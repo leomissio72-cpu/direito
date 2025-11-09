@@ -75,22 +75,28 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-    import { getAuth, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    // Import SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
+    // Configuração do novo projeto Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyCznEr8M2lNu7nwCfGN_kcJZFM5lqRQdf8",
+      apiKey: "AIzaSyBHelxNg37YtEykAkO3nOU8l45IbGmbK0M",
       authDomain: "juridico-4bf6c.firebaseapp.com",
-      projectId: "psico-17375",
-      storageBucket: "psico-17375.appspot.com",
-      messagingSenderId: "405718265829",
-      appId: "1:405718265829:web:3e3974a0dc02080824890c",
-      measurementId: "G-P19R4LJJKS"
+      projectId: "juridico-4bf6c",
+      storageBucket: "juridico-4bf6c.firebasestorage.app",
+      messagingSenderId: "427029341843",
+      appId: "1:427029341843:web:f4545ff656d2723ccccf66",
+      measurementId: "G-6DWF14QXHB"
     };
 
+    // Inicializa Firebase e Analytics
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     const auth = getAuth(app);
 
+    // Elementos de interface
     const userPhoto = document.getElementById('userPhoto');
     const userName = document.getElementById('userName');
     const btnLogout = document.getElementById('btnLogout');
