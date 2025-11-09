@@ -2,67 +2,82 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Login — Sistema Jurídico</title>
+  <title>Painel — Sistema Jurídico</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: #f4f6fb;
-      color: #0b1b2b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+      margin:0;
+      font-family:'Inter',sans-serif;
+      background:#f9fafc;
+      color:#1a1a1a;
+      display:flex;
+      flex-direction:column;
+      height:100vh;
     }
-    .card {
-      background: #fff;
-      padding: 32px;
-      border-radius: 14px;
-      box-shadow: 0 8px 30px rgba(11,27,43,0.08);
-      width: 380px;
-      text-align: center;
-      transition: 0.3s ease;
+    header {
+      background:#2b61ff;
+      color:#fff;
+      padding:14px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      box-shadow:0 3px 10px rgba(0,0,0,0.08);
     }
-    .card:hover { transform: scale(1.02); }
-    h1 { margin-bottom: 6px; font-size: 1.6rem; }
-    p { color: #556179; margin-bottom: 20px; }
-    button {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 15px;
-      background: #4285F4;
-      color: #fff;
-      transition: 0.3s ease;
+    .user {
+      display:flex;
+      align-items:center;
+      gap:10px;
     }
-    button:hover { background: #3367D6; }
-    .footer {
-      margin-top: 16px;
-      font-size: 13px;
-      color: #94a3b8;
+    .user img {
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      border:2px solid rgba(255,255,255,0.7);
+    }
+    .main {
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      text-align:center;
+    }
+    .logout {
+      background:#fff;
+      color:#2b61ff;
+      border:1px solid #2b61ff;
+      padding:8px 16px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      transition:all .2s;
+    }
+    .logout:hover {
+      background:#2b61ff;
+      color:#fff;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Sistema Jurídico</h1>
-    <p>Faça login com sua conta Google para acessar o painel</p>
-    <button id="btnGoogle">🔐 Entrar com Google</button>
-    <div class="footer">Acesso restrito a usuários autorizados</div>
+  <header>
+    <h2>Sistema Jurídico ⚖️</h2>
+    <div class="user">
+      <img id="userPhoto" src="" alt="Foto">
+      <span id="userName"></span>
+      <button class="logout" id="btnLogout">Sair</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <h1>Bem-vindo ao painel jurídico</h1>
+    <p>Você está autenticado com sua conta Google.</p>
   </div>
 
-  <!-- Firebase compat -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getAuth, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
-  <script>
-    // Configuração do Firebase (do seu projeto)
     const firebaseConfig = {
       apiKey: "AIzaSyCznEr8M2lNu7nwCfGN_kcJZFM5lqRQdf8",
       authDomain: "juridico-4bf6c.firebaseapp.com",
@@ -73,38 +88,29 @@
       measurementId: "G-P19R4LJJKS"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-    const btnGoogle = document.getElementById('btnGoogle');
+    const userPhoto = document.getElementById('userPhoto');
+    const userName = document.getElementById('userName');
+    const btnLogout = document.getElementById('btnLogout');
 
-    btnGoogle.addEventListener('click', () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider)
-        .then(result => {
-          const user = result.user;
-          const payload = {
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL
-          };
-          localStorage.setItem('sj_user', JSON.stringify(payload));
-          window.location.href = 'app.html';
-        })
-        .catch(e => alert('Erro ao autenticar: ' + e.message));
+    // Verifica login
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = 'login.html';
+      } else {
+        userName.textContent = user.displayName;
+        userPhoto.src = user.photoURL || 'https://via.placeholder.com/36';
+      }
     });
 
-    // Se já estiver logado, vai direto pro painel
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        const payload = {
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL
-        };
-        localStorage.setItem('sj_user', JSON.stringify(payload));
-        window.location.href = 'app.html';
-      }
+    // Logout
+    btnLogout.addEventListener('click', () => {
+      signOut(auth).then(() => {
+        localStorage.removeItem('sj_user');
+        window.location.href = 'login.html';
+      });
     });
   </script>
 </body>
