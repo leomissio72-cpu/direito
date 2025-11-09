@@ -1,5 +1,13 @@
-<!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Jurídico Local</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root{
@@ -80,7 +88,7 @@
     .status-arquivado{background:#e5e7eb;color:#374151}
     .status-finalizado{background:#d1fae5;color:#065f46}
 
-    /* LOGIN MODAL */
+    /* LOGIN MODAL (O CSS relacionado ao login foi mantido mas o elemento foi removido) */
     .login-modal{
       position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);
       display:flex;align-items:center;justify-content:center;z-index:9999;
@@ -117,7 +125,6 @@
 </head>
 <body>
   <div class="app">
-    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="brand">
         <div class="logo">J</div>
@@ -156,32 +163,21 @@
       </div>
     </aside>
 
-    <!-- WORKSPACE -->
     <div class="workspace">
       <div class="topbar">
         <div class="page-title" id="pageTitle">Cadastro</div>
-        <div class="user-area" id="userArea">
+        <div class="user-area">
           <div style="text-align:right">
-            <div id="userName" style="font-weight:700">Sistema Local</div>
+            <div style="font-weight:700">Sistema Local</div>
             <div style="font-size:12px;color:var(--muted)">
-              <span id="userStatus">Armazenamento do navegador</span>
-              <button id="btnLogin" style="background:transparent;border:none;color:var(--primary);cursor:pointer;text-decoration:underline;font-size:12px;margin-left:8px">
-                Fazer Login
-              </button>
+              Armazenamento do navegador
             </div>
           </div>
-          <div class="avatar" id="userAvatar">⚖️</div>
+          <div class="avatar">⚖️</div>
         </div>
-        <div class="user-dropdown" id="userDropdown">
-          <div class="user-dropdown-item" onclick="signOut()">
-            <span class="material-icons" style="font-size:18px">logout</span>
-            Sair
-          </div>
         </div>
-      </div>
 
       <main class="main-area">
-        <!-- CADASTRO -->
         <section id="cadastro" class="container tab" style="display:block">
           <h2>Cadastro de Cliente & Processo</h2>
           <div id="alertCadastro"></div>
@@ -303,7 +299,6 @@
           </form>
         </section>
 
-        <!-- LISTA -->
         <section id="lista" class="container tab" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
             <h2>Processos Registrados</h2>
@@ -326,7 +321,6 @@
           </div>
         </section>
 
-        <!-- ANOTAÇÕES -->
         <section id="anotacoes" class="container tab" style="display:none">
           <h2>Anotações</h2>
           <div id="alertAnotacoes"></div>
@@ -354,7 +348,6 @@
           <div id="listaAnotacoes"></div>
         </section>
 
-        <!-- FERRAMENTAS -->
         <section id="ferramentas" class="container tab" style="display:none">
           <h2>Calculadora de Prazos Processuais</h2>
           
@@ -402,255 +395,10 @@
     </div>
   </div>
 
-  <!-- LOGIN MODAL -->
-  <div class="login-modal" id="loginModal" style="display:none">
-    <div class="login-card">
-      <h2>🔐 Login com Google</h2>
-      <p>Faça login com sua conta Google para sincronizar seus dados e acessar de qualquer dispositivo.</p>
-      
-      <div style="background:#fff3cd;border:1px solid #ffc107;padding:12px;border-radius:8px;margin-bottom:16px;font-size:13px">
-        <strong>⚠️ Configuração Necessária:</strong><br>
-        Para usar o login do Google, você precisa:
-        <ol style="margin:8px 0 0 0;padding-left:20px">
-          <li>Criar um projeto no <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a></li>
-          <li>Ativar a Google Identity Services API</li>
-          <li>Criar credenciais OAuth 2.0</li>
-          <li>Inserir seu Client ID abaixo</li>
-        </ol>
-      </div>
-
-      <label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px">
-        Google Client ID:
-      </label>
-      <input 
-        type="text" 
-        id="googleClientId" 
-        placeholder="SEU-CLIENT-ID.apps.googleusercontent.com"
-        style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.1);margin-bottom:16px;font-size:13px"
-      >
-      <button class="btn primary" onclick="saveClientIdAndInitGoogle()" style="width:100%">
-        <span class="material-icons">save</span> Salvar e Continuar
-      </button>
-      
-      <div id="googleButtonContainer" class="google-btn-wrapper" style="display:none">
-        <!-- Google Button will appear here -->
-        <div id="g_id_onload"
-             data-callback="handleCredentialResponse"
-             data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin"
-             data-type="standard"
-             data-size="large"
-             data-theme="outline"
-             data-text="signin_with"
-             data-shape="rectangular"
-             data-logo_alignment="left">
-        </div>
-      </div>
-
-      <div class="skip-login">
-        <button onclick="skipLogin()">Continuar sem login (usar apenas armazenamento local)</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // ========== GOOGLE LOGIN CONFIGURATION ==========
-    const GOOGLE_CLIENT_ID_KEY = 'google_client_id';
-    const GOOGLE_USER_KEY = 'google_user_info';
-    let currentUser = null;
-
-    // Decode JWT token
-    function parseJwt(token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split('')
-            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-            .join('')
-        );
-        return JSON.parse(jsonPayload);
-      } catch (e) {
-        console.error('Error parsing JWT:', e);
-        return null;
-      }
-    }
-
-    // Handle Google Sign-In Response
-    function handleCredentialResponse(response) {
-      console.log("Google login successful!");
-      const userInfo = parseJwt(response.credential);
-      
-      if (userInfo) {
-        currentUser = {
-          name: userInfo.name,
-          email: userInfo.email,
-          picture: userInfo.picture,
-          id: userInfo.sub,
-          token: response.credential
-        };
-        
-        // Save to sessionStorage
-        sessionStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(currentUser));
-        
-        // Update UI
-        updateUserUI();
-        
-        // Hide login modal
-        document.getElementById('loginModal').style.display = 'none';
-      }
-    }
-
-    // Save Client ID and Initialize Google
-    function saveClientIdAndInitGoogle() {
-      const clientId = document.getElementById('googleClientId').value.trim();
-      
-      if (!clientId) {
-        alert('Por favor, insira um Client ID válido.');
-        return;
-      }
-      
-      if (!clientId.includes('.apps.googleusercontent.com')) {
-        alert('O Client ID deve estar no formato: SEU-ID.apps.googleusercontent.com');
-        return;
-      }
-      
-      // Save to localStorage
-      localStorage.setItem(GOOGLE_CLIENT_ID_KEY, clientId);
-      
-      // Show Google button
-      document.getElementById('googleButtonContainer').style.display = 'flex';
-      
-      // Initialize Google Sign-In
-      try {
-        google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleCredentialResponse
-        });
-        
-        google.accounts.id.renderButton(
-          document.querySelector('.g_id_signin'),
-          { theme: "outline", size: "large", text: "signin_with", shape: "rectangular" }
-        );
-        
-        alert('✅ Configuração salva! Agora você pode fazer login com Google.');
-      } catch (e) {
-        console.error('Error initializing Google Sign-In:', e);
-        alert('Erro ao inicializar Google Sign-In. Verifique se o Client ID está correto.');
-      }
-    }
-
-    // Skip Login
-    function skipLogin() {
-      document.getElementById('loginModal').style.display = 'none';
-      sessionStorage.setItem('skip_login', 'true');
-    }
-
-    // Sign Out
-    function signOut() {
-      if (confirm('Deseja realmente sair?')) {
-        currentUser = null;
-        sessionStorage.removeItem(GOOGLE_USER_KEY);
-        sessionStorage.removeItem('google_token');
-        
-        // Reset UI
-        document.getElementById('userName').textContent = 'Sistema Local';
-        document.getElementById('userStatus').textContent = 'Armazenamento do navegador';
-        document.getElementById('userAvatar').innerHTML = '⚖️';
-        document.getElementById('btnLogin').style.display = 'inline';
-        document.getElementById('userDropdown').classList.remove('show');
-        
-        // Disable Google auto-select
-        if (typeof google !== 'undefined' && google.accounts) {
-          google.accounts.id.disableAutoSelect();
-        }
-      }
-    }
-
-    // Update User UI
-    function updateUserUI() {
-      if (currentUser) {
-        document.getElementById('userName').textContent = currentUser.name;
-        document.getElementById('userStatus').textContent = currentUser.email;
-        document.getElementById('btnLogin').style.display = 'none';
-        
-        // Update avatar
-        const avatarEl = document.getElementById('userAvatar');
-        avatarEl.innerHTML = `<img src="${currentUser.picture}" alt="${currentUser.name}" style="width:40px;height:40px;border-radius:8px">`;
-        
-        // Make avatar clickable
-        avatarEl.style.cursor = 'pointer';
-        avatarEl.onclick = () => {
-          document.getElementById('userDropdown').classList.toggle('show');
-        };
-      }
-    }
-
-    // Show Login Modal
-    function showLoginModal() {
-      const savedClientId = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
-      
-      if (savedClientId) {
-        document.getElementById('googleClientId').value = savedClientId;
-        // Auto-initialize if Client ID exists
-        setTimeout(() => {
-          document.getElementById('googleButtonContainer').style.display = 'flex';
-          try {
-            google.accounts.id.initialize({
-              client_id: savedClientId,
-              callback: handleCredentialResponse
-            });
-            google.accounts.id.renderButton(
-              document.querySelector('.g_id_signin'),
-              { theme: "outline", size: "large", text: "signin_with", shape: "rectangular" }
-            );
-          } catch (e) {
-            console.error('Error initializing Google:', e);
-          }
-        }, 500);
-      }
-      
-      document.getElementById('loginModal').style.display = 'flex';
-    }
-
-    // Check if user is logged in on page load
-    window.addEventListener('load', () => {
-      const savedUser = sessionStorage.getItem(GOOGLE_USER_KEY);
-      const skipLogin = sessionStorage.getItem('skip_login');
-      
-      if (savedUser) {
-        try {
-          currentUser = JSON.parse(savedUser);
-          // Check if token is still valid
-          const tokenData = parseJwt(currentUser.token);
-          if (tokenData && tokenData.exp * 1000 > Date.now()) {
-            updateUserUI();
-          } else {
-            // Token expired
-            sessionStorage.removeItem(GOOGLE_USER_KEY);
-          }
-        } catch (e) {
-          console.error('Error loading user:', e);
-        }
-      } else if (!skipLogin) {
-        // Show login modal if not logged in and not skipped
-        setTimeout(showLoginModal, 1000);
-      }
-    });
-
-    // Login button click
-    document.getElementById('btnLogin').addEventListener('click', showLoginModal);
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      const dropdown = document.getElementById('userDropdown');
-      const avatar = document.getElementById('userAvatar');
-      if (!dropdown.contains(e.target) && !avatar.contains(e.target)) {
-        dropdown.classList.remove('show');
-      }
-    });
+    // ========== Variáveis e Funções de Login removidas ==========
+    // As funções e variáveis GOOGLE_CLIENT_ID_KEY, GOOGLE_USER_KEY, parseJwt, handleCredentialResponse,
+    // saveClientIdAndInitGoogle, skipLogin, signOut, updateUserUI e showLoginModal foram removidas.
 
     // ========== OPÇÕES DE STATUS ==========
     const STATUS_OPTIONS = [
@@ -787,370 +535,481 @@
       const form = document.getElementById('formCadastro');
       const formData = new FormData(form);
       
-      if (!formData.get('nome')) {
-        alert('Preencha pelo menos o nome do cliente para exportar.');
-        return;
+      // Criar objeto com os dados do formulário
+      const data = {};
+      for (let [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+
+      // Formatando dados para o PDF
+      const formattedData = `
+        CLIENTE:
+        Nome Completo: ${data.nome || '-'}
+        CPF: ${data.cpf || '-'}
+        RG: ${data.rg || '-'}
+        Telefone: ${data.telefone || '-'}
+        E-mail: ${data.email || '-'}
+        Endereço: ${data.endereco || '-'}
+
+        PROCESSO:
+        Responsável: ${data.responsavel || '-'}
+        Categoria: ${data.categoria || '-'}
+        Número do Processo: ${data.numero || '-'}
+        Vara / Comarca: ${data.vara || '-'}
+        Parte Contrária: ${data.parte || '-'}
+        Status: ${data.status || '-'}
+        Data de Abertura: ${data.dataAbertura ? new Date(data.dataAbertura).toLocaleDateString('pt-BR') : '-'}
+
+        FINANCEIRO:
+        Valor da Causa (R$): ${formatCurrency(data.valor)}
+        Honorários (R$): ${formatCurrency(data.honorarios)}
+        Forma de Pagamento: ${data.formaPagamento || '-'}
+        Parcelas: ${data.formaPagamento === 'Parcelado' ? (data.parcelas || 'N/A') : 'N/A'}
+
+        OBSERVAÇÕES:
+        ${data.observacoes || '(Nenhuma observação)'}
+      `;
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text("Resumo do Processo (Cadastro)", 10, 10);
+        
+        doc.setFontSize(12);
+        const splitText = doc.splitTextToSize(formattedData, 180);
+        doc.text(splitText, 10, 20);
+
+        doc.save(`processo_${data.nome.replace(/\s/g, '_') || 'novo'}.pdf`);
+        mostrarAlerta('alertCadastro', 'PDF exportado com sucesso!', 'success');
+      } catch (error) {
+        console.error("Erro ao exportar PDF:", error);
+        mostrarAlerta('alertCadastro', 'Erro ao exportar PDF. Verifique se a biblioteca jsPDF foi carregada corretamente.', 'error');
       }
       
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      
-      doc.setFontSize(18);
-      doc.text('Cadastro de Processo - Sistema Jurídico', 20, 20);
-      
-      doc.setFontSize(12);
-      let y = 40;
-      
-      const campos = [
-        ['Nome', formData.get('nome')],
-        ['CPF', formData.get('cpf')],
-        ['RG', formData.get('rg')],
-        ['Telefone', formData.get('telefone')],
-        ['E-mail', formData.get('email')],
-        ['Responsável', formData.get('responsavel')],
-        ['Endereço', formData.get('endereco')],
-        ['Categoria', formData.get('categoria')],
-        ['Número do Processo', formData.get('numero')],
-        ['Vara/Comarca', formData.get('vara')],
-        ['Parte Contrária', formData.get('parte')],
-        ['Status', formData.get('status')],
-        ['Data de Abertura', formData.get('dataAbertura')],
-        ['Valor da Causa', formData.get('valor') ? `R$ ${formData.get('valor')}` : ''],
-        ['Honorários', formData.get('honorarios') ? `R$ ${formData.get('honorarios')}` : ''],
-        ['Forma de Pagamento', formData.get('formaPagamento')],
-        ['Parcelas', formData.get('parcelas')],
-      ];
-      
-      campos.forEach(([label, value]) => {
-        if (value) {
-          doc.setFont(undefined, 'bold');
-          doc.text(`${label}:`, 20, y);
-          doc.setFont(undefined, 'normal');
-          doc.text(value, 70, y);
-          y += 10;
-        }
-      });
-      
-      if (formData.get('observacoes')) {
-        y += 5;
-        doc.setFont(undefined, 'bold');
-        doc.text('Observações:', 20, y);
-        y += 7;
-        doc.setFont(undefined, 'normal');
-        const obs = doc.splitTextToSize(formData.get('observacoes'), 170);
-        doc.text(obs, 20, y);
-      }
-      
-      doc.save(`processo-${Date.now()}.pdf`);
-      mostrarAlerta('alertCadastro', 'PDF exportado com sucesso!', 'success');
       setTimeout(() => {
         document.getElementById('alertCadastro').innerHTML = '';
       }, 3000);
     });
 
-    // ========== LISTA DE PROCESSOS ==========
-    let processosFiltrados = [];
-    let ordenacaoData = 'desc';
-
-    function renderizarTabela(filtro = '') {
-      const processos = carregarProcessos();
-      processosFiltrados = processos.filter(p => {
-        if (!filtro) return true;
-        const busca = filtro.toLowerCase();
-        return (
-          p.nome.toLowerCase().includes(busca) ||
-          (p.cpf && p.cpf.includes(busca)) ||
-          (p.numero && p.numero.includes(busca)) ||
-          (p.categoria && p.categoria.toLowerCase().includes(busca))
-        );
-      });
-      
-      const wrapper = document.getElementById('tableWrapper');
-      
-      if (processosFiltrados.length === 0) {
-        wrapper.innerHTML = '<div class="no-data">Nenhum processo encontrado.</div>';
-        return;
-      }
-      
-      let html = '<table><thead><tr>';
-      html += '<th>Nome</th><th>Categoria</th><th>Número</th><th>Status</th><th>Data Abertura</th><th>Pagamento</th><th>Ações</th>';
-      html += '</tr></thead><tbody>';
-      
-      processosFiltrados.forEach(p => {
-        html += '<tr>';
-        html += `<td>${p.nome}</td>`;
-        html += `<td>${p.categoria || '-'}</td>`;
-        html += `<td>${p.numero || '-'}</td>`;
-        html += `<td>
-          <select onchange="mudarStatus('${p.id}', this.value)" style="padding:6px 8px;font-size:13px;border:1px solid rgba(11,27,43,0.1);border-radius:6px;background:#fff">
-            ${STATUS_OPTIONS.map(status => 
-              `<option value="${status}" ${p.status === status ? 'selected' : ''}>${status}</option>`
-            ).join('')}
-          </select>
-        </td>`;
-        html += `<td>${p.dataAbertura ? new Date(p.dataAbertura).toLocaleDateString('pt-BR') : '-'}</td>`;
-        html += `<td>${p.formaPagamento || '-'}${p.parcelas ? ` (${p.parcelas}x)` : ''}</td>`;
-        html += `<td>
-          <button class="btn ghost" onclick="verDetalhes('${p.id}')">
-            <span class="material-icons">visibility</span> Ver
-          </button>
-          <button class="btn danger" onclick="deletarProcesso('${p.id}')">
-            <span class="material-icons">delete</span>
-          </button>
-        </td>`;
-        html += '</tr>';
-      });
-      
-      html += '</tbody></table>';
-      wrapper.innerHTML = html;
+    // Função auxiliar para formatação de moeda
+    function formatCurrency(value) {
+      const num = parseFloat(value);
+      return isNaN(num) ? 'R$ 0,00' : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    // Mudar status
-    window.mudarStatus = function(id, novoStatus) {
-      const processos = carregarProcessos();
-      const processo = processos.find(p => p.id === id);
-      if (processo) {
-        processo.status = novoStatus;
-        salvarProcessos(processos);
-        console.log(`Status do processo ${id} alterado para: ${novoStatus}`);
+    // Função auxiliar para mostrar alertas
+    function mostrarAlerta(containerId, message, type) {
+      document.getElementById(containerId).innerHTML = `
+        <div class="alert ${type}">
+          ${message}
+        </div>
+      `;
+    }
+
+    // ========== LISTA DE PROCESSOS ==========
+
+    // Renderiza a tabela de processos
+    function renderizarTabela(processos = carregarProcessos()) {
+      const tableWrapper = document.getElementById('tableWrapper');
+      
+      if (processos.length === 0) {
+        tableWrapper.innerHTML = `<div class="no-data">Nenhum processo registrado ainda.</div>`;
+        return;
       }
-    };
 
-    // Busca
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      renderizarTabela(e.target.value);
-    });
+      let tableHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Processo</th>
+              <th>Status</th>
+              <th>Abertura</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
 
-    // Atualizar
-    document.getElementById('btnRefresh').addEventListener('click', () => {
-      renderizarTabela();
-    });
-
-    // Ordenar por data
-    document.getElementById('btnSortDate').addEventListener('click', () => {
-      const processos = carregarProcessos();
-      ordenacaoData = ordenacaoData === 'desc' ? 'asc' : 'desc';
-      
-      processos.sort((a, b) => {
-        const dataA = new Date(a.dataAbertura || a.dataCadastro);
-        const dataB = new Date(b.dataAbertura || b.dataCadastro);
-        return ordenacaoData === 'desc' ? dataB - dataA : dataA - dataB;
+      processos.forEach(p => {
+        const dataAberturaFormatada = p.dataAbertura ? new Date(p.dataAbertura).toLocaleDateString('pt-BR') : '-';
+        const statusClass = 'status-' + p.status.toLowerCase().replace(/\s/g, '').replace(/[^\w\s]/gi, ''); // Ex: Aguardando Distribuição -> status-aguardandodistribuicao
+        
+        tableHTML += `
+          <tr data-id="${p.id}">
+            <td>
+              <strong>${p.nome}</strong><br>
+              <span style="font-size:12px;color:var(--muted)">${p.categoria || 'N/A'}</span>
+            </td>
+            <td>${p.numero || 'N/A'}</td>
+            <td><span class="status-badge ${statusClass}">${p.status}</span></td>
+            <td>${dataAberturaFormatada}</td>
+            <td style="white-space:nowrap;">
+              <select class="status-changer" data-id="${p.id}" onchange="atualizarStatus(this.dataset.id, this.value)">
+                <option value="">Mudar Status</option>
+                ${STATUS_OPTIONS.map(status => `<option value="${status}">${status}</option>`).join('')}
+              </select>
+              <button class="btn danger" onclick="deletarProcesso('${p.id}')">Excluir</button>
+            </td>
+          </tr>
+        `;
       });
+
+      tableHTML += `
+          </tbody>
+        </table>
+      `;
+
+      tableWrapper.innerHTML = tableHTML;
       
-      salvarProcessos(processos);
-      renderizarTabela();
+      // Define o status atual na combobox
+      processos.forEach(p => {
+        const select = document.querySelector(`.status-changer[data-id="${p.id}"]`);
+        if (select) {
+          select.value = p.status;
+        }
+      });
+    }
+    
+    // Atualiza o status de um processo
+    function atualizarStatus(id, novoStatus) {
+      if (novoStatus === "") return;
+      
+      let processos = carregarProcessos();
+      const index = processos.findIndex(p => p.id === id);
+      
+      if (index !== -1) {
+        processos[index].status = novoStatus;
+        salvarProcessos(processos);
+        renderizarTabela(processos); // Re-renderizar para atualizar o badge
+        
+        mostrarAlerta('alertCadastro', `Status do processo de ${processos[index].nome} atualizado para ${novoStatus}.`, 'success');
+        setTimeout(() => {
+          document.getElementById('alertCadastro').innerHTML = '';
+        }, 3000);
+      }
+    }
+
+    // Deleta um processo
+    function deletarProcesso(id) {
+      if (confirm('Tem certeza que deseja excluir este processo? Esta ação não pode ser desfeita.')) {
+        let processos = carregarProcessos().filter(p => p.id !== id);
+        salvarProcessos(processos);
+        
+        // Excluir anotações relacionadas
+        let anotacoes = carregarAnotacoes().filter(a => a.processoId !== id);
+        salvarAnotacoes(anotacoes);
+
+        renderizarTabela(processos);
+        
+        mostrarAlerta('alertCadastro', 'Processo e anotações relacionadas excluídos com sucesso!', 'success');
+        setTimeout(() => {
+          document.getElementById('alertCadastro').innerHTML = '';
+        }, 3000);
+      }
+    }
+
+    // Pesquisa na tabela
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const processos = carregarProcessos();
+      
+      const filteredProcessos = processos.filter(p => 
+        p.nome.toLowerCase().includes(searchTerm) ||
+        p.numero.toLowerCase().includes(searchTerm) ||
+        p.categoria.toLowerCase().includes(searchTerm) ||
+        p.status.toLowerCase().includes(searchTerm)
+      );
+      
+      renderizarTabela(filteredProcessos);
+    });
+    
+    // Botão de Refresh
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+        document.getElementById('searchInput').value = ''; // Limpa a pesquisa
+        renderizarTabela();
+    });
+
+    // Ordenação por Data
+    document.getElementById('btnSortDate').addEventListener('click', () => {
+        const processos = carregarProcessos();
+        
+        processos.sort((a, b) => {
+            const dateA = new Date(a.dataAbertura || a.dataCadastro).getTime();
+            const dateB = new Date(b.dataAbertura || b.dataCadastro).getTime();
+            return dateB - dateA; // Mais recente primeiro
+        });
+        
+        renderizarTabela(processos);
+        mostrarAlerta('alertCadastro', 'Processos ordenados por data de abertura/cadastro (mais recente primeiro).', 'success');
+        setTimeout(() => {
+          document.getElementById('alertCadastro').innerHTML = '';
+        }, 3000);
     });
 
     // Download CSV
     document.getElementById('btnDownloadCsv').addEventListener('click', () => {
-      const processos = processosFiltrados.length > 0 ? processosFiltrados : carregarProcessos();
-      
-      if (processos.length === 0) {
-        alert('Nenhum processo para exportar.');
-        return;
-      }
-      
-      let csv = 'Nome,CPF,Telefone,Email,Categoria,Número,Status,Data Abertura,Valor,Honorários,Forma Pagamento,Parcelas\n';
-      
-      processos.forEach(p => {
-        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}","${p.formaPagamento || ''}","${p.parcelas || ''}"\n`;
-      });
-      
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `processos-${Date.now()}.csv`;
-      link.click();
+        const processos = carregarProcessos();
+        if (processos.length === 0) {
+            alert("Não há dados para exportar.");
+            return;
+        }
+
+        const headers = [
+            "ID", "Data Cadastro", "Nome", "CPF", "RG", "Telefone", "Email", "Responsavel", "Endereco",
+            "Categoria", "Numero", "Vara", "Parte Contraria", "Status", "Data Abertura",
+            "Valor da Causa", "Honorarios", "Forma Pagamento", "Parcelas", "Observacoes"
+        ];
+
+        const csvRows = [];
+        csvRows.push(headers.join(';')); // Adiciona cabeçalho
+
+        processos.forEach(p => {
+            const values = [
+                p.id, p.dataCadastro, p.nome, p.cpf, p.rg, p.telefone, p.email, p.responsavel, p.endereco,
+                p.categoria, p.numero, p.vara, p.parte, p.status, p.dataAbertura,
+                p.valor, p.honorarios, p.formaPagamento, p.parcelas, `"${p.observacoes.replace(/"/g, '""').replace(/\n/g, ' ')}"` // Sanitize observations
+            ];
+            csvRows.push(values.join(';'));
+        });
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' }); // Adiciona BOM para caracteres especiais
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "processos_juridicos.csv";
+        link.click();
+        
+        mostrarAlerta('alertCadastro', 'Dados exportados para CSV com sucesso!', 'success');
+        setTimeout(() => {
+          document.getElementById('alertCadastro').innerHTML = '';
+        }, 3000);
     });
 
-    // Ver detalhes
-    window.verDetalhes = function(id) {
-      const processos = carregarProcessos();
-      const processo = processos.find(p => p.id === id);
-      if (!processo) return;
-      
-      let detalhes = 'DETALHES DO PROCESSO\n\n';
-      detalhes += `Nome: ${processo.nome}\n`;
-      detalhes += `CPF: ${processo.cpf || '-'}\n`;
-      detalhes += `RG: ${processo.rg || '-'}\n`;
-      detalhes += `Telefone: ${processo.telefone || '-'}\n`;
-      detalhes += `Email: ${processo.email || '-'}\n`;
-      detalhes += `Responsável: ${processo.responsavel || '-'}\n`;
-      detalhes += `Endereço: ${processo.endereco || '-'}\n`;
-      detalhes += `Categoria: ${processo.categoria || '-'}\n`;
-      detalhes += `Número: ${processo.numero || '-'}\n`;
-      detalhes += `Vara: ${processo.vara || '-'}\n`;
-      detalhes += `Parte Contrária: ${processo.parte || '-'}\n`;
-      detalhes += `Status: ${processo.status}\n`;
-      detalhes += `Data Abertura: ${processo.dataAbertura || '-'}\n`;
-      detalhes += `Valor da Causa: R$ ${processo.valor || '0'}\n`;
-      detalhes += `Honorários: R$ ${processo.honorarios || '0'}\n`;
-      detalhes += `Forma de Pagamento: ${processo.formaPagamento || '-'}\n`;
-      detalhes += `Parcelas: ${processo.parcelas || '-'}\n`;
-      detalhes += `Observações: ${processo.observacoes || '-'}\n`;
-      
-      alert(detalhes);
-    };
+    // Garante que a tabela é carregada ao abrir a lista (será feito no nav-btn, mas útil para o load inicial)
+    // window.addEventListener('load', renderizarTabela); 
 
-    // Deletar processo
-    window.deletarProcesso = function(id) {
-      if (!confirm('Deseja realmente deletar este processo?')) return;
-      
-      let processos = carregarProcessos();
-      processos = processos.filter(p => p.id !== id);
-      salvarProcessos(processos);
-      
-      renderizarTabela();
-    };
 
     // ========== ANOTAÇÕES ==========
+
+    // Preenche o select de processos para a aba de anotações
     function atualizarSelectProcessos() {
-      const processos = carregarProcessos();
       const select = document.getElementById('selectProcesso');
-      
       select.innerHTML = '<option value="">--- selecione um processo ---</option>';
       
+      const processos = carregarProcessos();
       processos.forEach(p => {
         const option = document.createElement('option');
         option.value = p.id;
         option.textContent = `${p.nome} - ${p.numero || 'S/N'}`;
         select.appendChild(option);
       });
+      
+      select.value = ''; // Reset
+      document.getElementById('listaAnotacoes').innerHTML = '';
     }
 
+    // Renderiza a lista de anotações do processo selecionado
+    document.getElementById('selectProcesso').addEventListener('change', renderizarAnotacoes);
+
     function renderizarAnotacoes() {
-      const processoId = document.getElementById('selectProcesso').value;
-      const container = document.getElementById('listaAnotacoes');
+      const select = document.getElementById('selectProcesso');
+      const processoId = select.value;
+      const listaAnotacoesDiv = document.getElementById('listaAnotacoes');
       
       if (!processoId) {
-        container.innerHTML = '<div class="no-data">Selecione um processo para ver as anotações.</div>';
+        listaAnotacoesDiv.innerHTML = `<div class="no-data">Selecione um processo para ver/adicionar anotações.</div>`;
         return;
       }
+
+      const todasAnotacoes = carregarAnotacoes();
+      const anotacoesDoProcesso = todasAnotacoes.filter(a => a.processoId === processoId).reverse();
       
-      const anotacoes = carregarAnotacoes().filter(a => a.processoId === processoId);
-      
-      if (anotacoes.length === 0) {
-        container.innerHTML = '<div class="no-data">Nenhuma anotação para este processo.</div>';
+      if (anotacoesDoProcesso.length === 0) {
+        listaAnotacoesDiv.innerHTML = `<div class="no-data">Nenhuma anotação para este processo.</div>`;
         return;
       }
       
       let html = '';
-      anotacoes.forEach(a => {
-        html += `<div class="note-card">
-          <div class="note-meta">${new Date(a.data).toLocaleString('pt-BR')}</div>
-          <div class="note-text">${a.texto}</div>
-          <button class="btn danger" onclick="deletarAnotacao('${a.id}')" style="margin-top:8px;font-size:12px;padding:4px 8px">
-            <span class="material-icons" style="font-size:16px">delete</span> Excluir
-          </button>
-        </div>`;
+      anotacoesDoProcesso.forEach(a => {
+        const dataFormatada = new Date(a.data).toLocaleString('pt-BR');
+        html += `
+          <div class="note-card">
+            <div class="note-meta">
+              ${dataFormatada}
+              <button class="btn link" onclick="deletarAnotacao('${a.id}')" style="float:right;padding:0;">Excluir</button>
+            </div>
+            <div class="note-text">${a.texto}</div>
+          </div>
+        `;
       });
-      
-      container.innerHTML = html;
+
+      listaAnotacoesDiv.innerHTML = html;
     }
 
-    document.getElementById('selectProcesso').addEventListener('change', renderizarAnotacoes);
-
+    // Salvar Anotação
     document.getElementById('btnSalvarAnotacao').addEventListener('click', () => {
-      const processoId = document.getElementById('selectProcesso').value;
-      const texto = document.getElementById('inputAnotacao').value.trim();
+      const select = document.getElementById('selectProcesso');
+      const input = document.getElementById('inputAnotacao');
+      const processoId = select.value;
+      const texto = input.value.trim();
       
       if (!processoId) {
-        mostrarAlerta('alertAnotacoes', 'Selecione um processo primeiro.', 'error');
+        mostrarAlerta('alertAnotacoes', 'Selecione um processo para adicionar a anotação.', 'error');
         return;
       }
       
       if (!texto) {
-        mostrarAlerta('alertAnotacoes', 'Digite uma anotação.', 'error');
+        mostrarAlerta('alertAnotacoes', 'Digite o texto da anotação.', 'error');
         return;
       }
       
-      const anotacoes = carregarAnotacoes();
-      anotacoes.push({
+      const novaAnotacao = {
         id: Date.now().toString(),
-        processoId,
-        texto,
-        data: new Date().toISOString()
-      });
+        processoId: processoId,
+        data: new Date().toISOString(),
+        texto: texto
+      };
       
+      const anotacoes = carregarAnotacoes();
+      anotacoes.push(novaAnotacao);
       salvarAnotacoes(anotacoes);
-      document.getElementById('inputAnotacao').value = '';
-      renderizarAnotacoes();
-      mostrarAlerta('alertAnotacoes', 'Anotação salva com sucesso!', 'success');
       
+      input.value = ''; // Limpa o campo
+      renderizarAnotacoes();
+      
+      mostrarAlerta('alertAnotacoes', 'Anotação salva com sucesso!', 'success');
       setTimeout(() => {
         document.getElementById('alertAnotacoes').innerHTML = '';
       }, 3000);
     });
 
-    window.deletarAnotacao = function(id) {
-      if (!confirm('Deseja realmente excluir esta anotação?')) return;
-      
-      let anotacoes = carregarAnotacoes();
-      anotacoes = anotacoes.filter(a => a.id !== id);
-      salvarAnotacoes(anotacoes);
-      renderizarAnotacoes();
-    };
-
-    // ========== CALCULADORA DE PRAZOS ==========
-    document.getElementById('btnCalcularPrazo').addEventListener('click', () => {
-      const dataInicial = document.getElementById('dataInicial').value;
-      const tipoPrazo = document.getElementById('tipoPrazo').value;
-      const quantidade = parseInt(document.getElementById('quantidadeDias').value);
-      
-      if (!dataInicial || !quantidade) {
-        alert('Preencha a data inicial e a quantidade de dias.');
-        return;
+    // Deletar Anotação
+    function deletarAnotacao(id) {
+      if (confirm('Tem certeza que deseja excluir esta anotação?')) {
+        let anotacoes = carregarAnotacoes().filter(a => a.id !== id);
+        salvarAnotacoes(anotacoes);
+        renderizarAnotacoes();
+        
+        mostrarAlerta('alertAnotacoes', 'Anotação excluída com sucesso!', 'success');
+        setTimeout(() => {
+          document.getElementById('alertAnotacoes').innerHTML = '';
+        }, 3000);
       }
-      
-      const data = new Date(dataInicial + 'T00:00:00');
-      let diasAdicionados = 0;
-      
-      if (tipoPrazo === 'corrido') {
-        data.setDate(data.getDate() + quantidade);
-        diasAdicionados = quantidade;
-      } else {
-        // Dias úteis (não considera feriados)
-        while (diasAdicionados < quantidade) {
-          data.setDate(data.getDate() + 1);
-          const diaSemana = data.getDay();
-          if (diaSemana !== 0 && diaSemana !== 6) {
-            diasAdicionados++;
-          }
-        }
-      }
-      
-      const resultado = document.getElementById('resultadoPrazo');
-      const texto = document.getElementById('resultadoTexto');
-      
-      texto.innerHTML = `
-        <strong>Data Final:</strong> ${data.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
-        <strong>Prazo:</strong> ${quantidade} ${tipoPrazo === 'corrido' ? 'dias corridos' : 'dias úteis'}
-      `;
-      
-      resultado.style.display = 'block';
-    });
-
-    // ========== LIMPAR TODOS OS DADOS ==========
-    document.getElementById('btnLimparTodos').addEventListener('click', () => {
-      if (!confirm('ATENÇÃO: Isso irá apagar TODOS os processos e anotações. Deseja continuar?')) return;
-      if (!confirm('Tem certeza? Esta ação não pode ser desfeita!')) return;
-      
-      localStorage.removeItem(DB_KEY);
-      localStorage.removeItem(NOTES_KEY);
-      
-      alert('Todos os dados foram removidos com sucesso.');
-      renderizarTabela();
-      renderizarAnotacoes();
-    });
-
-    // ========== UTILITÁRIOS ==========
-    function mostrarAlerta(containerId, mensagem, tipo) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = `<div class="alert ${tipo}">${mensagem}</div>`;
     }
 
-    // Inicializar ao carregar
-    renderizarTabela();
+
+    // ========== FERRAMENTAS - CALCULADORA DE PRAZOS ==========
+    
+    // Função para verificar se um dia é útil (apenas sábado/domingo)
+    function isDiaUtil(date) {
+        const dayOfWeek = date.getDay(); // 0 = Domingo, 6 = Sábado
+        return dayOfWeek !== 0 && dayOfWeek !== 6;
+    }
+
+    // Função principal de cálculo
+    document.getElementById('btnCalcularPrazo').addEventListener('click', () => {
+        const dataInicialStr = document.getElementById('dataInicial').value;
+        const tipoPrazo = document.getElementById('tipoPrazo').value;
+        const quantidadeDias = parseInt(document.getElementById('quantidadeDias').value);
+
+        const resultadoDiv = document.getElementById('resultadoPrazo');
+        const resultadoTexto = document.getElementById('resultadoTexto');
+        
+        resultadoDiv.style.display = 'none';
+
+        if (!dataInicialStr || isNaN(quantidadeDias) || quantidadeDias <= 0) {
+            resultadoTexto.innerHTML = `<span style="color:var(--danger)">Por favor, preencha a Data Inicial e uma Quantidade de Dias válida.</span>`;
+            resultadoDiv.style.display = 'block';
+            resultadoDiv.style.border = '2px solid var(--danger)';
+            return;
+        }
+        
+        resultadoDiv.style.border = '2px solid var(--primary)';
+        
+        // Data de Início do Prazo (Dia seguinte)
+        const dataInicial = new Date(dataInicialStr);
+        dataInicial.setDate(dataInicial.getDate() + 1); // Começa a contar no dia seguinte
+
+        let dataAtual = new Date(dataInicial.getTime());
+        let diasContados = 0;
+        let dataFinal = null;
+
+        while (diasContados < quantidadeDias) {
+            if (tipoPrazo === 'corrido') {
+                diasContados++;
+                dataFinal = new Date(dataAtual.getTime()); // Atualiza a data final em cada passo
+            } else if (tipoPrazo === 'uteis') {
+                if (isDiaUtil(dataAtual)) {
+                    diasContados++;
+                }
+                dataFinal = new Date(dataAtual.getTime()); // Atualiza a data final em cada passo
+            }
+            
+            // Avança para o próximo dia
+            if (diasContados < quantidadeDias) {
+                dataAtual.setDate(dataAtual.getDate() + 1);
+            } else {
+                // Se chegou ao último dia, verifica se ele é útil se o prazo for útil
+                if (tipoPrazo === 'uteis') {
+                    // O prazo útil finaliza no último dia útil contado
+                } else {
+                    // Prazo corrido finaliza na última data contada
+                }
+                break;
+            }
+        }
+        
+        if (dataFinal) {
+            // Se o último dia do prazo não for útil, prorroga para o próximo dia útil
+            if (tipoPrazo === 'uteis') {
+                while (!isDiaUtil(dataFinal)) {
+                    dataFinal.setDate(dataFinal.getDate() + 1);
+                }
+            }
+            
+            resultadoTexto.innerHTML = `O prazo de **${quantidadeDias} dias ${tipoPrazo === 'uteis' ? 'úteis' : 'corridos'}** termina em: **${dataFinal.toLocaleDateString('pt-BR')}**`;
+        } else {
+            resultadoTexto.innerHTML = "Erro no cálculo. Verifique os valores.";
+        }
+
+        resultadoDiv.style.display = 'block';
+    });
+
+
+    // ========== FERRAMENTAS - GERENCIAR DADOS ==========
+
+    // Limpar Todos os Dados
+    document.getElementById('btnLimparTodos').addEventListener('click', () => {
+        if (confirm('ATENÇÃO: Você tem certeza que deseja APAGAR TODOS os processos e anotações? Esta ação é irreversível.')) {
+            localStorage.removeItem(DB_KEY);
+            localStorage.removeItem(NOTES_KEY);
+            
+            // Recarrega as listas
+            if (document.getElementById('lista').style.display !== 'none') {
+                renderizarTabela();
+            }
+            if (document.getElementById('anotacoes').style.display !== 'none') {
+                atualizarSelectProcessos();
+                renderizarAnotacoes();
+            }
+            
+            mostrarAlerta('alertCadastro', 'Todos os dados foram excluídos com sucesso!', 'success');
+            setTimeout(() => {
+              document.getElementById('alertCadastro').innerHTML = '';
+            }, 5000);
+        }
+    });
+
+    // ========== INITIAL LOAD ==========
+    // Garante que o modo de visualização inicial esteja correto
+    window.addEventListener('load', () => {
+        // Inicializa o modo local, sem a necessidade de checar login
+        document.getElementById('parcelasInput').disabled = true;
+        renderizarTabela(carregarProcessos()); // Carrega a lista inicial (na aba Processos, se o usuário navegar até lá)
+    });
   </script>
 </body>
 </html>
