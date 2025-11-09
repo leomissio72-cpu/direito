@@ -1,177 +1,144 @@
-function doGet(e) {
-  const action = e.parameter.action;
-
-  try {
-    switch (action) {
-      case "listarProcessos":
-        return listarProcessos();
-      case "buscarAnotacoes":
-        return buscarAnotacoes(e);
-      case "buscarHistorico":
-        return buscarHistorico(e);
-      default:
-        return ContentService
-          .createTextOutput(JSON.stringify({ erro: "Ação inválida." }))
-          .setMimeType(ContentService.MimeType.JSON);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Jurídico</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
     }
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ erro: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
 
-function doPost(e) {
-  const data = e.parameter;
-  const action = data.action;
-
-  try {
-    switch (action) {
-      case "cadastrarProcesso":
-        return cadastrarProcesso(data);
-      case "registrarAnotacao":
-        return registrarAnotacao(data);
-      default:
-        return ContentService
-          .createTextOutput(JSON.stringify({ erro: "Ação POST inválida." }))
-          .setMimeType(ContentService.MimeType.JSON);
+    h1 {
+      color: #2c3e50;
+      text-align: center;
     }
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ erro: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
 
-/* === CONFIGURAÇÕES === */
-const NOME_PLANILHA = "Processos";
-const NOME_ANOTACOES = "Anotacoes";
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: 20px auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
 
-/* === CADASTRAR PROCESSO === */
-function cadastrarProcesso(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(NOME_PLANILHA);
-  
-  if (!sheet) throw new Error(`A aba '${NOME_PLANILHA}' não existe.`);
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: 600;
+    }
 
-  const linha = [
-    new Date(),
-    data.nome || "",
-    data.cpf || "",
-    data.endereco || "",
-    data.categoria || "",
-    data.vara || "",
-    data.numero || "",
-    data.status || "",
-    data.observacoes || ""
-  ];
-  
-  sheet.appendRow(linha);
-  
-  return ContentService
-    .createTextOutput(JSON.stringify({ sucesso: true }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
 
-/* === LISTAR PROCESSOS === */
-function listarProcessos() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(NOME_PLANILHA);
-  
-  if (!sheet) throw new Error(`A aba '${NOME_PLANILHA}' não existe.`);
-  
-  const dados = sheet.getDataRange().getValues();
-  const cabecalho = dados.shift();
-  
-  const processos = dados.map(r => ({
-    dataCadastro: r[0],
-    nome: r[1],
-    cpf: r[2],
-    endereco: r[3],
-    categoria: r[4],
-    vara: r[5],
-    numero: r[6],
-    status: r[7],
-    observacoes: r[8]
-  }));
-  
-  return ContentService
-    .createTextOutput(JSON.stringify(processos))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
 
-/* === REGISTRAR ANOTAÇÃO === */
-function registrarAnotacao(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(NOME_ANOTACOES);
-  
-  if (!sheet) throw new Error(`A aba '${NOME_ANOTACOES}' não existe.`);
+    button:hover {
+      background-color: #155ab6;
+    }
 
-  const linha = [
-    new Date(),
-    data.numero || "",
-    data.texto || "",
-    new Date().toLocaleString("pt-BR")
-  ];
-  
-  sheet.appendRow(linha);
-  
-  return ContentService
-    .createTextOutput(JSON.stringify({ sucesso: true }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+    #mensagem {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
 
-/* === BUSCAR ANOTAÇÕES === */
-function buscarAnotacoes(e) {
-  const numero = e.parameter.numero;
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(NOME_ANOTACOES);
-  
-  if (!sheet) throw new Error(`A aba '${NOME_ANOTACOES}' não existe.`);
-  
-  const dados = sheet.getDataRange().getValues();
-  const cabecalho = dados.shift();
+  <h1>Sistema Jurídico</h1>
 
-  const anotacoes = dados
-    .filter(r => r[1] == numero)
-    .map(r => ({
-      dataRegistro: r[0],
-      numero: r[1],
-      texto: r[2],
-      dataHora: r[3]
-    }));
-  
-  return ContentService
-    .createTextOutput(JSON.stringify(anotacoes))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+  <form id="formProcesso">
+    <label>Nome do Cliente:</label>
+    <input type="text" id="nome" required>
 
-/* === BUSCAR HISTÓRICO COMPLETO === */
-function buscarHistorico(e) {
-  const cpf = e.parameter.cpf;
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(NOME_PLANILHA);
-  
-  if (!sheet) throw new Error(`A aba '${NOME_PLANILHA}' não existe.`);
+    <label>CPF:</label>
+    <input type="text" id="cpf" required>
 
-  const dados = sheet.getDataRange().getValues();
-  const cabecalho = dados.shift();
+    <label>Endereço:</label>
+    <input type="text" id="endereco" required>
 
-  const processos = dados
-    .filter(r => r[2] == cpf)
-    .map(r => ({
-      dataCadastro: r[0],
-      nome: r[1],
-      cpf: r[2],
-      endereco: r[3],
-      categoria: r[4],
-      vara: r[5],
-      numero: r[6],
-      status: r[7],
-      observacoes: r[8]
-    }));
+    <label>Categoria do Processo:</label>
+    <select id="categoria" required>
+      <option value="">Selecione</option>
+      <option>Cível</option>
+      <option>Trabalhista</option>
+      <option>Criminal</option>
+      <option>Família</option>
+      <option>Tributário</option>
+    </select>
 
-  return ContentService
-    .createTextOutput(JSON.stringify(processos))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+    <label>Número do Processo:</label>
+    <input type="text" id="numero" required>
+
+    <label>Vara / Comarca:</label>
+    <input type="text" id="vara" required>
+
+    <label>Status:</label>
+    <select id="status" required>
+      <option value="">Selecione</option>
+      <option>Em andamento</option>
+      <option>Finalizado</option>
+    </select>
+
+    <label>Observações:</label>
+    <textarea id="observacoes" rows="3"></textarea>
+
+    <button type="submit">Salvar Processo</button>
+  </form>
+
+  <div id="mensagem"></div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzrWzlAEW-f93fdVd4mCc-XaI6GlBQ_0luuDA-OV8oslGPfACLi69P7so9o4-YS3Lo2Cw/exec";
+
+    document.getElementById("formProcesso").addEventListener("submit", e => {
+      e.preventDefault();
+
+      const data = {
+        nome: document.getElementById("nome").value,
+        cpf: document.getElementById("cpf").value,
+        endereco: document.getElementById("endereco").value,
+        categoria: document.getElementById("categoria").value,
+        numero: document.getElementById("numero").value,
+        vara: document.getElementById("vara").value,
+        status: document.getElementById("status").value,
+        observacoes: document.getElementById("observacoes").value,
+        dataHora: new Date().toLocaleString('pt-BR')
+      };
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.text())
+      .then(msg => {
+        document.getElementById("mensagem").innerText = "✅ Processo salvo com sucesso!";
+        document.getElementById("formProcesso").reset();
+      })
+      .catch(err => {
+        document.getElementById("mensagem").innerText = "❌ Erro ao salvar processo.";
+        console.error(err);
+      });
+    });
+  </script>
+</body>
+</html>
