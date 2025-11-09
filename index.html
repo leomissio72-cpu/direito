@@ -6,13 +6,39 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { margin:0; font-family:'Inter',sans-serif; background: #f4f6fb; color:#0b1b2b; display:flex; align-items:center; justify-content:center; height:100vh }
-    .card { background:#fff; padding:28px; border-radius:12px; box-shadow:0 8px 30px rgba(11,27,43,0.06); width:360px; text-align:center }
-    h1{margin-bottom:6px}
-    p{color:#556179;margin-bottom:18px}
-    button{display:block;width:100%;padding:12px;border-radius:8px;border:none;cursor:pointer;font-weight:700;margin-bottom:10px}
-    .google{background:#3366ff;color:#fff}
-    .microsoft{background:#2b61ff;color:#fff}
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f4f6fb;
+      color: #0b1b2b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .card {
+      background: #fff;
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(11,27,43,0.06);
+      width: 360px;
+      text-align: center;
+    }
+    h1 { margin-bottom: 6px; }
+    p { color: #556179; margin-bottom: 18px; }
+    button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .google { background: #3366ff; color: #fff; }
+    .microsoft { background: #2b61ff; color: #fff; }
   </style>
 </head>
 <body>
@@ -21,7 +47,9 @@
     <p>Faça login para acessar o painel</p>
     <button id="btnGoogle" class="google">Entrar com Google</button>
     <button id="btnMicrosoft" class="microsoft">Entrar com Microsoft</button>
-    <p style="margin-top:12px;color:#94a3b8;font-size:13px">Após login você será redirecionado para o painel.</p>
+    <p style="margin-top:12px;color:#94a3b8;font-size:13px">
+      Após login, você será redirecionado ao painel.
+    </p>
   </div>
 
   <!-- Firebase compat -->
@@ -29,7 +57,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <script>
-    // Substitua pelas suas credenciais do projeto Firebase (as que você já usou antes)
+    // Configuração do Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCznEr8M2lNu7nwCfGN_kcJZFM5lqRQdf8",
       authDomain: "juridico-4bf6c.firebaseapp.com",
@@ -39,19 +67,23 @@
       appId: "1:405718265829:web:3e3974a0dc02080824890c",
       measurementId: "G-P19R4LJJKS"
     };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
+    // Botões
     const btnGoogle = document.getElementById('btnGoogle');
     const btnMicrosoft = document.getElementById('btnMicrosoft');
 
+    // Login Google
     btnGoogle.addEventListener('click', () => {
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider)
         .then(result => onLoginSuccess(result.user))
-        .catch(e => alert('Erro ao autenticar: ' + e.message));
+        .catch(e => alert('Erro ao autenticar Google: ' + e.message));
     });
 
+    // Login Microsoft
     btnMicrosoft.addEventListener('click', () => {
       const provider = new firebase.auth.OAuthProvider('microsoft.com');
       auth.signInWithPopup(provider)
@@ -60,18 +92,19 @@
     });
 
     function onLoginSuccess(user) {
-      // salvar info leve no localStorage para a app principal verificar
+      // Salva dados leves
       const payload = {
         displayName: user.displayName || '',
         email: user.email || '',
         photoURL: user.photoURL || ''
       };
       localStorage.setItem('sj_user', JSON.stringify(payload));
-      // redireciona para painel
-      window.location.href = 'app.html';
+
+      // Redireciona para o painel (corrigido para GitHub Pages)
+      window.location.href = './app.html';
     }
 
-    // se já logado, redireciona
+    // Se já estiver logado, redireciona
     auth.onAuthStateChanged(u => {
       if (u) onLoginSuccess(u);
     });
