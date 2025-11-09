@@ -1,16 +1,5 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sistema Jurídico</title>
-
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-  <!-- jsPDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     :root{
@@ -69,6 +58,7 @@
     th,td{padding:10px;border-bottom:1px solid rgba(11,27,43,0.04);text-align:left;font-size:14px}
     th{color:var(--muted);font-weight:700}
     td .btn{padding:6px 10px;font-size:13px}
+    td select{padding:6px 8px;font-size:13px;border:1px solid rgba(11,27,43,0.1)}
 
     .no-data{color:var(--muted);padding:18px;text-align:center}
     .note-card{background:#fafbff;border-left:4px solid var(--primary);padding:12px;border-radius:8px;margin-bottom:10px}
@@ -78,6 +68,44 @@
     .alert{padding:12px 16px;border-radius:8px;margin-bottom:12px;font-size:14px}
     .alert.success{background:#d1fae5;color:#065f46;border:1px solid #10b981}
     .alert.error{background:#fee2e2;color:#991b1b;border:1px solid #ef4444}
+
+    .status-badge{
+      display:inline-block;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600;
+    }
+    .status-aguardando{background:#fef3c7;color:#92400e}
+    .status-andamento{background:#dbeafe;color:#1e40af}
+    .status-suspenso{background:#fed7aa;color:#9a3412}
+    .status-sentenca{background:#e9d5ff;color:#6b21a8}
+    .status-recurso{background:#fce7f3;color:#9f1239}
+    .status-arquivado{background:#e5e7eb;color:#374151}
+    .status-finalizado{background:#d1fae5;color:#065f46}
+
+    /* LOGIN MODAL */
+    .login-modal{
+      position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);
+      display:flex;align-items:center;justify-content:center;z-index:9999;
+    }
+    .login-card{
+      background:var(--card);border-radius:12px;padding:32px;max-width:400px;width:90%;
+      box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-card h2{margin-top:0;text-align:center}
+    .login-card p{text-align:center;color:var(--muted);margin-bottom:24px}
+    .google-btn-wrapper{display:flex;justify-content:center;margin-top:16px}
+    .skip-login{text-align:center;margin-top:16px}
+    .skip-login button{background:transparent;border:none;color:var(--muted);
+      text-decoration:underline;cursor:pointer;font-size:14px}
+    .user-profile{display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;
+      border-radius:8px;transition:background 0.2s}
+    .user-profile:hover{background:rgba(11,27,43,0.04)}
+    .user-profile img{width:40px;height:40px;border-radius:8px}
+    .user-dropdown{position:absolute;top:60px;right:20px;background:var(--card);
+      border-radius:8px;padding:8px;box-shadow:0 8px 24px rgba(11,27,43,0.1);
+      border:1px solid rgba(11,27,43,0.04);min-width:200px;display:none}
+    .user-dropdown.show{display:block}
+    .user-dropdown-item{padding:10px;cursor:pointer;border-radius:6px;
+      display:flex;align-items:center;gap:8px;transition:background 0.2s}
+    .user-dropdown-item:hover{background:rgba(11,27,43,0.04)}
 
     @media (max-width:980px){
       .grid{grid-template-columns:1fr}
@@ -132,12 +160,23 @@
     <div class="workspace">
       <div class="topbar">
         <div class="page-title" id="pageTitle">Cadastro</div>
-        <div class="user-area">
+        <div class="user-area" id="userArea">
           <div style="text-align:right">
             <div id="userName" style="font-weight:700">Sistema Local</div>
-            <div style="font-size:12px;color:var(--muted)">Armazenamento do navegador</div>
+            <div style="font-size:12px;color:var(--muted)">
+              <span id="userStatus">Armazenamento do navegador</span>
+              <button id="btnLogin" style="background:transparent;border:none;color:var(--primary);cursor:pointer;text-decoration:underline;font-size:12px;margin-left:8px">
+                Fazer Login
+              </button>
+            </div>
           </div>
-          <div class="avatar">⚖️</div>
+          <div class="avatar" id="userAvatar">⚖️</div>
+        </div>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="user-dropdown-item" onclick="signOut()">
+            <span class="material-icons" style="font-size:18px">logout</span>
+            Sair
+          </div>
         </div>
       </div>
 
@@ -184,6 +223,9 @@
                   <option value="Penal">Penal</option>
                   <option value="Família">Família</option>
                   <option value="Consumidor">Consumidor</option>
+                  <option value="Tributário">Tributário</option>
+                  <option value="Administrativo">Administrativo</option>
+                  <option value="Previdenciário">Previdenciário</option>
                   <option value="Outros">Outros</option>
                 </select>
 
@@ -200,9 +242,16 @@
               </div>
 
               <div>
-                <label>Status</label>
+                <label>Status do Processo</label>
                 <select name="status">
-                  <option value="Em andamento">Em andamento</option>
+                  <option value="Aguardando Distribuição">Aguardando Distribuição</option>
+                  <option value="Em Andamento">Em Andamento</option>
+                  <option value="Aguardando Decisão">Aguardando Decisão</option>
+                  <option value="Suspenso">Suspenso</option>
+                  <option value="Sentença Proferida">Sentença Proferida</option>
+                  <option value="Em Recurso">Em Recurso</option>
+                  <option value="Trânsito em Julgado">Trânsito em Julgado</option>
+                  <option value="Arquivado">Arquivado</option>
                   <option value="Finalizado">Finalizado</option>
                 </select>
 
@@ -216,6 +265,22 @@
 
                 <label>Honorários (R$)</label>
                 <input name="honorarios" type="number" step="0.01" placeholder="0.00">
+              </div>
+
+              <div>
+                <label>Forma de Pagamento</label>
+                <select name="formaPagamento" id="formaPagamento">
+                  <option value="">Selecione...</option>
+                  <option value="À Vista">À Vista</option>
+                  <option value="Parcelado">Parcelado</option>
+                  <option value="Sucumbência">Sucumbência</option>
+                  <option value="Êxito">Êxito (% sobre ganho)</option>
+                  <option value="Pro Bono">Pro Bono</option>
+                  <option value="Convênio">Convênio</option>
+                </select>
+
+                <label>Quantidade de Parcelas</label>
+                <input name="parcelas" type="number" min="1" placeholder="Ex: 12" id="parcelasInput">
               </div>
 
               <div class="col-full">
@@ -337,7 +402,269 @@
     </div>
   </div>
 
+  <!-- LOGIN MODAL -->
+  <div class="login-modal" id="loginModal" style="display:none">
+    <div class="login-card">
+      <h2>🔐 Login com Google</h2>
+      <p>Faça login com sua conta Google para sincronizar seus dados e acessar de qualquer dispositivo.</p>
+      
+      <div style="background:#fff3cd;border:1px solid #ffc107;padding:12px;border-radius:8px;margin-bottom:16px;font-size:13px">
+        <strong>⚠️ Configuração Necessária:</strong><br>
+        Para usar o login do Google, você precisa:
+        <ol style="margin:8px 0 0 0;padding-left:20px">
+          <li>Criar um projeto no <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a></li>
+          <li>Ativar a Google Identity Services API</li>
+          <li>Criar credenciais OAuth 2.0</li>
+          <li>Inserir seu Client ID abaixo</li>
+        </ol>
+      </div>
+
+      <label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px">
+        Google Client ID:
+      </label>
+      <input 
+        type="text" 
+        id="googleClientId" 
+        placeholder="SEU-CLIENT-ID.apps.googleusercontent.com"
+        style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.1);margin-bottom:16px;font-size:13px"
+      >
+      <button class="btn primary" onclick="saveClientIdAndInitGoogle()" style="width:100%">
+        <span class="material-icons">save</span> Salvar e Continuar
+      </button>
+      
+      <div id="googleButtonContainer" class="google-btn-wrapper" style="display:none">
+        <!-- Google Button will appear here -->
+        <div id="g_id_onload"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-size="large"
+             data-theme="outline"
+             data-text="signin_with"
+             data-shape="rectangular"
+             data-logo_alignment="left">
+        </div>
+      </div>
+
+      <div class="skip-login">
+        <button onclick="skipLogin()">Continuar sem login (usar apenas armazenamento local)</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ========== GOOGLE LOGIN CONFIGURATION ==========
+    const GOOGLE_CLIENT_ID_KEY = 'google_client_id';
+    const GOOGLE_USER_KEY = 'google_user_info';
+    let currentUser = null;
+
+    // Decode JWT token
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        console.error('Error parsing JWT:', e);
+        return null;
+      }
+    }
+
+    // Handle Google Sign-In Response
+    function handleCredentialResponse(response) {
+      console.log("Google login successful!");
+      const userInfo = parseJwt(response.credential);
+      
+      if (userInfo) {
+        currentUser = {
+          name: userInfo.name,
+          email: userInfo.email,
+          picture: userInfo.picture,
+          id: userInfo.sub,
+          token: response.credential
+        };
+        
+        // Save to sessionStorage
+        sessionStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(currentUser));
+        
+        // Update UI
+        updateUserUI();
+        
+        // Hide login modal
+        document.getElementById('loginModal').style.display = 'none';
+      }
+    }
+
+    // Save Client ID and Initialize Google
+    function saveClientIdAndInitGoogle() {
+      const clientId = document.getElementById('googleClientId').value.trim();
+      
+      if (!clientId) {
+        alert('Por favor, insira um Client ID válido.');
+        return;
+      }
+      
+      if (!clientId.includes('.apps.googleusercontent.com')) {
+        alert('O Client ID deve estar no formato: SEU-ID.apps.googleusercontent.com');
+        return;
+      }
+      
+      // Save to localStorage
+      localStorage.setItem(GOOGLE_CLIENT_ID_KEY, clientId);
+      
+      // Show Google button
+      document.getElementById('googleButtonContainer').style.display = 'flex';
+      
+      // Initialize Google Sign-In
+      try {
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleCredentialResponse
+        });
+        
+        google.accounts.id.renderButton(
+          document.querySelector('.g_id_signin'),
+          { theme: "outline", size: "large", text: "signin_with", shape: "rectangular" }
+        );
+        
+        alert('✅ Configuração salva! Agora você pode fazer login com Google.');
+      } catch (e) {
+        console.error('Error initializing Google Sign-In:', e);
+        alert('Erro ao inicializar Google Sign-In. Verifique se o Client ID está correto.');
+      }
+    }
+
+    // Skip Login
+    function skipLogin() {
+      document.getElementById('loginModal').style.display = 'none';
+      sessionStorage.setItem('skip_login', 'true');
+    }
+
+    // Sign Out
+    function signOut() {
+      if (confirm('Deseja realmente sair?')) {
+        currentUser = null;
+        sessionStorage.removeItem(GOOGLE_USER_KEY);
+        sessionStorage.removeItem('google_token');
+        
+        // Reset UI
+        document.getElementById('userName').textContent = 'Sistema Local';
+        document.getElementById('userStatus').textContent = 'Armazenamento do navegador';
+        document.getElementById('userAvatar').innerHTML = '⚖️';
+        document.getElementById('btnLogin').style.display = 'inline';
+        document.getElementById('userDropdown').classList.remove('show');
+        
+        // Disable Google auto-select
+        if (typeof google !== 'undefined' && google.accounts) {
+          google.accounts.id.disableAutoSelect();
+        }
+      }
+    }
+
+    // Update User UI
+    function updateUserUI() {
+      if (currentUser) {
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userStatus').textContent = currentUser.email;
+        document.getElementById('btnLogin').style.display = 'none';
+        
+        // Update avatar
+        const avatarEl = document.getElementById('userAvatar');
+        avatarEl.innerHTML = `<img src="${currentUser.picture}" alt="${currentUser.name}" style="width:40px;height:40px;border-radius:8px">`;
+        
+        // Make avatar clickable
+        avatarEl.style.cursor = 'pointer';
+        avatarEl.onclick = () => {
+          document.getElementById('userDropdown').classList.toggle('show');
+        };
+      }
+    }
+
+    // Show Login Modal
+    function showLoginModal() {
+      const savedClientId = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
+      
+      if (savedClientId) {
+        document.getElementById('googleClientId').value = savedClientId;
+        // Auto-initialize if Client ID exists
+        setTimeout(() => {
+          document.getElementById('googleButtonContainer').style.display = 'flex';
+          try {
+            google.accounts.id.initialize({
+              client_id: savedClientId,
+              callback: handleCredentialResponse
+            });
+            google.accounts.id.renderButton(
+              document.querySelector('.g_id_signin'),
+              { theme: "outline", size: "large", text: "signin_with", shape: "rectangular" }
+            );
+          } catch (e) {
+            console.error('Error initializing Google:', e);
+          }
+        }, 500);
+      }
+      
+      document.getElementById('loginModal').style.display = 'flex';
+    }
+
+    // Check if user is logged in on page load
+    window.addEventListener('load', () => {
+      const savedUser = sessionStorage.getItem(GOOGLE_USER_KEY);
+      const skipLogin = sessionStorage.getItem('skip_login');
+      
+      if (savedUser) {
+        try {
+          currentUser = JSON.parse(savedUser);
+          // Check if token is still valid
+          const tokenData = parseJwt(currentUser.token);
+          if (tokenData && tokenData.exp * 1000 > Date.now()) {
+            updateUserUI();
+          } else {
+            // Token expired
+            sessionStorage.removeItem(GOOGLE_USER_KEY);
+          }
+        } catch (e) {
+          console.error('Error loading user:', e);
+        }
+      } else if (!skipLogin) {
+        // Show login modal if not logged in and not skipped
+        setTimeout(showLoginModal, 1000);
+      }
+    });
+
+    // Login button click
+    document.getElementById('btnLogin').addEventListener('click', showLoginModal);
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('userDropdown');
+      const avatar = document.getElementById('userAvatar');
+      if (!dropdown.contains(e.target) && !avatar.contains(e.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+
+    // ========== OPÇÕES DE STATUS ==========
+    const STATUS_OPTIONS = [
+      'Aguardando Distribuição',
+      'Em Andamento',
+      'Aguardando Decisão',
+      'Suspenso',
+      'Sentença Proferida',
+      'Em Recurso',
+      'Trânsito em Julgado',
+      'Arquivado',
+      'Finalizado'
+    ];
+
     // ========== ARMAZENAMENTO ==========
     const DB_KEY = 'processos_juridicos';
     const NOTES_KEY = 'anotacoes_juridicas';
@@ -359,6 +686,19 @@
       const data = localStorage.getItem(NOTES_KEY);
       return data ? JSON.parse(data) : [];
     }
+
+    // ========== CONTROLE DE PARCELAS ==========
+    document.getElementById('formaPagamento').addEventListener('change', (e) => {
+      const parcelasInput = document.getElementById('parcelasInput');
+      if (e.target.value === 'Parcelado') {
+        parcelasInput.disabled = false;
+        parcelasInput.required = true;
+      } else {
+        parcelasInput.disabled = true;
+        parcelasInput.required = false;
+        parcelasInput.value = '';
+      }
+    });
 
     // ========== NAVEGAÇÃO ENTRE ABAS ==========
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -418,6 +758,8 @@
         dataAbertura: formData.get('dataAbertura'),
         valor: formData.get('valor'),
         honorarios: formData.get('honorarios'),
+        formaPagamento: formData.get('formaPagamento'),
+        parcelas: formData.get('parcelas'),
         observacoes: formData.get('observacoes')
       };
       
@@ -427,6 +769,7 @@
       
       mostrarAlerta('alertCadastro', 'Processo salvo com sucesso!', 'success');
       e.target.reset();
+      document.getElementById('parcelasInput').disabled = true;
       
       setTimeout(() => {
         document.getElementById('alertCadastro').innerHTML = '';
@@ -436,6 +779,7 @@
     // Limpar formulário
     document.getElementById('btnLimparForm').addEventListener('click', () => {
       document.getElementById('formCadastro').reset();
+      document.getElementById('parcelasInput').disabled = true;
     });
 
     // ========== EXPORTAR PDF ==========
@@ -473,6 +817,8 @@
         ['Data de Abertura', formData.get('dataAbertura')],
         ['Valor da Causa', formData.get('valor') ? `R$ ${formData.get('valor')}` : ''],
         ['Honorários', formData.get('honorarios') ? `R$ ${formData.get('honorarios')}` : ''],
+        ['Forma de Pagamento', formData.get('formaPagamento')],
+        ['Parcelas', formData.get('parcelas')],
       ];
       
       campos.forEach(([label, value]) => {
@@ -527,7 +873,7 @@
       }
       
       let html = '<table><thead><tr>';
-      html += '<th>Nome</th><th>Categoria</th><th>Número</th><th>Status</th><th>Data Abertura</th><th>Ações</th>';
+      html += '<th>Nome</th><th>Categoria</th><th>Número</th><th>Status</th><th>Data Abertura</th><th>Pagamento</th><th>Ações</th>';
       html += '</tr></thead><tbody>';
       
       processosFiltrados.forEach(p => {
@@ -535,8 +881,15 @@
         html += `<td>${p.nome}</td>`;
         html += `<td>${p.categoria || '-'}</td>`;
         html += `<td>${p.numero || '-'}</td>`;
-        html += `<td>${p.status}</td>`;
+        html += `<td>
+          <select onchange="mudarStatus('${p.id}', this.value)" style="padding:6px 8px;font-size:13px;border:1px solid rgba(11,27,43,0.1);border-radius:6px;background:#fff">
+            ${STATUS_OPTIONS.map(status => 
+              `<option value="${status}" ${p.status === status ? 'selected' : ''}>${status}</option>`
+            ).join('')}
+          </select>
+        </td>`;
         html += `<td>${p.dataAbertura ? new Date(p.dataAbertura).toLocaleDateString('pt-BR') : '-'}</td>`;
+        html += `<td>${p.formaPagamento || '-'}${p.parcelas ? ` (${p.parcelas}x)` : ''}</td>`;
         html += `<td>
           <button class="btn ghost" onclick="verDetalhes('${p.id}')">
             <span class="material-icons">visibility</span> Ver
@@ -551,6 +904,17 @@
       html += '</tbody></table>';
       wrapper.innerHTML = html;
     }
+
+    // Mudar status
+    window.mudarStatus = function(id, novoStatus) {
+      const processos = carregarProcessos();
+      const processo = processos.find(p => p.id === id);
+      if (processo) {
+        processo.status = novoStatus;
+        salvarProcessos(processos);
+        console.log(`Status do processo ${id} alterado para: ${novoStatus}`);
+      }
+    };
 
     // Busca
     document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -586,10 +950,10 @@
         return;
       }
       
-      let csv = 'Nome,CPF,Telefone,Email,Categoria,Número,Status,Data Abertura,Valor,Honorários\n';
+      let csv = 'Nome,CPF,Telefone,Email,Categoria,Número,Status,Data Abertura,Valor,Honorários,Forma Pagamento,Parcelas\n';
       
       processos.forEach(p => {
-        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}"\n`;
+        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}","${p.formaPagamento || ''}","${p.parcelas || ''}"\n`;
       });
       
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -621,6 +985,8 @@
       detalhes += `Data Abertura: ${processo.dataAbertura || '-'}\n`;
       detalhes += `Valor da Causa: R$ ${processo.valor || '0'}\n`;
       detalhes += `Honorários: R$ ${processo.honorarios || '0'}\n`;
+      detalhes += `Forma de Pagamento: ${processo.formaPagamento || '-'}\n`;
+      detalhes += `Parcelas: ${processo.parcelas || '-'}\n`;
       detalhes += `Observações: ${processo.observacoes || '-'}\n`;
       
       alert(detalhes);
