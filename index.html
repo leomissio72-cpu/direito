@@ -44,9 +44,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        // Importa getAuth, onAuthStateChanged e signOut
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-        // SUA CONFIGURAÇÃO COMPLETA DO FIREBASE
+        // SUA CONFIGURAÇÃO COMPLETA DO FIREBASE (a mesma do app.html)
         const firebaseConfig = {
             apiKey: "AIzaSyBHelxNg37YtEykAkO3nOU8l45IbGmbK0M",
             authDomain: "juridico-4bf6c.firebaseapp.com",
@@ -70,7 +71,7 @@
                 document.getElementById('userNameDetail').innerHTML = `Logado como: <strong>${user.email}</strong>`;
 
             } else {
-                // Usuário NÃO logado: Redireciona imediatamente para o login
+                // Usuário NÃO logado: Redireciona imediatamente para a página de login
                 window.location.href = "app.html";
             }
         });
