@@ -5,10 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sistema Jurídico</title>
 
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <style>
     :root{
@@ -41,7 +47,319 @@
 /* WORKSPACE */
     .workspace{flex:1;display:flex;flex-direction:column;min-width:0}
     .topbar{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:transparent;border-bottom:1px solid rgba(16,24,40,0.04)}
-    .page-title{font-size:18px;font-weight:700;color:#0b1b2b}<br>    .user-area{display:flex;align-items:center;gap:12px}<br>    .avatar{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}<br><br>    .main-area{padding:18px;overflow:auto}<br>    .container{background:var(--card);border-radius:12px;padding:18px;border:1px solid rgba(11,27,43,0.04);box-shadow:0 8px 24px rgba(11,27,43,0.04);margin-bottom:16px}<br>    h2{margin:0 0 8px 0;color:#0b1b2b}<br><br>    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}<br>    .col-full{grid-column:1/-1}<br>    label{display:block;margin-top:10px;color:var(--muted);font-weight:600}<br>    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b}<br>    textarea{min-height:100px;resize:vertical}<br>    .actions{display:flex;gap:10px;align-items:center;margin-top:14px}<br>    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}<br>    .btn.primary{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff}<br>    .btn.ghost{background:transparent;border:1px solid rgba(11,27,43,0.06);color:#0b1b2b}<br>    .btn.link{background:transparent;color:var(--muted);text-decoration:underline;padding:8px}<br><br>    table{width:100%;border-collapse:collapse;margin-top:12px;color:#0b1b2b}<br>    th,td{padding:10px;border-bottom:1px solid rgba(11,27,43,0.04);text-align:left;font-size:14px}<br>    th{color:var(--muted);font-weight:700}<br><br>    .no-data{color:var(--muted);padding:18px}<br>    .note-card{background:#fafbff;border-left:4px solid var(--primary);padding:12px;border-radius:8px;margin-bottom:10px}<br>    .note-meta{font-size:13px;color:var(--muted);margin-bottom:6px}<br>    .note-text{font-size:14px;color:#0b1b2b}<br><br>    .search-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}<br>    @media (max-width:980px){.grid{grid-template-columns:1fr}.sidebar{width:64px}.brand h3{display:none}}<br>  </style><br></head><br><body><br>  <div class="app"><br>    <br>    <aside class="sidebar"><br>      <div class="brand"><br>        <div class="logo">J</div><br>        <div><br>          <h3>Sistema Jurídico</h3><br>          <div style="font-size:12px;color:var(--muted)">Escritório</div><br>        </div><br>      </div><br><br>      <nav><br>        <button class="nav-btn active" data-tab="cadastro"><span class="material-icons">person_add</span> <span class="label">Cadastro</span></button><br>        <button class="nav-btn" data-tab="lista"><span class="material-icons">folder_open</span> <span class="label">Processos</span></button><br>        <button class="nav-btn" data-tab="anotacoes"><span class="material-icons">note_add</span> <span class="label">Anotações</span></button><br>        <button class="nav-btn" data-tab="ferramentas"><span class="material-icons">build</span> <span class="label">Ferramentas</span></button><br>      </nav><br><br>      <div class="sidebar-footer"><br>        <div><strong>Planilha:</strong></div><br>        <div style="word-break:break-all;color:var(--muted);font-size:13px">docs.google.com/spreadsheets/d/1wU3D0kSBjAB_lIKKi1fUP9LZJK8pto2l7byvZBwucOM</div><br>      </div><br>    </aside><br><br>    <br>    <div class="workspace"><br>      <div class="topbar"><br>        <div class="page-title" id="pageTitle">Cadastro</div><br>        <div class="user-area"><br>          <div style="text-align:right"><br>            <div id="userName" style="font-weight:700">Usuário do Sistema</div><br>            <div style="font-size:12px;color:var(--muted)">Acesso Direto</div><br>          </div><br>          <div class="avatar">⚖️</div><br>        </div><br>      </div><br><br>      <main class="main-area"><br>        <br>        <section id="cadastro" class="container tab" style="display:block"><br>          <h2>Cadastro de Cliente & Processo</h2><br>          <form id="formCadastro" style="margin-top:12px"><br>            <div class="grid"><br>              <div><br>                <label>Nome completo</label><br>                <input name="Nome" type="text" required placeholder="Ex: José da Silva"><br><br>                <label>CPF</label><br>                <input name="CPF" type="text" placeholder="000.000.000-00"><br><br>                <label>RG</label><br>                <input name="RG" type="text" placeholder=""><br>              </div><br><br>              <div><br>                <label>Telefone / WhatsApp</label><br>                <input name="Telefone" type="text" placeholder="(11) 9xxxx-xxxx"><br><br>                <label>E-mail</label><br>                <input name="Email" type="email" placeholder="exemplo@dominio.com"><br><br>                <label>Responsável (advogado)</label><br>                <input name="Responsavel" type="text" placeholder="Adv. Fulano"><br>              </div><br><br>              <div class="col-full"><br>                <label>Endereço</label><br>                <input name="Endereço" type="text" placeholder="Rua, nº, bairro, cidade - UF"><br>              </div><br><br>              <div><br>                <label>Categoria do processo</label><br>                <select name="Categoria"><br>                  <option value="">Selecione...</option><br>                  <option value="Cível">Cível</option><br>                  <option value="Trabalhista">Trabalhista</option><br>                  <option value="Penal">Penal</option><br>                  <option value="Família">Família</option><br>                  <option value="Consumidor">Consumidor</option><br>                  <option value="Outros">Outros</option><br>                </select><br><br>                <label>Número do processo</label><br>                <input name="Número" type="text" placeholder="0001234-56.2025.8.26.0000"><br>              </div><br><br>              <div><br>                <label>Vara / Comarca</label><br>                <input name="Vara" type="text" placeholder="Ex: 3ª Vara Cível de São Paulo"><br><br>                <label>Parte Contrária</label><br>                <input name="Parte" type="text" placeholder="Nome da parte contrária"><br>              </div><br><br>              <div><br>                <label>Status</label><br>                <select name="Status"><br>                  <option value="Em andamento">Em andamento</option><br>                  <option value="Finalizado">Finalizado</option><br>                </select><br><br>                <label>Data de abertura</label><br>                <input name="DataAbertura" type="date"><br>              </div><br><br>              <div><br>                <label>Valor da causa (R$)</label><br>                <input name="Valor" type="number" step="0.01" placeholder="0.00"><br><br>                <label>Honorários (R$)</label><br>                <input name="Honorarios" type="number" step="0.01" placeholder="0.00"><br>              </div><br><br>              <div class="col-full"><br>                <label>Observações / Anotações</label><br>                <textarea name="Observações" placeholder="Anotações importantes, prazos, lembretes..."></textarea><br>              </div><br>            </div><br><br>            <div class="actions"><br>              <button class="btn primary" type="submit"><span class="material-icons">save</span> Salvar (Planilha)</button><br>              <button type="button" class="btn ghost" id="btnExportPdf"><span class="material-icons">picture_as_pdf</span> Exportar PDF</button><br>              <button type="button" class="btn link" id="btnOpenSheet">Abrir Planilha</button><br>            </div><br>          </form><br>        </section><br><br>        <br>        <section id="lista" class="container tab" style="display:none"><br>          <div style="display:flex;justify-content:space-between;align-items:center"><br>            <h2>Processos Registrados</h2><br>            <div style="display:flex;gap:8px;align-items:center"><br>              <input id="searchInput" placeholder="Pesquisar por nome, CPF, número ou categoria" style="padding:8px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);min-width:240px"><br>              <div style="display:flex;gap:8px"><br>                <button class="btn ghost" id="btnRefresh">Atualizar</button><br>                <button class="btn ghost" id="btnDownloadCsv">Baixar CSV (filtrado)</button><br>                <button class="btn ghost" id="btnSortDate">Ordenar por Data ↓</button><br>              </div><br>            </div><br>          </div><br><br>          <div id="tableWrapper" style="margin-top:12px"><br>            <div class="no-data">Carregando registros...</div><br>          </div><br>        </section><br><br>        <br>        <section id="anotacoes" class="container tab" style="display:none"><br>          <h2>Anotações</h2><br><br>          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px"><br>            <div style="flex:1;min-width:220px"><br>              <label>Processo (selecionar)</label><br>              <select id="selectProcesso" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b"><br>                <option value="">--- selecione um processo ---</option><br>              </select><br>            </div><br><br>            <div style="flex:1;min-width:220px"><br>              <label>Adicionar anotação</label><br>              <input id="inputAnotacao" placeholder="Digite a anotação..." style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b"><br>            </div><br><br>            <div style="display:flex;align-items:end"><br>              <button class="btn primary" id="btnSalvarAnotacao"><span class="material-icons">note_add</span> Salvar Anotação</button><br>            </div><br>          </div><br><br>          <div id="listaAnotacoes" style="margin-top:8px"><br>            <div class="no-data">Nenhuma anotação carregada.</div><br>          </div><br>        </section><br><br>        <br>        <section id="ferramentas" class="container tab" style="display:none"><br>          <h2>Ferramentas & Exportações</h2><br>          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px"><br>            <button class="btn primary" id="btnExportAllPdf">Exportar todos (PDF)</button><br>            <button class="btn ghost" id="btnOpenSheet2">Abrir Planilha</button><br>          </div><br>          <div style="margin-top:16px;color:var(--muted)"><br>            Observações: se quiser que eu gere o Apps Script para gravar as anotações em uma aba separada (Anotacoes) com campos padronizados (Processo, Texto, DataCriacao, DataISO), eu já gero o código e você só cola no editor do Apps Script.<br>          </div><br>        </section><br>      </main><br>    </div><br>  </div><br><br><script><br>/* ===========================<br>   CONFIGURAÇÃO<br>   =========================== */<br>// seu Apps Script endpoint<br>const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrWzlAEW-f93fdVd4mCc-XaI6GlBQ_0luuDA-OV8oslGPfACLi69P7so9o4-YS3Lo2Cw/exec";<br>// planilha pública CSV<br>const SHEET_CSV = "https://docs.google.com/spreadsheets/d/1wU3D0kSBjAB_lIKKi1fUP9LZJK8pto2l7byvZBwucOM/export?format=csv&gid=0";<br><br>const navButtons = document.querySelectorAll('.nav-btn');<br>const tabs = document.querySelectorAll('.tab');<br>const pageTitle = document.getElementById('pageTitle');<br><br>navButtons.forEach(btn=>{<br>  btn.addEventListener('click', ()=>{<br>    navButtons.forEach(b=>b.classList.remove('active'));<br>    btn.classList.add('active');<br>    const tab = btn.dataset.tab;<br>    tabs.forEach(t=> t.style.display = (t.id===tab ? 'block' : 'none'));<br>    pageTitle.innerText = tab.charAt(0).toUpperCase() + tab.slice(1);<br>    if(tab==='lista') loadTable();<br>    if(tab==='anotacoes') loadAnotacoes();<br>  });<br>});<br><br>/* -----------------------------<br>   Utilities<br>   ----------------------------- */<br>function nowReadable() {<br>  const d = new Date();<br>  const pad = n => String(n).padStart(2,'0');<br>  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;<br>}<br>function parseCSV(text) {<br>  const rows = []; let cur=''; let row=[]; let inQuotes=false;<br>  for (let i=0;i<text.length;i++){<br>    const ch=text[i]; const next=text[i+1];<br>    if (ch === '"') {<br>      if (inQuotes && next === '"') { cur += '"'; i++; } else inQuotes = !inQuotes;<br>    } else if (ch === ',' && !inQuotes) {
+    .page-title{font-size:18px;font-weight:700;color:#0b1b2b}
+    .user-area{display:flex;align-items:center;gap:12px}
+    .avatar{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+
+    .main-area{padding:18px;overflow:auto}
+    .container{background:var(--card);border-radius:12px;padding:18px;border:1px solid rgba(11,27,43,0.04);box-shadow:0 8px 24px rgba(11,27,43,0.04);margin-bottom:16px}
+    h2{margin:0 0 8px 0;color:#0b1b2b}
+
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .col-full{grid-column:1/-1}
+    label{display:block;margin-top:10px;color:var(--muted);font-weight:600}
+    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b}
+    textarea{min-height:100px;resize:vertical}
+    .actions{display:flex;gap:10px;align-items:center;margin-top:14px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff}
+    .btn.ghost{background:transparent;border:1px solid rgba(11,27,43,0.06);color:#0b1b2b}
+    .btn.link{background:transparent;color:var(--muted);text-decoration:underline;padding:8px}
+
+    table{width:100%;border-collapse:collapse;margin-top:12px;color:#0b1b2b}
+    th,td{padding:10px;border-bottom:1px solid rgba(11,27,43,0.04);text-align:left;font-size:14px}
+    th{color:var(--muted);font-weight:700}
+
+    .no-data{color:var(--muted);padding:18px}
+    .note-card{background:#fafbff;border-left:4px solid var(--primary);padding:12px;border-radius:8px;margin-bottom:10px}
+    .note-meta{font-size:13px;color:var(--muted);margin-bottom:6px}
+    .note-text{font-size:14px;color:#0b1b2b}
+
+    .search-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}.sidebar{width:64px}.brand h3{display:none}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">J</div>
+        <div>
+          <h3>Sistema Jurídico</h3>
+          <div style="font-size:12px;color:var(--muted)">Escritório</div>
+        </div>
+      </div>
+
+      <nav>
+        <button class="nav-btn active" data-tab="cadastro"><span class="material-icons">person_add</span> <span class="label">Cadastro</span></button>
+        <button class="nav-btn" data-tab="lista"><span class="material-icons">folder_open</span> <span class="label">Processos</span></button>
+        <button class="nav-btn" data-tab="anotacoes"><span class="material-icons">note_add</span> <span class="label">Anotações</span></button>
+        <button class="nav-btn" data-tab="ferramentas"><span class="material-icons">build</span> <span class="label">Ferramentas</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div><strong>Planilha:</strong></div>
+        <div style="word-break:break-all;color:var(--muted);font-size:13px">docs.google.com/spreadsheets/d/1wU3D0kSBjAB_lIKKi1fUP9LZJK8pto2l7byvZBwucOM</div>
+      </div>
+    </aside>
+
+    <!-- WORKSPACE -->
+    <div class="workspace">
+      <div class="topbar">
+        <div class="page-title" id="pageTitle">Cadastro</div>
+        <div class="user-area">
+          <div style="text-align:right">
+            <div id="userName" style="font-weight:700">Convidado</div>
+            <div style="font-size:12px;color:var(--muted)">Sem autenticação</div>
+          </div>
+          <div class="avatar">⚖️</div>
+        </div>
+      </div>
+
+      <main class="main-area">
+        <!-- LOGIN CARD (quando não logado) -->
+        <div id="loginCard" class="container" style="display:none">
+          <h2>Login</h2>
+          <p style="color:var(--muted)">Faça login com Google ou Microsoft para sincronizar e ter conta.</p>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn primary" id="btnGoogle"><span class="material-icons">login</span> Entrar com Google</button>
+            <button class="btn ghost" id="btnMicrosoft"><span class="material-icons">login</span> Entrar com Microsoft</button>
+          </div>
+          <p style="margin-top:12px;color:var(--muted)">Verificação de e-mail: seu Firebase já envia confirmação.</p>
+        </div>
+
+        <!-- CADASTRO -->
+        <section id="cadastro" class="container tab" style="display:block">
+          <h2>Cadastro de Cliente & Processo</h2>
+          <form id="formCadastro" style="margin-top:12px">
+            <div class="grid">
+              <div>
+                <label>Nome completo</label>
+                <input name="Nome" type="text" required placeholder="Ex: José da Silva">
+
+                <label>CPF</label>
+                <input name="CPF" type="text" placeholder="000.000.000-00">
+
+                <label>RG</label>
+                <input name="RG" type="text" placeholder="">
+              </div>
+
+              <div>
+                <label>Telefone / WhatsApp</label>
+                <input name="Telefone" type="text" placeholder="(11) 9xxxx-xxxx">
+
+                <label>E-mail</label>
+                <input name="Email" type="email" placeholder="exemplo@dominio.com">
+
+                <label>Responsável (advogado)</label>
+                <input name="Responsavel" type="text" placeholder="Adv. Fulano">
+              </div>
+
+              <div class="col-full">
+                <label>Endereço</label>
+                <input name="Endereço" type="text" placeholder="Rua, nº, bairro, cidade - UF">
+              </div>
+
+              <div>
+                <label>Categoria do processo</label>
+                <select name="Categoria">
+                  <option value="">Selecione...</option>
+                  <option value="Cível">Cível</option>
+                  <option value="Trabalhista">Trabalhista</option>
+                  <option value="Penal">Penal</option>
+                  <option value="Família">Família</option>
+                  <option value="Consumidor">Consumidor</option>
+                  <option value="Outros">Outros</option>
+                </select>
+
+                <label>Número do processo</label>
+                <input name="Número" type="text" placeholder="0001234-56.2025.8.26.0000">
+              </div>
+
+              <div>
+                <label>Vara / Comarca</label>
+                <input name="Vara" type="text" placeholder="Ex: 3ª Vara Cível de São Paulo">
+
+                <label>Parte Contrária</label>
+                <input name="Parte" type="text" placeholder="Nome da parte contrária">
+              </div>
+
+              <div>
+                <label>Status</label>
+                <select name="Status">
+                  <option value="Em andamento">Em andamento</option>
+                  <option value="Finalizado">Finalizado</option>
+                </select>
+
+                <label>Data de abertura</label>
+                <input name="DataAbertura" type="date">
+              </div>
+
+              <div>
+                <label>Valor da causa (R$)</label>
+                <input name="Valor" type="number" step="0.01" placeholder="0.00">
+
+                <label>Honorários (R$)</label>
+                <input name="Honorarios" type="number" step="0.01" placeholder="0.00">
+              </div>
+
+              <div class="col-full">
+                <label>Observações / Anotações</label>
+                <textarea name="Observações" placeholder="Anotações importantes, prazos, lembretes..."></textarea>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn primary" type="submit"><span class="material-icons">save</span> Salvar (Planilha)</button>
+              <button type="button" class="btn ghost" id="btnExportPdf"><span class="material-icons">picture_as_pdf</span> Exportar PDF</button>
+              <button type="button" class="btn link" id="btnOpenSheet">Abrir Planilha</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- LISTA -->
+        <section id="lista" class="container tab" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h2>Processos Registrados</h2>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="searchInput" placeholder="Pesquisar por nome, CPF, número ou categoria" style="padding:8px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);min-width:240px">
+              <div style="display:flex;gap:8px">
+                <button class="btn ghost" id="btnRefresh">Atualizar</button>
+                <button class="btn ghost" id="btnDownloadCsv">Baixar CSV (filtrado)</button>
+                <button class="btn ghost" id="btnSortDate">Ordenar por Data ↓</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="tableWrapper" style="margin-top:12px">
+            <div class="no-data">Carregando registros...</div>
+          </div>
+        </section>
+
+        <!-- ANOTAÇÕES -->
+        <section id="anotacoes" class="container tab" style="display:none">
+          <h2>Anotações</h2>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+            <div style="flex:1;min-width:220px">
+              <label>Processo (selecionar)</label>
+              <select id="selectProcesso" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b">
+                <option value="">--- selecione um processo ---</option>
+              </select>
+            </div>
+
+            <div style="flex:1;min-width:220px">
+              <label>Adicionar anotação</label>
+              <input id="inputAnotacao" placeholder="Digite a anotação..." style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b">
+            </div>
+
+            <div style="display:flex;align-items:end">
+              <button class="btn primary" id="btnSalvarAnotacao"><span class="material-icons">note_add</span> Salvar Anotação</button>
+            </div>
+          </div>
+
+          <div id="listaAnotacoes" style="margin-top:8px">
+            <div class="no-data">Nenhuma anotação carregada.</div>
+          </div>
+        </section>
+
+        <!-- FERRAMENTAS -->
+        <section id="ferramentas" class="container tab" style="display:none">
+          <h2>Ferramentas & Exportações</h2>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+            <button class="btn primary" id="btnExportAllPdf">Exportar todos (PDF)</button>
+            <button class="btn ghost" id="btnOpenSheet2">Abrir Planilha</button>
+          </div>
+          <div style="margin-top:16px;color:var(--muted)">
+            Observações: se quiser que eu gere o Apps Script para gravar as anotações em uma aba separada (Anotacoes) com campos padronizados (Processo, Texto, DataCriacao, DataISO), eu já gero o código e você só cola no editor do Apps Script.
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+<script>
+/* ===========================
+   CONFIGURAÇÃO
+   =========================== */
+// seu Apps Script endpoint
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrWzlAEW-f93fdVd4mCc-XaI6GlBQ_0luuDA-OV8oslGPfACLi69P7so9o4-YS3Lo2Cw/exec";
+// planilha pública CSV
+const SHEET_CSV = "https://docs.google.com/spreadsheets/d/1wU3D0kSBjAB_lIKKi1fUP9LZJK8pto2l7byvZBwucOM/export?format=csv&gid=0";
+
+const navButtons = document.querySelectorAll('.nav-btn');
+const tabs = document.querySelectorAll('.tab');
+const pageTitle = document.getElementById('pageTitle');
+
+navButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navButtons.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    tabs.forEach(t=> t.style.display = (t.id===tab ? 'block' : 'none'));
+    pageTitle.innerText = tab.charAt(0).toUpperCase() + tab.slice(1);
+    if(tab==='lista') loadTable();
+    if(tab==='anotacoes') loadAnotacoes();
+  });
+});
+
+/* -----------------------------
+   FIREBASE AUTH (Google + Microsoft)
+   ----------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyCznEr8M2lNu7nwCfGN_kcJZFM5lqRQdf8",
+  authDomain: "psico-17375.firebaseapp.com",
+  projectId: "psico-17375",
+  storageBucket: "psico-17375.appspot.com",
+  messagingSenderId: "405718265829",
+  appId: "1:405718265829:web:3e3974a0dc02080824890c",
+  measurementId: "G-P19R4LJJKS"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+const loginCard = document.getElementById('loginCard');
+const btnGoogle = document.getElementById('btnGoogle');
+const btnMicrosoft = document.getElementById('btnMicrosoft');
+const userNameEl = document.getElementById('userName');
+
+btnGoogle && btnGoogle.addEventListener('click', () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(e => alert('Erro ao logar: ' + e.message));
+});
+
+btnMicrosoft && btnMicrosoft.addEventListener('click', () => {
+  const provider = new firebase.auth.OAuthProvider('microsoft.com');
+  auth.signInWithPopup(provider).catch(e => alert('Erro ao logar MS: ' + e.message));
+});
+
+auth.onAuthStateChanged(user=>{
+  if(user) {
+    userNameEl.innerText = user.displayName || (user.email || 'Usuário');
+    loginCard.style.display = 'none';
+    // optionally show logged-in badge
+  } else {
+    userNameEl.innerText = 'Convidado';
+    loginCard.style.display = 'block';
+  }
+});
+
+/* -----------------------------
+   Utilities
+   ----------------------------- */
+function nowReadable() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())};
+}
+function parseCSV(text) {
+  const rows = []; let cur=''; let row=[]; let inQuotes=false;
+  for (let i=0;i<text.length;i++){
+    const ch=text[i]; const next=text[i+1];
+    if (ch === '"') {
+      if (inQuotes && next === '"') { cur += '"'; i++; } else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
       row.push(cur); cur='';
     } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
       if (cur !== '' || row.length>0) { row.push(cur); rows.push(row); row=[]; cur=''; }
@@ -122,14 +440,14 @@ searchInput && searchInput.addEventListener('input', ()=>loadTable(searchInput.v
 btnDownloadCsv.addEventListener('click', ()=>{
   if(!currentRows.length){ alert('Nenhum registro'); return; }
   const cols = Object.keys(currentRows[0]);
-  const csv = [cols.join(',')].concat(currentRows.map(r=>cols.map(c=>`"${(r[c]||'').replace(/"/g,'""')}"`).join(','))).join('\r\n');
+  const csv = [cols.join(',')].concat(currentRows.map(r=>cols.map(c=>"${(r[c]||'').replace(/"/g,'""')}").join(','))).join('\r\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download = `processos_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  const a = document.createElement('a'); a.href=url; a.download = processos_${new Date().toISOString().slice(0,10)}.csv; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
 
 btnSortDate.addEventListener('click', ()=>{
   sortDesc = !sortDesc;
-  btnSortDate.innerText = `Ordenar por Data ${sortDesc ? '↓' : '↑'}`;
+  btnSortDate.innerText = Ordenar por Data ${sortDesc ? '↓' : '↑'};
   loadTable(searchInput.value.trim());
 });
 
@@ -158,7 +476,7 @@ async function loadTable(filter='') {
     ) : data;
 
     filtered.sort((a,b)=>{
-      const ta = a.__date ? a.__date.getTime():0; const tb = b.__date ? b.__date.getTime():0;
+      const ta = a._date ? a.date.getTime():0; const tb = b.date ? b._date.getTime():0;
       return sortDesc ? tb - ta : ta - tb;
     });
 
@@ -173,7 +491,7 @@ async function loadTable(filter='') {
     const tbody = document.createElement('tbody');
     filtered.forEach(item=>{
       const tr = document.createElement('tr');
-      const tdDate = document.createElement('td'); tdDate.textContent = item['DataCriacao'] || (item.__date ? item.__date.toLocaleString() : '-'); tr.appendChild(tdDate);
+      const tdDate = document.createElement('td'); tdDate.textContent = item['DataCriacao'] || (item._date ? item._date.toLocaleString() : '-'); tr.appendChild(tdDate);
       const tdNome = document.createElement('td'); tdNome.textContent = item['Nome'] || '-'; tr.appendChild(tdNome);
       const tdNum = document.createElement('td'); tdNum.textContent = item['Número'] || '-'; tr.appendChild(tdNum);
       const tdCat = document.createElement('td'); tdCat.textContent = item['Categoria'] || '-'; tr.appendChild(tdCat);
@@ -254,8 +572,70 @@ async function loadAnotacoes(){
   listaAnotacoes.innerHTML = '<div class="no-data">Carregando anotações...</div>';
   // try to fetch via Apps Script
   try {
-    const res = await fetch(`${SCRIPT_URL}?action=listarAnotacoes`);
+    const res = await fetch(${SCRIPT_URL}?action=listarAnotacoes);
     if(res.ok) {
       const json = await res.json().catch(()=>null);
       if(Array.isArray(json)) { renderAnotacoes(json); return; }
     }
+    // fallback to localStorage + try to match by process selection if needed
+    const local = JSON.parse(localStorage.getItem('anotacoes_local')||'[]');
+    if(local.length) { renderAnotacoes(local); return; }
+    listaAnotacoes.innerHTML = '<div class="no-data">Nenhuma anotação disponível.</div>';
+  } catch(err){
+    console.error('err anota', err);
+    const local = JSON.parse(localStorage.getItem('anotacoes_local')||'[]');
+    if(local.length) { renderAnotacoes(local); return; }
+    listaAnotacoes.innerHTML = '<div class="no-data">Nenhuma anotação disponível.</div>';
+  }
+}
+
+function renderAnotacoes(arr){
+  if(!arr.length){ listaAnotacoes.innerHTML = '<div class="no-data">Nenhuma anotação.</div>'; return; }
+  // sort desc by date if exists
+  arr.sort((a,b)=> {
+    const da = a.DataISO ? new Date(a.DataISO).getTime() : (a.DataCriacao? parseReadableDate(a.DataCriacao).getTime():0);
+    const db = b.DataISO ? new Date(b.DataISO).getTime() : (b.DataCriacao? parseReadableDate(b.DataCriacao).getTime():0);
+    return db - da;
+  });
+  listaAnotacoes.innerHTML = '';
+  arr.forEach(item=>{
+    const card = document.createElement('div'); card.className='note-card';
+    const meta = document.createElement('div'); meta.className='note-meta';
+    meta.textContent = ${item.ProcessoNumero || item['Processo'] || '—'} • ${item.DataCriacao || (item.DataISO ? new Date(item.DataISO).toLocaleString() : '')};
+    const text = document.createElement('div'); text.className='note-text'; text.textContent = item.Texto || item.Text || item.Anotacao || '';
+    card.appendChild(meta); card.appendChild(text);
+    listaAnotacoes.appendChild(card);
+  });
+}
+
+/* -----------------------------
+   POPULA LISTA DE PROCESSOS (select)
+   ----------------------------- */
+async function populateProcessSelect(filteredList){
+  // if filteredList provided, use it. Otherwise use currentRows
+  const list = filteredList || currentRows;
+  // build options
+  selectProcesso.innerHTML = '<option value="">--- selecione um processo ---</option>';
+  if(!list || !list.length) return;
+  // unique by Número
+  const seen = new Set();
+  list.forEach(item=>{
+    const num = item['Número'] || item['Processo'] || item['Número do Processo'] || '';
+    const name = item['Nome']||'—';
+    if(!num) return;
+    if(seen.has(num)) return;
+    seen.add(num);
+    const opt = document.createElement('option'); opt.value = num; opt.textContent = ${name} — ${num};
+    selectProcesso.appendChild(opt);
+  });
+}
+
+/* -----------------------------
+   INICIALIZAÇÃO
+   ----------------------------- */
+loadTable(); // load processes
+populateProcessSelect(); // fill select (will use currentRows when available)
+loadAnotacoes(); // load annotations (from server or local)
+</script>
+</body>
+</html>
