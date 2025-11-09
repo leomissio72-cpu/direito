@@ -1,121 +1,90 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>Login — Sistema Jurídico</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: #f4f6fb;
-      color: #0b1b2b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-
-    .card {
-      background: #fff;
-      padding: 32px;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(11, 27, 43, 0.08);
-      width: 360px;
-      text-align: center;
-    }
-
-    h1 {
-      margin-bottom: 6px;
-    }
-
-    p {
-      color: #556179;
-      margin-bottom: 18px;
-    }
-
-    button {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-      margin-bottom: 10px;
-      transition: 0.3s;
-    }
-
-    .google {
-      background: #3366ff;
-      color: #fff;
-    }
-
-    .google:hover {
-      background: #2554cc;
-    }
-
-    footer {
-      margin-top: 12px;
-      color: #94a3b8;
-      font-size: 13px;
-    }
-  </style>
+    <meta charset="utf-8" />
+    <title>Painel Principal — Sistema Jurídico</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            padding: 30px; 
+            background: #f4f6fb;
+            color: #0b1b2b;
+        }
+        .container {
+            max-width: 960px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        h1 { color: #3366ff; margin-bottom: 5px; }
+        #logoutButton {
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+    </style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>Sistema Jurídico</h1>
-    <p>Faça login para acessar o painel</p>
-    <button id="loginGoogle" class="google">Entrar com Google</button>
-    <footer>Após login você será redirecionado para o painel.</footer>
-  </div>
+    <div class="container">
+        <h1 id="welcomeTitle">Carregando Painel...</h1>
+        <p>Este é o conteúdo principal do seu sistema jurídico. Apenas usuários logados podem ver esta página.</p>
+        <p id="userNameDetail"></p>
+        <button id="logoutButton">Sair do Sistema</button>
+    </div>
 
-  <!-- Firebase Modular SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBHelxNg37YtEykAkO3nOU8l45IbGmbK0M",
-      authDomain: "juridico-4bf6c.firebaseapp.com",
-      projectId: "juridico-4bf6c",
-      storageBucket: "juridico-4bf6c.firebasestorage.app",
-      messagingSenderId: "427029341843",
-      appId: "1:427029341843:web:f4545ff656d2723ccccf66",
-      measurementId: "G-6DWF14QXHB"
-    };
+        // SUA CONFIGURAÇÃO COMPLETA DO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHelxNg37YtEykAkO3nOU8l45IbGmbK0M",
+            authDomain: "juridico-4bf6c.firebaseapp.com",
+            projectId: "juridico-4bf6c",
+            storageBucket: "juridico-4bf6c.firebasestorage.app",
+            messagingSenderId: "427029341843",
+            appId: "1:427029341843:web:f4545ff656d2723ccccf66",
+            measurementId: "G-6DWF14QXHB"
+        };
 
-    // Inicializa o Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
 
-    // Botão de login
-    document.getElementById("loginGoogle").addEventListener("click", () => {
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          const user = result.user;
-          localStorage.setItem('sj_user', JSON.stringify({
-            name: user.displayName,
-            email: user.email,
-            photo: user.photoURL
-          }));
-          window.location.href = "index.html"; // redireciona para o painel
-        })
-        .catch((error) => {
-          console.error("Erro no login:", error);
-          alert("Erro ao fazer login. Verifique o console para mais detalhes.");
+        // --- VERIFICAÇÃO DE AUTENTICAÇÃO E SEGURANÇA ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Usuário logado: Exibe os dados
+                const userName = user.displayName || user.email;
+                document.getElementById('welcomeTitle').textContent = `Bem-vindo, ${userName}!`;
+                document.getElementById('userNameDetail').innerHTML = `Logado como: <strong>${user.email}</strong>`;
+
+            } else {
+                // Usuário NÃO logado: Redireciona imediatamente para o login
+                window.location.href = "app.html";
+            }
         });
-    });
 
-    // Se já estiver logado, redireciona
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.href = "index.html";
-      }
-    });
-  </script>
+        // --- FUNÇÃO DE LOGOUT ---
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                // Logout bem-sucedido. Redireciona para o login.
+                window.location.href = "app.html";
+            }).catch((error) => {
+                console.error("Erro ao fazer logout:", error);
+                alert("Não foi possível sair. Tente novamente.");
+            });
+        });
+    </script>
 </body>
 </html>
