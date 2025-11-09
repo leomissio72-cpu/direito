@@ -2,109 +2,79 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Sistema Jurídico — Painel</title>
+  <title>Login — Sistema Jurídico</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    :root{
-      --bg:#f4f6fb; --primary:#3366ff; --accent:#2b61ff; --muted:#556179; --card:#fff;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:'Inter',sans-serif;background:var(--bg);color:#0b1b2b}
-    .app{display:flex;min-height:100vh}
-    .sidebar{width:220px;padding:20px;background:#0f1724;color:#fff;display:flex;flex-direction:column;gap:18px}
-    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff}
-    .nav-btn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:transparent;color:rgba(255,255,255,0.9);border:none;cursor:pointer}
-    .nav-btn.active{background:rgba(255,255,255,0.06)}
-    .workspace{flex:1;display:flex;flex-direction:column}
-    .topbar{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
-    .main-area{padding:18px;overflow:auto}
-    .container{background:var(--card);padding:18px;border-radius:12px;margin-bottom:16px;box-shadow:0 8px 24px rgba(11,27,43,0.04)}
-    label{display:block;margin-top:10px;color:var(--muted);font-weight:600}
-    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff}
-    .actions{display:flex;gap:10px;margin-top:14px}
-    .btn{padding:10px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-    .btn.primary{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff}
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{padding:10px;border-bottom:1px solid rgba(11,27,43,0.04);text-align:left}
-    .note-card{background:#fafbff;border-left:4px solid var(--primary);padding:12px;border-radius:8px;margin-bottom:10px}
+    body { margin:0; font-family:'Inter',sans-serif; background: #f4f6fb; color:#0b1b2b; display:flex; align-items:center; justify-content:center; height:100vh }
+    .card { background:#fff; padding:28px; border-radius:12px; box-shadow:0 8px 30px rgba(11,27,43,0.06); width:360px; text-align:center }
+    h1{margin-bottom:6px}
+    p{color:#556179;margin-bottom:18px}
+    button{display:block;width:100%;padding:12px;border-radius:8px;border:none;cursor:pointer;font-weight:700;margin-bottom:10px}
+    .google{background:#3366ff;color:#fff}
+    .microsoft{background:#2b61ff;color:#fff}
   </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div class="logo">J</div>
-        <div><strong>Sistema Jurídico</strong><div style="font-size:12px;color:#94a3b8">Escritório</div></div>
-      </div>
-      <nav style="margin-top:10px">
-        <button class="nav-btn active" data-tab="cadastro">Cadastro</button>
-        <button class="nav-btn" data-tab="lista">Processos</button>
-        <button class="nav-btn" data-tab="anotacoes">Anotações</button>
-        <button class="nav-btn" data-tab="ferramentas">Ferramentas</button>
-      </nav>
-      <div style="margin-top:auto;color:#94a3b8;font-size:13px">Planilha: docs.google.com/spreadsheets/d/1wU3D0kSBjAB...</div>
-    </aside>
-
-    <div class="workspace">
-      <div class="topbar">
-        <div style="font-weight:700">Sistema Jurídico</div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div id="userInfo" style="text-align:right">
-            <div id="userDisplay" style="font-weight:700">Convidado</div>
-            <div style="font-size:12px;color:#94a3b8" id="userEmail">—</div>
-          </div>
-          <button id="btnLogout" class="btn">Logout</button>
-        </div>
-      </div>
-
-      <main class="main-area">
-        <!-- Conteúdo: mesmo que geramos antes (cadastro, lista, anotacoes, ferramentas) -->
-        <!-- Para economizar espaço aqui está o app completo: 
-             - Use o código do app anterior que eu já forneci (o app.html gerado previamente)
-             - Este arquivo deve checar localStorage.sj_user no load e redirecionar para login.html se ausente.
-        -->
-        <div class="container">
-          <h2>Bem-vindo</h2>
-          <p style="color:#556179">Se você não está logado, será redirecionado para a página de login.</p>
-        </div>
-      </main>
-    </div>
+  <div class="card">
+    <h1>Sistema Jurídico</h1>
+    <p>Faça login para acessar o painel</p>
+    <button id="btnGoogle" class="google">Entrar com Google</button>
+    <button id="btnMicrosoft" class="microsoft">Entrar com Microsoft</button>
+    <p style="margin-top:12px;color:#94a3b8;font-size:13px">Após login você será redirecionado para o painel.</p>
   </div>
 
-<script>
-  // Verifica login via localStorage.sj_user (gravado no login.html)
-  const user = localStorage.getItem('sj_user');
-  if (!user) {
-    // redireciona para página exclusiva de login
-    window.location.href = 'login.html';
-  } else {
-    const u = JSON.parse(user);
-    document.getElementById('userDisplay').innerText = u.displayName || (u.email||'Usuário');
-    document.getElementById('userEmail').innerText = u.email||'';
-  }
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-  // logout: limpa localStorage e volta ao login
-  document.getElementById('btnLogout').addEventListener('click', ()=> {
-    localStorage.removeItem('sj_user');
-    // se usar Firebase, também signOut
-    if (window.firebase && firebase.auth) {
-      firebase.auth().signOut().catch(()=>{});
-    }
-    window.location.href = 'login.html';
-  });
+  <script>
+    // Substitua pelas suas credenciais do projeto Firebase (as que você já usou antes)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCznEr8M2lNu7nwCfGN_kcJZFM5lqRQdf8",
+      authDomain: "juridico-4bf6c.firebaseapp.com",
+      projectId: "psico-17375",
+      storageBucket: "psico-17375.appspot.com",
+      messagingSenderId: "405718265829",
+      appId: "1:405718265829:web:3e3974a0dc02080824890c",
+      measurementId: "G-P19R4LJJKS"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-  // nav handlers: ativa abas — você deve colar aqui a lógica completa do painel (as funções de CRUD, loadTable, etc.)
-  document.querySelectorAll('.nav-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      // aqui você mostra a aba correspondente (implemente como no app anterior)
-      alert('Navegar para aba: ' + btn.dataset.tab + '\nCole o conteúdo completo do painel aqui (formulário, tabela, anotações)');
+    const btnGoogle = document.getElementById('btnGoogle');
+    const btnMicrosoft = document.getElementById('btnMicrosoft');
+
+    btnGoogle.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(result => onLoginSuccess(result.user))
+        .catch(e => alert('Erro ao autenticar: ' + e.message));
     });
-  });
-</script>
+
+    btnMicrosoft.addEventListener('click', () => {
+      const provider = new firebase.auth.OAuthProvider('microsoft.com');
+      auth.signInWithPopup(provider)
+        .then(result => onLoginSuccess(result.user))
+        .catch(e => alert('Erro ao autenticar Microsoft: ' + e.message));
+    });
+
+    function onLoginSuccess(user) {
+      // salvar info leve no localStorage para a app principal verificar
+      const payload = {
+        displayName: user.displayName || '',
+        email: user.email || '',
+        photoURL: user.photoURL || ''
+      };
+      localStorage.setItem('sj_user', JSON.stringify(payload));
+      // redireciona para painel
+      window.location.href = 'app.html';
+    }
+
+    // se já logado, redireciona
+    auth.onAuthStateChanged(u => {
+      if (u) onLoginSuccess(u);
+    });
+  </script>
 </body>
 </html>
