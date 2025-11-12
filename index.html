@@ -459,6 +459,26 @@
       color: #0b1b2b;
     }
 
+    /* Filtros */
+    .filtros-container {
+      background: #fafbff;
+      border: 1px solid rgba(11,27,43,0.06);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .filtro-acoes {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
     @media (max-width:980px){
       .grid{grid-template-columns:1fr}
       .sidebar{width:64px}
@@ -467,6 +487,9 @@
       .contrato-signatures {
         grid-template-columns: 1fr;
         gap: 20px;
+      }
+      .filtros-grid {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -535,6 +558,10 @@
         <button class="nav-btn" data-tab="contratos">
           <span class="material-icons">description</span>
           <span class="label">Contratos</span>
+        </button>
+        <button class="nav-btn" data-tab="contratos-criados">
+          <span class="material-icons">folder_open</span>
+          <span class="label">Contratos Criados</span>
         </button>
         <button class="nav-btn" data-tab="anotacoes">
           <span class="material-icons">note_add</span>
@@ -841,6 +868,67 @@
           </div>
         </section>
 
+        <!-- CONTRATOS CRIADOS -->
+        <section id="contratos-criados" class="container tab" style="display:none">
+          <h2><span class="material-icons">folder_open</span>Contratos Criados</h2>
+          
+          <div class="filtros-container">
+            <h3>Filtros</h3>
+            <div class="filtros-grid">
+              <div>
+                <label>Cliente</label>
+                <input type="text" id="filtroCliente" placeholder="Nome do cliente">
+              </div>
+              <div>
+                <label>Número do Processo</label>
+                <input type="text" id="filtroNumeroProcesso" placeholder="Número do processo">
+              </div>
+              <div>
+                <label>Vara</label>
+                <input type="text" id="filtroVara" placeholder="Vara/Comarca">
+              </div>
+              <div>
+                <label>Categoria</label>
+                <select id="filtroCategoria">
+                  <option value="">Todas</option>
+                  <option value="Cível">Cível</option>
+                  <option value="Trabalhista">Trabalhista</option>
+                  <option value="Penal">Penal</option>
+                  <option value="Família">Família</option>
+                  <option value="Consumidor">Consumidor</option>
+                  <option value="Tributário">Tributário</option>
+                  <option value="Administrativo">Administrativo</option>
+                  <option value="Previdenciário">Previdenciário</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+              <div>
+                <label>Data Inicial</label>
+                <input type="date" id="filtroDataInicial">
+              </div>
+              <div>
+                <label>Data Final</label>
+                <input type="date" id="filtroDataFinal">
+              </div>
+            </div>
+            <div class="filtro-acoes">
+              <button class="btn primary" id="btnAplicarFiltros">
+                <span class="material-icons">search</span> Aplicar Filtros
+              </button>
+              <button class="btn ghost" id="btnLimparFiltros">
+                <span class="material-icons">clear</span> Limpar Filtros
+              </button>
+              <button class="btn success" id="btnExportarContratos">
+                <span class="material-icons">download</span> Exportar Lista
+              </button>
+            </div>
+          </div>
+
+          <div id="listaContratosCriados">
+            <div class="no-data">Nenhum contrato encontrado. Gere contratos na aba "Contratos".</div>
+          </div>
+        </section>
+
         <!-- ANOTAÇÕES -->
         <section id="anotacoes" class="container tab" style="display:none">
           <h2><span class="material-icons">note_add</span>Anotações</h2>
@@ -1121,6 +1209,7 @@
           'cadastro': 'Cadastro',
           'lista': 'Processos Registrados',
           'contratos': 'Contratos',
+          'contratos-criados': 'Contratos Criados',
           'anotacoes': 'Anotações',
           'interacao': 'Interação com Cliente',
           'ferramentas': 'Ferramentas'
@@ -1142,6 +1231,11 @@
         if (tab === 'interacao') {
           atualizarSelectProcessosInteracao();
           renderizarInteracoes();
+        }
+
+        // Atualizar contratos criados
+        if (tab === 'contratos-criados') {
+          renderizarContratosCriados();
         }
 
         // Atualizar dashboard
@@ -1240,6 +1334,26 @@
         return;
       }
       
+      // Salvar contrato
+      const contrato = {
+        id: Date.now().toString(),
+        dataCriacao: new Date().toISOString(),
+        cliente: formData.get('nome'),
+        cpf: formData.get('cpf'),
+        endereco: formData.get('endereco'),
+        categoria: formData.get('categoria'),
+        numeroProcesso: formData.get('numero'),
+        vara: formData.get('vara'),
+        parteContraria: formData.get('parte'),
+        valorCausa: formData.get('valor'),
+        honorarios: formData.get('honorarios'),
+        formaPagamento: formData.get('formaPagamento')
+      };
+      
+      const contratos = carregarContratos();
+      contratos.push(contrato);
+      salvarContratos(contratos);
+      
       // Navegar para a aba de contratos
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       document.querySelector('[data-tab="contratos"]').classList.add('active');
@@ -1247,7 +1361,7 @@
       document.getElementById('contratos').style.display = 'block';
       document.getElementById('pageTitle').textContent = 'Contratos';
       
-      mostrarAlerta('alertContratos', 'Contrato gerado com sucesso! Preencha os dados no cadastro para atualizar automaticamente.', 'success');
+      mostrarAlerta('alertContratos', 'Contrato gerado e salvo com sucesso!', 'success');
     });
 
     // ========== IMPRIMIR CONTRATO ==========
@@ -1494,6 +1608,170 @@
       salvarProcessos(processos);
       
       renderizarTabela();
+    };
+
+    // ========== CONTRATOS CRIADOS ==========
+    function renderizarContratosCriados(filtros = {}) {
+      const contratos = carregarContratos();
+      const container = document.getElementById('listaContratosCriados');
+      
+      // Aplicar filtros
+      let contratosFiltrados = contratos.filter(contrato => {
+        // Filtro por cliente
+        if (filtros.cliente && !contrato.cliente.toLowerCase().includes(filtros.cliente.toLowerCase())) {
+          return false;
+        }
+        
+        // Filtro por número do processo
+        if (filtros.numeroProcesso && !contrato.numeroProcesso?.includes(filtros.numeroProcesso)) {
+          return false;
+        }
+        
+        // Filtro por vara
+        if (filtros.vara && !contrato.vara?.toLowerCase().includes(filtros.vara.toLowerCase())) {
+          return false;
+        }
+        
+        // Filtro por categoria
+        if (filtros.categoria && contrato.categoria !== filtros.categoria) {
+          return false;
+        }
+        
+        // Filtro por data
+        if (filtros.dataInicial || filtros.dataFinal) {
+          const dataContrato = new Date(contrato.dataCriacao);
+          
+          if (filtros.dataInicial) {
+            const dataInicial = new Date(filtros.dataInicial);
+            if (dataContrato < dataInicial) return false;
+          }
+          
+          if (filtros.dataFinal) {
+            const dataFinal = new Date(filtros.dataFinal);
+            dataFinal.setDate(dataFinal.getDate() + 1); // Inclui o dia final
+            if (dataContrato >= dataFinal) return false;
+          }
+        }
+        
+        return true;
+      });
+      
+      if (contratosFiltrados.length === 0) {
+        container.innerHTML = '<div class="no-data">Nenhum contrato encontrado com os filtros aplicados.</div>';
+        return;
+      }
+      
+      // Ordenar por data (mais recente primeiro)
+      contratosFiltrados.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+      
+      let html = '<table><thead><tr>';
+      html += '<th>Cliente</th><th>CPF</th><th>Categoria</th><th>Nº Processo</th><th>Vara</th><th>Valor Causa</th><th>Honorários</th><th>Data Criação</th><th>Ações</th>';
+      html += '</tr></thead><tbody>';
+      
+      contratosFiltrados.forEach(c => {
+        html += '<tr>';
+        html += `<td>${c.cliente}</td>`;
+        html += `<td>${c.cpf || '-'}</td>`;
+        html += `<td>${c.categoria || '-'}</td>`;
+        html += `<td>${c.numeroProcesso || '-'}</td>`;
+        html += `<td>${c.vara || '-'}</td>`;
+        html += `<td>${c.valorCausa ? `R$ ${parseFloat(c.valorCausa).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '-'}</td>`;
+        html += `<td>${c.honorarios ? `R$ ${parseFloat(c.honorarios).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '-'}</td>`;
+        html += `<td>${new Date(c.dataCriacao).toLocaleDateString('pt-BR')}</td>`;
+        html += `<td>
+          <button class="btn ghost" onclick="visualizarContrato('${c.id}')">
+            <span class="material-icons">visibility</span> Ver
+          </button>
+          <button class="btn danger" onclick="deletarContrato('${c.id}')">
+            <span class="material-icons">delete</span>
+          </button>
+        </td>`;
+        html += '</tr>';
+      });
+      
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    // Aplicar filtros
+    document.getElementById('btnAplicarFiltros').addEventListener('click', () => {
+      const filtros = {
+        cliente: document.getElementById('filtroCliente').value,
+        numeroProcesso: document.getElementById('filtroNumeroProcesso').value,
+        vara: document.getElementById('filtroVara').value,
+        categoria: document.getElementById('filtroCategoria').value,
+        dataInicial: document.getElementById('filtroDataInicial').value,
+        dataFinal: document.getElementById('filtroDataFinal').value
+      };
+      
+      renderizarContratosCriados(filtros);
+    });
+
+    // Limpar filtros
+    document.getElementById('btnLimparFiltros').addEventListener('click', () => {
+      document.getElementById('filtroCliente').value = '';
+      document.getElementById('filtroNumeroProcesso').value = '';
+      document.getElementById('filtroVara').value = '';
+      document.getElementById('filtroCategoria').value = '';
+      document.getElementById('filtroDataInicial').value = '';
+      document.getElementById('filtroDataFinal').value = '';
+      
+      renderizarContratosCriados();
+    });
+
+    // Exportar lista de contratos
+    document.getElementById('btnExportarContratos').addEventListener('click', () => {
+      const contratos = carregarContratos();
+      
+      if (contratos.length === 0) {
+        alert('Nenhum contrato para exportar.');
+        return;
+      }
+      
+      let csv = 'Cliente,CPF,Categoria,Número Processo,Vara,Valor Causa,Honorários,Forma Pagamento,Data Criação\n';
+      
+      contratos.forEach(c => {
+        csv += `"${c.cliente}","${c.cpf || ''}","${c.categoria || ''}","${c.numeroProcesso || ''}","${c.vara || ''}","${c.valorCausa || ''}","${c.honorarios || ''}","${c.formaPagamento || ''}","${new Date(c.dataCriacao).toLocaleDateString('pt-BR')}"\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `contratos-${Date.now()}.csv`;
+      link.click();
+    });
+
+    // Visualizar contrato
+    window.visualizarContrato = function(id) {
+      const contratos = carregarContratos();
+      const contrato = contratos.find(c => c.id === id);
+      if (!contrato) return;
+      
+      let detalhes = 'DETALHES DO CONTRATO\n\n';
+      detalhes += `Cliente: ${contrato.cliente}\n`;
+      detalhes += `CPF: ${contrato.cpf || '-'}\n`;
+      detalhes += `Endereço: ${contrato.endereco || '-'}\n`;
+      detalhes += `Categoria: ${contrato.categoria || '-'}\n`;
+      detalhes += `Número do Processo: ${contrato.numeroProcesso || '-'}\n`;
+      detalhes += `Vara: ${contrato.vara || '-'}\n`;
+      detalhes += `Parte Contrária: ${contrato.parteContraria || '-'}\n`;
+      detalhes += `Valor da Causa: R$ ${contrato.valorCausa || '0'}\n`;
+      detalhes += `Honorários: R$ ${contrato.honorarios || '0'}\n`;
+      detalhes += `Forma de Pagamento: ${contrato.formaPagamento || '-'}\n`;
+      detalhes += `Data de Criação: ${new Date(contrato.dataCriacao).toLocaleString('pt-BR')}\n`;
+      
+      alert(detalhes);
+    };
+
+    // Deletar contrato
+    window.deletarContrato = function(id) {
+      if (!confirm('Deseja realmente deletar este contrato?')) return;
+      
+      let contratos = carregarContratos();
+      contratos = contratos.filter(c => c.id !== id);
+      salvarContratos(contratos);
+      
+      renderizarContratosCriados();
     };
 
     // ========== ANOTAÇÕES ==========
@@ -1815,6 +2093,7 @@
       renderizarTabela();
       renderizarAnotacoes();
       renderizarInteracoes();
+      renderizarContratosCriados();
       atualizarDashboard();
     });
 
@@ -1834,6 +2113,7 @@
       atualizarSelectProcessosInteracao();
       atualizarDashboard();
       atualizarContrato();
+      renderizarContratosCriados();
       
       // Definir data atual como padrão para interações
       const hoje = new Date().toISOString().split('T')[0];
