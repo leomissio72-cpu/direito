@@ -390,6 +390,75 @@
       justify-content: center;
     }
 
+    /* Interação com Cliente */
+    .interacao-card {
+      background: #fafbff;
+      border-left: 4px solid var(--primary);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+    .interacao-card:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .interacao-meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .interacao-text {
+      font-size: 14px;
+      color: #0b1b2b;
+    }
+    .interacao-tipo {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .tipo-reuniao { background: #dbeafe; color: #1e40af; }
+    .tipo-telefonema { background: #e9d5ff; color: #6b21a8; }
+    .tipo-email { background: #d1fae5; color: #065f46; }
+    .tipo-anotacao { background: #fef3c7; color: #92400e; }
+
+    /* Calculadoras */
+    .calc-container {
+      background: #fafbff;
+      border: 1px solid rgba(11,27,43,0.06);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .calc-result {
+      background: #e0f2fe;
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+      display: none;
+    }
+    .calc-result.show {
+      display: block;
+    }
+    .calc-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .calc-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0b1b2b;
+    }
+
     @media (max-width:980px){
       .grid{grid-template-columns:1fr}
       .sidebar{width:64px}
@@ -470,6 +539,10 @@
         <button class="nav-btn" data-tab="anotacoes">
           <span class="material-icons">note_add</span>
           <span class="label">Anotações</span>
+        </button>
+        <button class="nav-btn" data-tab="interacao">
+          <span class="material-icons">people</span>
+          <span class="label">Interação</span>
         </button>
         <button class="nav-btn" data-tab="ferramentas">
           <span class="material-icons">build</span>
@@ -796,6 +869,55 @@
           <div id="listaAnotacoes"></div>
         </section>
 
+        <!-- INTERAÇÃO COM CLIENTE -->
+        <section id="interacao" class="container tab" style="display:none">
+          <h2><span class="material-icons">people</span>Interação com Cliente</h2>
+          <div id="alertInteracao"></div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+            <div style="flex:1;min-width:220px">
+              <label>Processo (selecionar)</label>
+              <select id="selectProcessoInteracao" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b">
+                <option value="">--- selecione um processo ---</option>
+              </select>
+            </div>
+
+            <div style="flex:1;min-width:220px">
+              <label>Tipo de Interação</label>
+              <select id="tipoInteracao" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b">
+                <option value="reuniao">Reunião</option>
+                <option value="telefonema">Telefonema</option>
+                <option value="email">E-mail</option>
+                <option value="anotacao">Anotação</option>
+              </select>
+            </div>
+
+            <div style="flex:1;min-width:220px">
+              <label>Data da Interação</label>
+              <input type="date" id="dataInteracao" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b">
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px">
+            <label>Detalhes da Interação</label>
+            <textarea id="detalhesInteracao" placeholder="Descreva como foi a interação, pontos importantes discutidos, próximos passos..." style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b;min-height:80px"></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" id="btnSalvarInteracao">
+              <span class="material-icons">save</span> Salvar Interação
+            </button>
+            <button class="btn ghost" id="btnLimparInteracao">
+              <span class="material-icons">clear</span> Limpar
+            </button>
+          </div>
+
+          <div style="margin-top:24px">
+            <h3>Histórico de Interações</h3>
+            <div id="listaInteracoes"></div>
+          </div>
+        </section>
+
         <!-- FERRAMENTAS -->
         <section id="ferramentas" class="container tab" style="display:none">
           <h2><span class="material-icons">build</span>Ferramentas</h2>
@@ -826,6 +948,71 @@
             <div class="col-full" id="resultadoPrazo" style="display:none;background:#fafbff;padding:16px;border-radius:8px;border:2px solid var(--primary)">
               <div style="font-weight:700;color:var(--primary);margin-bottom:8px">Resultado:</div>
               <div id="resultadoTexto" style="font-size:16px;color:#0b1b2b"></div>
+            </div>
+          </div>
+
+          <hr style="margin:24px 0;border:none;border-top:1px solid rgba(11,27,43,0.06)">
+
+          <h3>Calculadora de Honorários</h3>
+          <div class="calc-container">
+            <div class="grid">
+              <div>
+                <label>Valor da Causa (R$)</label>
+                <input type="number" id="valorCausa" placeholder="0.00" step="0.01">
+              </div>
+              <div>
+                <label>Percentual de Honorários (%)</label>
+                <input type="number" id="percentualHonorarios" placeholder="Ex: 20" step="0.1" min="0" max="100">
+              </div>
+            </div>
+            <button class="btn primary" id="btnCalcularHonorarios" style="margin-top:12px">
+              <span class="material-icons">calculate</span> Calcular Honorários
+            </button>
+            <div class="calc-result" id="resultadoHonorarios">
+              <div class="calc-title">Valor dos Honorários:</div>
+              <div class="calc-value" id="valorHonorarios">R$ 0,00</div>
+            </div>
+          </div>
+
+          <h3>Calculadora de Custas Processuais</h3>
+          <div class="calc-container">
+            <div class="grid">
+              <div>
+                <label>Valor da Causa (R$)</label>
+                <input type="number" id="valorCausaCustas" placeholder="0.00" step="0.01">
+              </div>
+              <div>
+                <label>Percentual de Custas (%)</label>
+                <input type="number" id="percentualCustas" placeholder="Ex: 1" step="0.1" min="0" max="100" value="1">
+              </div>
+            </div>
+            <button class="btn primary" id="btnCalcularCustas" style="margin-top:12px">
+              <span class="material-icons">calculate</span> Calcular Custas
+            </button>
+            <div class="calc-result" id="resultadoCustas">
+              <div class="calc-title">Valor das Custas:</div>
+              <div class="calc-value" id="valorCustas">R$ 0,00</div>
+            </div>
+          </div>
+
+          <h3>Calculadora de Parcelamento</h3>
+          <div class="calc-container">
+            <div class="grid">
+              <div>
+                <label>Valor Total (R$)</label>
+                <input type="number" id="valorTotalParcelamento" placeholder="0.00" step="0.01">
+              </div>
+              <div>
+                <label>Número de Parcelas</label>
+                <input type="number" id="numeroParcelas" placeholder="Ex: 12" min="1" max="60">
+              </div>
+            </div>
+            <button class="btn primary" id="btnCalcularParcelamento" style="margin-top:12px">
+              <span class="material-icons">calculate</span> Calcular Parcelamento
+            </button>
+            <div class="calc-result" id="resultadoParcelamento">
+              <div class="calc-title">Valor da Parcela:</div>
+              <div class="calc-value" id="valorParcela">R$ 0,00</div>
             </div>
           </div>
 
@@ -863,6 +1050,7 @@
     const DB_KEY = 'processos_juridicos';
     const NOTES_KEY = 'anotacoes_juridicas';
     const CONTRATOS_KEY = 'contratos_gerados';
+    const INTERACOES_KEY = 'interacoes_clientes';
 
     function salvarProcessos(processos) {
       localStorage.setItem(DB_KEY, JSON.stringify(processos));
@@ -889,6 +1077,15 @@
 
     function carregarContratos() {
       const data = localStorage.getItem(CONTRATOS_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+
+    function salvarInteracoes(interacoes) {
+      localStorage.setItem(INTERACOES_KEY, JSON.stringify(interacoes));
+    }
+
+    function carregarInteracoes() {
+      const data = localStorage.getItem(INTERACOES_KEY);
       return data ? JSON.parse(data) : [];
     }
 
@@ -925,6 +1122,7 @@
           'lista': 'Processos Registrados',
           'contratos': 'Contratos',
           'anotacoes': 'Anotações',
+          'interacao': 'Interação com Cliente',
           'ferramentas': 'Ferramentas'
         };
         document.getElementById('pageTitle').textContent = titulos[tab];
@@ -938,6 +1136,12 @@
         if (tab === 'anotacoes') {
           atualizarSelectProcessos();
           renderizarAnotacoes();
+        }
+
+        // Atualizar interações
+        if (tab === 'interacao') {
+          atualizarSelectProcessosInteracao();
+          renderizarInteracoes();
         }
 
         // Atualizar dashboard
@@ -1380,6 +1584,120 @@
       renderizarAnotacoes();
     };
 
+    // ========== INTERAÇÃO COM CLIENTE ==========
+    function atualizarSelectProcessosInteracao() {
+      const processos = carregarProcessos();
+      const select = document.getElementById('selectProcessoInteracao');
+      
+      select.innerHTML = '<option value="">--- selecione um processo ---</option>';
+      
+      processos.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `${p.nome} - ${p.numero || 'S/N'}`;
+        select.appendChild(option);
+      });
+    }
+
+    function renderizarInteracoes() {
+      const processoId = document.getElementById('selectProcessoInteracao').value;
+      const container = document.getElementById('listaInteracoes');
+      
+      if (!processoId) {
+        container.innerHTML = '<div class="no-data">Selecione um processo para ver as interações.</div>';
+        return;
+      }
+      
+      const interacoes = carregarInteracoes().filter(i => i.processoId === processoId);
+      
+      if (interacoes.length === 0) {
+        container.innerHTML = '<div class="no-data">Nenhuma interação registrada para este processo.</div>';
+        return;
+      }
+      
+      // Ordenar por data (mais recente primeiro)
+      interacoes.sort((a, b) => new Date(b.data) - new Date(a.data));
+      
+      let html = '';
+      interacoes.forEach(i => {
+        const tipoClass = `tipo-${i.tipo}`;
+        const tipoLabel = {
+          'reuniao': 'Reunião',
+          'telefonema': 'Telefonema',
+          'email': 'E-mail',
+          'anotacao': 'Anotação'
+        }[i.tipo];
+        
+        html += `<div class="interacao-card">
+          <div class="interacao-meta">
+            <span>${new Date(i.data).toLocaleString('pt-BR')}</span>
+            <span class="interacao-tipo ${tipoClass}">${tipoLabel}</span>
+          </div>
+          <div class="interacao-text">${i.detalhes}</div>
+          <button class="btn danger" onclick="deletarInteracao('${i.id}')" style="margin-top:8px;font-size:12px;padding:4px 8px">
+            <span class="material-icons" style="font-size:16px">delete</span> Excluir
+          </button>
+        </div>`;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    document.getElementById('selectProcessoInteracao').addEventListener('change', renderizarInteracoes);
+
+    document.getElementById('btnSalvarInteracao').addEventListener('click', () => {
+      const processoId = document.getElementById('selectProcessoInteracao').value;
+      const tipo = document.getElementById('tipoInteracao').value;
+      const data = document.getElementById('dataInteracao').value;
+      const detalhes = document.getElementById('detalhesInteracao').value.trim();
+      
+      if (!processoId) {
+        mostrarAlerta('alertInteracao', 'Selecione um processo primeiro.', 'error');
+        return;
+      }
+      
+      if (!data) {
+        mostrarAlerta('alertInteracao', 'Informe a data da interação.', 'error');
+        return;
+      }
+      
+      if (!detalhes) {
+        mostrarAlerta('alertInteracao', 'Descreva os detalhes da interação.', 'error');
+        return;
+      }
+      
+      const interacoes = carregarInteracoes();
+      interacoes.push({
+        id: Date.now().toString(),
+        processoId,
+        tipo,
+        data: data + 'T12:00:00', // Adiciona horário padrão
+        detalhes
+      });
+      
+      salvarInteracoes(interacoes);
+      document.getElementById('detalhesInteracao').value = '';
+      renderizarInteracoes();
+      mostrarAlerta('alertInteracao', 'Interação salva com sucesso!', 'success');
+      
+      setTimeout(() => {
+        document.getElementById('alertInteracao').innerHTML = '';
+      }, 3000);
+    });
+
+    document.getElementById('btnLimparInteracao').addEventListener('click', () => {
+      document.getElementById('detalhesInteracao').value = '';
+    });
+
+    window.deletarInteracao = function(id) {
+      if (!confirm('Deseja realmente excluir esta interação?')) return;
+      
+      let interacoes = carregarInteracoes();
+      interacoes = interacoes.filter(i => i.id !== id);
+      salvarInteracoes(interacoes);
+      renderizarInteracoes();
+    };
+
     // ========== CALCULADORA DE PRAZOS ==========
     document.getElementById('btnCalcularPrazo').addEventListener('click', () => {
       const dataInicial = document.getElementById('dataInicial').value;
@@ -1419,6 +1737,51 @@
       resultado.style.display = 'block';
     });
 
+    // ========== CALCULADORA DE HONORÁRIOS ==========
+    document.getElementById('btnCalcularHonorarios').addEventListener('click', () => {
+      const valorCausa = parseFloat(document.getElementById('valorCausa').value) || 0;
+      const percentual = parseFloat(document.getElementById('percentualHonorarios').value) || 0;
+      
+      if (valorCausa <= 0 || percentual <= 0) {
+        alert('Preencha o valor da causa e o percentual de honorários.');
+        return;
+      }
+      
+      const valorHonorarios = valorCausa * (percentual / 100);
+      document.getElementById('valorHonorarios').textContent = `R$ ${valorHonorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('resultadoHonorarios').classList.add('show');
+    });
+
+    // ========== CALCULADORA DE CUSTAS ==========
+    document.getElementById('btnCalcularCustas').addEventListener('click', () => {
+      const valorCausa = parseFloat(document.getElementById('valorCausaCustas').value) || 0;
+      const percentual = parseFloat(document.getElementById('percentualCustas').value) || 1;
+      
+      if (valorCausa <= 0) {
+        alert('Preencha o valor da causa.');
+        return;
+      }
+      
+      const valorCustas = valorCausa * (percentual / 100);
+      document.getElementById('valorCustas').textContent = `R$ ${valorCustas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('resultadoCustas').classList.add('show');
+    });
+
+    // ========== CALCULADORA DE PARCELAMENTO ==========
+    document.getElementById('btnCalcularParcelamento').addEventListener('click', () => {
+      const valorTotal = parseFloat(document.getElementById('valorTotalParcelamento').value) || 0;
+      const numeroParcelas = parseInt(document.getElementById('numeroParcelas').value) || 1;
+      
+      if (valorTotal <= 0 || numeroParcelas <= 0) {
+        alert('Preencha o valor total e o número de parcelas.');
+        return;
+      }
+      
+      const valorParcela = valorTotal / numeroParcelas;
+      document.getElementById('valorParcela').textContent = `R$ ${valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('resultadoParcelamento').classList.add('show');
+    });
+
     // ========== DASHBOARD ==========
     function atualizarDashboard() {
       const processos = carregarProcessos();
@@ -1446,10 +1809,12 @@
       localStorage.removeItem(DB_KEY);
       localStorage.removeItem(NOTES_KEY);
       localStorage.removeItem(CONTRATOS_KEY);
+      localStorage.removeItem(INTERACOES_KEY);
       
       alert('Todos os dados foram removidos com sucesso.');
       renderizarTabela();
       renderizarAnotacoes();
+      renderizarInteracoes();
       atualizarDashboard();
     });
 
@@ -1466,8 +1831,13 @@
     document.addEventListener('DOMContentLoaded', function() {
       renderizarTabela();
       atualizarSelectProcessos();
+      atualizarSelectProcessosInteracao();
       atualizarDashboard();
       atualizarContrato();
+      
+      // Definir data atual como padrão para interações
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('dataInteracao').value = hoje;
       
       // Adicionar dados de exemplo se não houver dados
       const processos = carregarProcessos();
