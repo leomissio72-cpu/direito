@@ -1,4 +1,11 @@
-<!-- jsPDF -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Jurídico - Dra. Advogada</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
@@ -14,63 +21,294 @@
       --danger:#ef4444;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:'Inter',sans-serif;background:var(--bg);color:#0b1b2b}
+    body{
+      margin:0;
+      font-family:'Inter',sans-serif;
+      background:var(--bg);
+      color:#0b1b2b;
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f4f6fb"/><path d="M30,30 L40,20 L60,40 L70,30 L80,40 L60,60 L40,40 Z" fill="%233366ff" opacity="0.03"/><circle cx="20" cy="80" r="8" fill="%232b61ff" opacity="0.03"/><rect x="80" y="70" width="15" height="15" fill="%230ea44e" opacity="0.03" transform="rotate(45 87.5 77.5)"/></svg>');
+      background-size: 200px 200px;
+    }
     .app{display:flex;min-height:100vh}
 
     /* SIDEBAR */
     .sidebar{
-      width:220px;padding:20px;background:#0f1724;color:#fff;display:flex;flex-direction:column;gap:18px;
+      width:220px;
+      padding:20px;
+      background:#0f1724;
+      color:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230f1724"/><path d="M30,20 L50,10 L70,20 L70,40 L50,50 L30,40 Z" fill="%233366ff" opacity="0.05"/><path d="M20,60 L40,50 L60,60 L60,80 L40,90 L20,80 Z" fill="%232b61ff" opacity="0.03"/></svg>');
+      background-size: 150px 150px;
     }
     .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:10px;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:700;
+      position: relative;
+      overflow: hidden;
+    }
+    .logo::after {
+      content: "⚖️";
+      position: absolute;
+      font-size: 20px;
+    }
     .brand h3{margin:0;font-size:16px}
+    .brand .advogada-nome {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
     nav{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-    .nav-btn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;border:none;background:transparent;color:rgba(255,255,255,0.9);cursor:pointer;font-weight:600;text-align:left;width:100%}
-    .nav-btn:hover{background:rgba(255,255,255,0.04)}
-    .nav-btn.active{background:rgba(255,255,255,0.06)}
-    .sidebar-footer{margin-top:auto;color:var(--muted);font-size:13px}
+    .nav-btn{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      background:transparent;
+      color:rgba(255,255,255,0.9);
+      cursor:pointer;
+      font-weight:600;
+      text-align:left;
+      width:100%;
+      transition: all 0.3s ease;
+    }
+    .nav-btn:hover{
+      background:rgba(255,255,255,0.08);
+      transform: translateX(5px);
+    }
+    .nav-btn.active{
+      background:rgba(255,255,255,0.12);
+      color:#fff;
+      box-shadow: 0 2px 8px rgba(51, 102, 255, 0.3);
+    }
+    .sidebar-footer{
+      margin-top:auto;
+      color:var(--muted);
+      font-size:13px;
+      text-align: center;
+      padding: 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+    }
 
     /* WORKSPACE */
     .workspace{flex:1;display:flex;flex-direction:column;min-width:0}
-    .topbar{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:transparent;border-bottom:1px solid rgba(16,24,40,0.04)}
-    .page-title{font-size:18px;font-weight:700;color:#0b1b2b}
+    .topbar{
+      height:68px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 20px;
+      background:transparent;
+      border-bottom:1px solid rgba(16,24,40,0.04);
+    }
+    .page-title{
+      font-size:18px;
+      font-weight:700;
+      color:#0b1b2b;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
     .user-area{display:flex;align-items:center;gap:12px}
-    .avatar{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .avatar{
+      width:40px;
+      height:40px;
+      border-radius:8px;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:700;
+    }
 
     .main-area{padding:18px;overflow:auto}
-    .container{background:var(--card);border-radius:12px;padding:18px;border:1px solid rgba(11,27,43,0.04);box-shadow:0 8px 24px rgba(11,27,43,0.04);margin-bottom:16px}
-    h2{margin:0 0 8px 0;color:#0b1b2b}
+    .container{
+      background:var(--card);
+      border-radius:12px;
+      padding:18px;
+      border:1px solid rgba(11,27,43,0.04);
+      box-shadow:0 8px 24px rgba(11,27,43,0.04);
+      margin-bottom:16px;
+      position: relative;
+    }
+    h2{
+      margin:0 0 8px 0;
+      color:#0b1b2b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
     .col-full{grid-column:1/-1}
-    label{display:block;margin-top:10px;color:var(--muted);font-weight:600;font-size:13px}
-    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b;font-family:'Inter',sans-serif;font-size:14px}
+    label{
+      display:block;
+      margin-top:10px;
+      color:var(--muted);
+      font-weight:600;
+      font-size:13px;
+    }
+    input,select,textarea{
+      width:100%;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid rgba(11,27,43,0.06);
+      background:#fff;
+      color:#0b1b2b;
+      font-family:'Inter',sans-serif;
+      font-size:14px;
+      transition: all 0.3s ease;
+    }
+    input:focus,select:focus,textarea:focus{
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(51, 102, 255, 0.1);
+    }
     textarea{min-height:100px;resize:vertical}
-    .actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:14px;transition:opacity 0.2s}
-    .btn:hover{opacity:0.9}
-    .btn.primary{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff}
-    .btn.ghost{background:transparent;border:1px solid rgba(11,27,43,0.06);color:#0b1b2b}
-    .btn.link{background:transparent;color:var(--muted);text-decoration:underline;padding:8px}
-    .btn.danger{background:var(--danger);color:#fff}
+    .actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      border-radius:8px;
+      border:none;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+      transition:all 0.3s ease;
+      text-decoration: none;
+    }
+    .btn:hover{
+      opacity:0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .btn.primary{
+      background:linear-gradient(90deg,var(--primary),var(--accent));
+      color:#fff;
+    }
+    .btn.ghost{
+      background:transparent;
+      border:1px solid rgba(11,27,43,0.06);
+      color:#0b1b2b;
+    }
+    .btn.link{
+      background:transparent;
+      color:var(--muted);
+      text-decoration:underline;
+      padding:8px;
+    }
+    .btn.danger{
+      background:var(--danger);
+      color:#fff;
+    }
+    .btn.success{
+      background:var(--success);
+      color:#fff;
+    }
 
-    table{width:100%;border-collapse:collapse;margin-top:12px;color:#0b1b2b}
-    th,td{padding:10px;border-bottom:1px solid rgba(11,27,43,0.04);text-align:left;font-size:14px}
-    th{color:var(--muted);font-weight:700}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:12px;
+      color:#0b1b2b;
+    }
+    th,td{
+      padding:10px;
+      border-bottom:1px solid rgba(11,27,43,0.04);
+      text-align:left;
+      font-size:14px;
+    }
+    th{
+      color:var(--muted);
+      font-weight:700;
+      background: rgba(51, 102, 255, 0.03);
+    }
     td .btn{padding:6px 10px;font-size:13px}
-    td select{padding:6px 8px;font-size:13px;border:1px solid rgba(11,27,43,0.1)}
+    td select{
+      padding:6px 8px;
+      font-size:13px;
+      border:1px solid rgba(11,27,43,0.1);
+      border-radius: 6px;
+    }
 
-    .no-data{color:var(--muted);padding:18px;text-align:center}
-    .note-card{background:#fafbff;border-left:4px solid var(--primary);padding:12px;border-radius:8px;margin-bottom:10px}
-    .note-meta{font-size:13px;color:var(--muted);margin-bottom:6px}
-    .note-text{font-size:14px;color:#0b1b2b}
+    .no-data{
+      color:var(--muted);
+      padding:18px;
+      text-align:center;
+    }
+    .note-card{
+      background:#fafbff;
+      border-left:4px solid var(--primary);
+      padding:12px;
+      border-radius:8px;
+      margin-bottom:10px;
+      transition: all 0.3s ease;
+    }
+    .note-card:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .note-meta{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .note-text{
+      font-size:14px;
+      color:#0b1b2b;
+    }
 
-    .alert{padding:12px 16px;border-radius:8px;margin-bottom:12px;font-size:14px}
-    .alert.success{background:#d1fae5;color:#065f46;border:1px solid #10b981}
-    .alert.error{background:#fee2e2;color:#991b1b;border:1px solid #ef4444}
+    .alert{
+      padding:12px 16px;
+      border-radius:8px;
+      margin-bottom:12px;
+      font-size:14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .alert.success{
+      background:#d1fae5;
+      color:#065f46;
+      border:1px solid #10b981;
+    }
+    .alert.error{
+      background:#fee2e2;
+      color:#991b1b;
+      border:1px solid #ef4444;
+    }
 
     .status-badge{
-      display:inline-block;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600;
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:6px;
+      font-size:12px;
+      font-weight:600;
     }
     .status-aguardando{background:#fef3c7;color:#92400e}
     .status-andamento{background:#dbeafe;color:#1e40af}
@@ -80,11 +318,123 @@
     .status-arquivado{background:#e5e7eb;color:#374151}
     .status-finalizado{background:#d1fae5;color:#065f46}
 
+    /* Contrato Styles */
+    .contrato-container {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 20px;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      position: relative;
+    }
+    .contrato-header {
+      text-align: center;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #cbd5e1;
+      padding-bottom: 16px;
+    }
+    .contrato-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .contrato-subtitle {
+      font-size: 16px;
+      color: #64748b;
+    }
+    .contrato-section {
+      margin-bottom: 20px;
+    }
+    .contrato-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+    .contrato-field {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .contrato-label {
+      font-weight: 600;
+      color: #475569;
+      min-width: 200px;
+    }
+    .contrato-value {
+      color: #1e293b;
+      flex: 1;
+      text-align: right;
+    }
+    .contrato-signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 60px;
+    }
+    .signature-line {
+      border-top: 1px solid #94a3b8;
+      padding-top: 8px;
+      text-align: center;
+      color: #64748b;
+    }
+    .contrato-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: center;
+    }
+
     @media (max-width:980px){
       .grid{grid-template-columns:1fr}
       .sidebar{width:64px}
-      .brand h3,.sidebar-footer{display:none}
+      .brand h3,.brand .advogada-nome,.sidebar-footer{display:none}
       .nav-btn .label{display:none}
+      .contrato-signatures {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
+    .tab {
+      display: none;
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid rgba(11,27,43,0.04);
+      box-shadow: 0 2px 8px rgba(11,27,43,0.04);
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 8px 0;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
     }
   </style>
 </head>
@@ -93,21 +443,29 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="brand">
-        <div class="logo">J</div>
+        <div class="logo"></div>
         <div>
           <h3>Sistema Jurídico</h3>
-          <div style="font-size:12px;color:var(--muted)">Escritório</div>
+          <div class="advogada-nome">Dra. Advogada</div>
         </div>
       </div>
 
       <nav>
-        <button class="nav-btn active" data-tab="cadastro">
+        <button class="nav-btn active" data-tab="dashboard">
+          <span class="material-icons">dashboard</span>
+          <span class="label">Dashboard</span>
+        </button>
+        <button class="nav-btn" data-tab="cadastro">
           <span class="material-icons">person_add</span>
           <span class="label">Cadastro</span>
         </button>
         <button class="nav-btn" data-tab="lista">
           <span class="material-icons">folder_open</span>
           <span class="label">Processos</span>
+        </button>
+        <button class="nav-btn" data-tab="contratos">
+          <span class="material-icons">description</span>
+          <span class="label">Contratos</span>
         </button>
         <button class="nav-btn" data-tab="anotacoes">
           <span class="material-icons">note_add</span>
@@ -121,10 +479,10 @@
 
       <div class="sidebar-footer">
         <div style="font-size:12px;margin-top:8px">
-          <strong>Armazenamento:</strong> Local
+          <strong>Dra. Advogada</strong>
         </div>
         <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px">
-          Os dados são salvos no navegador
+          OAB/SP 123.456
         </div>
       </div>
     </aside>
@@ -132,53 +490,79 @@
     <!-- WORKSPACE -->
     <div class="workspace">
       <div class="topbar">
-        <div class="page-title" id="pageTitle">Cadastro</div>
+        <div class="page-title" id="pageTitle">
+          <span class="material-icons">dashboard</span>
+          Dashboard
+        </div>
         <div class="user-area">
           <div style="text-align:right">
-            <div id="userName" style="font-weight:700">Sistema Local</div>
-            <div style="font-size:12px;color:var(--muted)">Armazenamento do navegador</div>
+            <div id="userName" style="font-weight:700">Dra. Advogada</div>
+            <div style="font-size:12px;color:var(--muted)">OAB/SP 123.456</div>
           </div>
           <div class="avatar">⚖️</div>
         </div>
       </div>
 
       <main class="main-area">
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="container tab" style="display:block">
+          <h2><span class="material-icons">dashboard</span>Dashboard do Escritório</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total de Processos</div>
+              <div class="stat-value" id="totalProcessos">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Processos Ativos</div>
+              <div class="stat-value" id="processosAtivos">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Honorários Mensais</div>
+              <div class="stat-value" id="honorariosMensais">R$ 0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Clientes Ativos</div>
+              <div class="stat-value" id="clientesAtivos">0</div>
+            </div>
+          </div>
+        </section>
+
         <!-- CADASTRO -->
-        <section id="cadastro" class="container tab" style="display:block">
-          <h2>Cadastro de Cliente & Processo</h2>
+        <section id="cadastro" class="container tab" style="display:none">
+          <h2><span class="material-icons">person_add</span>Cadastro de Cliente & Processo</h2>
           <div id="alertCadastro"></div>
           <form id="formCadastro" style="margin-top:12px">
             <div class="grid">
               <div>
                 <label>Nome completo *</label>
-                <input name="nome" type="text" required placeholder="Ex: José da Silva">
+                <input name="nome" type="text" required placeholder="Ex: José da Silva" id="inputNome">
 
                 <label>CPF</label>
-                <input name="cpf" type="text" placeholder="000.000.000-00">
+                <input name="cpf" type="text" placeholder="000.000.000-00" id="inputCpf">
 
                 <label>RG</label>
-                <input name="rg" type="text" placeholder="">
+                <input name="rg" type="text" placeholder="" id="inputRg">
               </div>
 
               <div>
                 <label>Telefone / WhatsApp</label>
-                <input name="telefone" type="text" placeholder="(11) 9xxxx-xxxx">
+                <input name="telefone" type="text" placeholder="(11) 9xxxx-xxxx" id="inputTelefone">
 
                 <label>E-mail</label>
-                <input name="email" type="email" placeholder="exemplo@dominio.com">
+                <input name="email" type="email" placeholder="exemplo@dominio.com" id="inputEmail">
 
                 <label>Responsável (advogado)</label>
-                <input name="responsavel" type="text" placeholder="Adv. Fulano">
+                <input name="responsavel" type="text" placeholder="Dra. Advogada" value="Dra. Advogada" id="inputResponsavel">
               </div>
 
               <div class="col-full">
                 <label>Endereço</label>
-                <input name="endereco" type="text" placeholder="Rua, nº, bairro, cidade - UF">
+                <input name="endereco" type="text" placeholder="Rua, nº, bairro, cidade - UF" id="inputEndereco">
               </div>
 
               <div>
                 <label>Categoria do processo</label>
-                <select name="categoria">
+                <select name="categoria" id="inputCategoria">
                   <option value="">Selecione...</option>
                   <option value="Cível">Cível</option>
                   <option value="Trabalhista">Trabalhista</option>
@@ -192,20 +576,20 @@
                 </select>
 
                 <label>Número do processo</label>
-                <input name="numero" type="text" placeholder="0001234-56.2025.8.26.0000">
+                <input name="numero" type="text" placeholder="0001234-56.2025.8.26.0000" id="inputNumero">
               </div>
 
               <div>
                 <label>Vara / Comarca</label>
-                <input name="vara" type="text" placeholder="Ex: 3ª Vara Cível de São Paulo">
+                <input name="vara" type="text" placeholder="Ex: 3ª Vara Cível de São Paulo" id="inputVara">
 
                 <label>Parte Contrária</label>
-                <input name="parte" type="text" placeholder="Nome da parte contrária">
+                <input name="parte" type="text" placeholder="Nome da parte contrária" id="inputParte">
               </div>
 
               <div>
                 <label>Status do Processo</label>
-                <select name="status">
+                <select name="status" id="inputStatus">
                   <option value="Aguardando Distribuição">Aguardando Distribuição</option>
                   <option value="Em Andamento">Em Andamento</option>
                   <option value="Aguardando Decisão">Aguardando Decisão</option>
@@ -218,15 +602,15 @@
                 </select>
 
                 <label>Data de abertura</label>
-                <input name="dataAbertura" type="date">
+                <input name="dataAbertura" type="date" id="inputDataAbertura">
               </div>
 
               <div>
                 <label>Valor da causa (R$)</label>
-                <input name="valor" type="number" step="0.01" placeholder="0.00">
+                <input name="valor" type="number" step="0.01" placeholder="0.00" id="inputValor">
 
                 <label>Honorários (R$)</label>
-                <input name="honorarios" type="number" step="0.01" placeholder="0.00">
+                <input name="honorarios" type="number" step="0.01" placeholder="0.00" id="inputHonorarios">
               </div>
 
               <div>
@@ -247,7 +631,7 @@
 
               <div class="col-full">
                 <label>Observações / Anotações</label>
-                <textarea name="observacoes" placeholder="Anotações importantes, prazos, lembretes..."></textarea>
+                <textarea name="observacoes" placeholder="Anotações importantes, prazos, lembretes..." id="inputObservacoes"></textarea>
               </div>
             </div>
 
@@ -255,11 +639,14 @@
               <button class="btn primary" type="submit">
                 <span class="material-icons">save</span> Salvar Processo
               </button>
+              <button type="button" class="btn success" id="btnGerarContrato">
+                <span class="material-icons">description</span> Gerar Contrato
+              </button>
               <button type="button" class="btn ghost" id="btnExportPdf">
                 <span class="material-icons">picture_as_pdf</span> Exportar PDF
               </button>
               <button type="button" class="btn link" id="btnLimparForm">
-                Limpar Formulário
+                <span class="material-icons">clear</span> Limpar Formulário
               </button>
             </div>
           </form>
@@ -268,7 +655,7 @@
         <!-- LISTA -->
         <section id="lista" class="container tab" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-            <h2>Processos Registrados</h2>
+            <h2><span class="material-icons">folder_open</span>Processos Registrados</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <input id="searchInput" placeholder="Pesquisar..." style="padding:8px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);min-width:200px">
               <button class="btn ghost" id="btnRefresh">
@@ -288,9 +675,102 @@
           </div>
         </section>
 
+        <!-- CONTRATOS -->
+        <section id="contratos" class="container tab" style="display:none">
+          <h2><span class="material-icons">description</span>Contratos</h2>
+          <div id="alertContratos"></div>
+          
+          <div class="contrato-container" id="contratoPreview">
+            <div class="contrato-header">
+              <div class="contrato-title">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS</div>
+              <div class="contrato-subtitle">Instrumento Particular</div>
+            </div>
+            
+            <div class="contrato-section">
+              <div class="contrato-section-title">DADOS DAS PARTES</div>
+              <div class="contrato-field">
+                <span class="contrato-label">CONTRATANTE:</span>
+                <span class="contrato-value" id="contratoCliente">[Nome do Cliente]</span>
+              </div>
+              <div class="contrato-field">
+                <span class="contrato-label">CPF:</span>
+                <span class="contrato-value" id="contratoCpf">[CPF do Cliente]</span>
+              </div>
+              <div class="contrato-field">
+                <span class="contrato-label">ENDEREÇO:</span>
+                <span class="contrato-value" id="contratoEndereco">[Endereço do Cliente]</span>
+              </div>
+              <div class="contrato-field">
+                <span class="contrato-label">CONTRATADA:</span>
+                <span class="contrato-value">Dra. Advogada - OAB/SP 123.456</span>
+              </div>
+            </div>
+
+            <div class="contrato-section">
+              <div class="contrato-section-title">OBJETO DO CONTRATO</div>
+              <div class="contrato-field">
+                <span class="contrato-label">CATEGORIA:</span>
+                <span class="contrato-value" id="contratoCategoria">[Categoria do Processo]</span>
+              </div>
+              <div class="contrato-field">
+                <span class="contrato-label">NÚMERO DO PROCESSO:</span>
+                <span class="contrato-value" id="contratoNumero">[Número do Processo]</span>
+              </div>
+              <div class="contrato-field">
+                <span class="contrato-label">VARA/COMARCA:</span>
+                <span class="contrato-value" id="contratoVara">[Vara/Comarca]</span>
+              </div>
+              <div class="contrato-field">
+                <span class="contrato-label">PARTE CONTRÁRIA:</span>
+                <span class="contrato-value" id="contratoParte">[Parte Contrária]</span>
+              </div>
+            </div>
+
+            <div class="contrato-section">
+              <div class="contrato-section-title">HONORÁRIOS ADVOCATÍCIOS</div>
+              <div class="contrato-field">
+                <span class="contrato-label">VALOR DA CAUSA:</span>
+                <span class="contrato-value" id="contratoValor">R$ 0,00</span>
+              </div>
+              <div class="contrato-field">
+                <span class="contrato-label">HONORÁRIOS:</span>
+                <span class="contrato-value" id="contratoHonorarios">R$ 0,00</span>
+              </div>
+              <div class="contrato-field">
+                <span class="contrato-label">FORMA DE PAGAMENTO:</span>
+                <span class="contrato-value" id="contratoPagamento">[Forma de Pagamento]</span>
+              </div>
+            </div>
+
+            <div class="contrato-signatures">
+              <div>
+                <div class="signature-line">___________________________________</div>
+                <div>CONTRATANTE</div>
+                <div id="contratoAssinaturaCliente">[Nome do Cliente]</div>
+                <div>CPF: <span id="contratoAssinaturaCpf">[CPF]</span></div>
+              </div>
+              <div>
+                <div class="signature-line">___________________________________</div>
+                <div>CONTRATADA</div>
+                <div>Dra. Advogada</div>
+                <div>OAB/SP 123.456</div>
+              </div>
+            </div>
+
+            <div class="contrato-actions">
+              <button class="btn primary" id="btnImprimirContrato">
+                <span class="material-icons">print</span> Imprimir Contrato
+              </button>
+              <button class="btn ghost" id="btnSalvarContrato">
+                <span class="material-icons">download</span> Salvar PDF
+              </button>
+            </div>
+          </div>
+        </section>
+
         <!-- ANOTAÇÕES -->
         <section id="anotacoes" class="container tab" style="display:none">
-          <h2>Anotações</h2>
+          <h2><span class="material-icons">note_add</span>Anotações</h2>
           <div id="alertAnotacoes"></div>
 
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
@@ -318,8 +798,9 @@
 
         <!-- FERRAMENTAS -->
         <section id="ferramentas" class="container tab" style="display:none">
-          <h2>Calculadora de Prazos Processuais</h2>
+          <h2><span class="material-icons">build</span>Ferramentas</h2>
           
+          <h3 style="margin-top:20px">Calculadora de Prazos Processuais</h3>
           <div class="grid" style="margin-top:12px">
             <div>
               <label>Data Inicial</label>
@@ -381,9 +862,11 @@
     // ========== ARMAZENAMENTO ==========
     const DB_KEY = 'processos_juridicos';
     const NOTES_KEY = 'anotacoes_juridicas';
+    const CONTRATOS_KEY = 'contratos_gerados';
 
     function salvarProcessos(processos) {
       localStorage.setItem(DB_KEY, JSON.stringify(processos));
+      atualizarDashboard();
     }
 
     function carregarProcessos() {
@@ -397,6 +880,15 @@
 
     function carregarAnotacoes() {
       const data = localStorage.getItem(NOTES_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+
+    function salvarContratos(contratos) {
+      localStorage.setItem(CONTRATOS_KEY, JSON.stringify(contratos));
+    }
+
+    function carregarContratos() {
+      const data = localStorage.getItem(CONTRATOS_KEY);
       return data ? JSON.parse(data) : [];
     }
 
@@ -428,8 +920,10 @@
         
         // Atualizar título
         const titulos = {
+          'dashboard': 'Dashboard',
           'cadastro': 'Cadastro',
           'lista': 'Processos Registrados',
+          'contratos': 'Contratos',
           'anotacoes': 'Anotações',
           'ferramentas': 'Ferramentas'
         };
@@ -445,7 +939,38 @@
           atualizarSelectProcessos();
           renderizarAnotacoes();
         }
+
+        // Atualizar dashboard
+        if (tab === 'dashboard') {
+          atualizarDashboard();
+        }
       });
+    });
+
+    // ========== ATUALIZAÇÃO DO CONTRATO EM TEMPO REAL ==========
+    function atualizarContrato() {
+      const form = document.getElementById('formCadastro');
+      const formData = new FormData(form);
+      
+      // Atualizar dados do contrato
+      document.getElementById('contratoCliente').textContent = formData.get('nome') || '[Nome do Cliente]';
+      document.getElementById('contratoCpf').textContent = formData.get('cpf') || '[CPF do Cliente]';
+      document.getElementById('contratoEndereco').textContent = formData.get('endereco') || '[Endereço do Cliente]';
+      document.getElementById('contratoCategoria').textContent = formData.get('categoria') || '[Categoria do Processo]';
+      document.getElementById('contratoNumero').textContent = formData.get('numero') || '[Número do Processo]';
+      document.getElementById('contratoVara').textContent = formData.get('vara') || '[Vara/Comarca]';
+      document.getElementById('contratoParte').textContent = formData.get('parte') || '[Parte Contrária]';
+      document.getElementById('contratoValor').textContent = formData.get('valor') ? `R$ ${parseFloat(formData.get('valor')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'R$ 0,00';
+      document.getElementById('contratoHonorarios').textContent = formData.get('honorarios') ? `R$ ${parseFloat(formData.get('honorarios')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'R$ 0,00';
+      document.getElementById('contratoPagamento').textContent = formData.get('formaPagamento') || '[Forma de Pagamento]';
+      document.getElementById('contratoAssinaturaCliente').textContent = formData.get('nome') || '[Nome do Cliente]';
+      document.getElementById('contratoAssinaturaCpf').textContent = formData.get('cpf') || '[CPF]';
+    }
+
+    // Adicionar event listeners para atualizar o contrato em tempo real
+    document.querySelectorAll('#formCadastro input, #formCadastro select, #formCadastro textarea').forEach(element => {
+      element.addEventListener('input', atualizarContrato);
+      element.addEventListener('change', atualizarContrato);
     });
 
     // ========== FORMULÁRIO DE CADASTRO ==========
@@ -481,8 +1006,13 @@
       salvarProcessos(processos);
       
       mostrarAlerta('alertCadastro', 'Processo salvo com sucesso!', 'success');
+      
+      // Limpar formulário
       e.target.reset();
       document.getElementById('parcelasInput').disabled = true;
+      
+      // Atualizar contrato
+      atualizarContrato();
       
       setTimeout(() => {
         document.getElementById('alertCadastro').innerHTML = '';
@@ -493,9 +1023,55 @@
     document.getElementById('btnLimparForm').addEventListener('click', () => {
       document.getElementById('formCadastro').reset();
       document.getElementById('parcelasInput').disabled = true;
+      atualizarContrato();
     });
 
-    // ========== EXPORTAR PDF ==========
+    // ========== GERAR CONTRATO ==========
+    document.getElementById('btnGerarContrato').addEventListener('click', () => {
+      const form = document.getElementById('formCadastro');
+      const formData = new FormData(form);
+      
+      if (!formData.get('nome')) {
+        mostrarAlerta('alertCadastro', 'Preencha pelo menos o nome do cliente para gerar o contrato.', 'error');
+        return;
+      }
+      
+      // Navegar para a aba de contratos
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-tab="contratos"]').classList.add('active');
+      document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
+      document.getElementById('contratos').style.display = 'block';
+      document.getElementById('pageTitle').textContent = 'Contratos';
+      
+      mostrarAlerta('alertContratos', 'Contrato gerado com sucesso! Preencha os dados no cadastro para atualizar automaticamente.', 'success');
+    });
+
+    // ========== IMPRIMIR CONTRATO ==========
+    document.getElementById('btnImprimirContrato').addEventListener('click', () => {
+      window.print();
+    });
+
+    // ========== SALVAR CONTRATO PDF ==========
+    document.getElementById('btnSalvarContrato').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Adicionar conteúdo do contrato ao PDF
+      const contratoElement = document.getElementById('contratoPreview');
+      const contratoText = contratoElement.innerText;
+      
+      doc.setFontSize(16);
+      doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS', 20, 20);
+      doc.setFontSize(10);
+      
+      const lines = doc.splitTextToSize(contratoText, 170);
+      doc.text(lines, 20, 40);
+      
+      doc.save(`contrato-${Date.now()}.pdf`);
+      mostrarAlerta('alertContratos', 'Contrato salvo como PDF!', 'success');
+    });
+
+    // ========== EXPORTAR PDF DO CADASTRO ==========
     document.getElementById('btnExportPdf').addEventListener('click', () => {
       const form = document.getElementById('formCadastro');
       const formData = new FormData(form);
@@ -843,6 +1419,25 @@
       resultado.style.display = 'block';
     });
 
+    // ========== DASHBOARD ==========
+    function atualizarDashboard() {
+      const processos = carregarProcessos();
+      const processosAtivos = processos.filter(p => 
+        p.status !== 'Arquivado' && p.status !== 'Finalizado' && p.status !== 'Trânsito em Julgado'
+      );
+      
+      const honorariosMensais = processos.reduce((total, p) => {
+        return total + (parseFloat(p.honorarios) || 0);
+      }, 0);
+      
+      const clientesUnicos = [...new Set(processos.map(p => p.cpf))].length;
+      
+      document.getElementById('totalProcessos').textContent = processos.length;
+      document.getElementById('processosAtivos').textContent = processosAtivos.length;
+      document.getElementById('honorariosMensais').textContent = `R$ ${honorariosMensais.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('clientesAtivos').textContent = clientesUnicos;
+    }
+
     // ========== LIMPAR TODOS OS DADOS ==========
     document.getElementById('btnLimparTodos').addEventListener('click', () => {
       if (!confirm('ATENÇÃO: Isso irá apagar TODOS os processos e anotações. Deseja continuar?')) return;
@@ -850,20 +1445,63 @@
       
       localStorage.removeItem(DB_KEY);
       localStorage.removeItem(NOTES_KEY);
+      localStorage.removeItem(CONTRATOS_KEY);
       
       alert('Todos os dados foram removidos com sucesso.');
       renderizarTabela();
       renderizarAnotacoes();
+      atualizarDashboard();
     });
 
     // ========== UTILITÁRIOS ==========
     function mostrarAlerta(containerId, mensagem, tipo) {
       const container = document.getElementById(containerId);
-      container.innerHTML = `<div class="alert ${tipo}">${mensagem}</div>`;
+      container.innerHTML = `<div class="alert ${tipo}">
+        <span class="material-icons">${tipo === 'success' ? 'check_circle' : 'error'}</span>
+        ${mensagem}
+      </div>`;
     }
 
     // Inicializar ao carregar
-    renderizarTabela();
+    document.addEventListener('DOMContentLoaded', function() {
+      renderizarTabela();
+      atualizarSelectProcessos();
+      atualizarDashboard();
+      atualizarContrato();
+      
+      // Adicionar dados de exemplo se não houver dados
+      const processos = carregarProcessos();
+      if (processos.length === 0) {
+        // Adicionar processo de exemplo
+        const processoExemplo = {
+          id: Date.now().toString(),
+          dataCadastro: new Date().toISOString(),
+          nome: 'João Silva Santos',
+          cpf: '123.456.789-00',
+          rg: '12.345.678-9',
+          telefone: '(11) 99999-1234',
+          email: 'joao.silva@email.com',
+          responsavel: 'Dra. Advogada',
+          endereco: 'Rua das Flores, 123, Centro, São Paulo - SP',
+          categoria: 'Cível',
+          numero: '0001234-56.2024.8.26.0001',
+          vara: '3ª Vara Cível de São Paulo',
+          parte: 'Empresa XYZ Ltda',
+          status: 'Em Andamento',
+          dataAbertura: '2024-01-15',
+          valor: '50000',
+          honorarios: '5000',
+          formaPagamento: 'Parcelado',
+          parcelas: '10',
+          observacoes: 'Processo sobre cobrança indevida.'
+        };
+        
+        processos.push(processoExemplo);
+        salvarProcessos(processos);
+        renderizarTabela();
+        atualizarDashboard();
+      }
+    });
   </script>
 </body>
 </html>
