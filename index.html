@@ -318,166 +318,105 @@
     .status-arquivado{background:#e5e7eb;color:#374151}
     .status-finalizado{background:#d1fae5;color:#065f46}
 
-    /* Contrato Styles */
-    .contrato-container {
-      background: #f8fafc;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 24px;
-      margin-top: 20px;
-      font-family: 'Inter', sans-serif;
-      line-height: 1.6;
-      position: relative;
-    }
-    .contrato-header {
-      text-align: center;
+    /* Perfil Styles */
+    .perfil-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
       margin-bottom: 24px;
-      border-bottom: 2px solid #cbd5e1;
-      padding-bottom: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(11,27,43,0.06);
     }
-    .contrato-title {
+    .perfil-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 32px;
+      font-weight: 700;
+    }
+    .perfil-info {
+      flex: 1;
+    }
+    .perfil-nome {
       font-size: 24px;
       font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 8px;
-    }
-    .contrato-subtitle {
-      font-size: 16px;
-      color: #64748b;
-    }
-    .contrato-section {
-      margin-bottom: 20px;
-    }
-    .contrato-section-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #334155;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 8px;
-    }
-    .contrato-field {
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .contrato-label {
-      font-weight: 600;
-      color: #475569;
-      min-width: 200px;
-    }
-    .contrato-value {
-      color: #1e293b;
-      flex: 1;
-      text-align: right;
-    }
-    .contrato-signatures {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      margin-top: 60px;
-    }
-    .signature-line {
-      border-top: 1px solid #94a3b8;
-      padding-top: 8px;
-      text-align: center;
-      color: #64748b;
-    }
-    .contrato-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-      justify-content: center;
-    }
-
-    /* Interação com Cliente */
-    .interacao-card {
-      background: #fafbff;
-      border-left: 4px solid var(--primary);
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      transition: all 0.3s ease;
-    }
-    .interacao-card:hover {
-      transform: translateX(5px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .interacao-meta {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .interacao-text {
-      font-size: 14px;
       color: #0b1b2b;
+      margin: 0 0 8px 0;
     }
-    .interacao-tipo {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-left: 8px;
+    .perfil-detalhes {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
     }
-    .tipo-reuniao { background: #dbeafe; color: #1e40af; }
-    .tipo-telefonema { background: #e9d5ff; color: #6b21a8; }
-    .tipo-email { background: #d1fae5; color: #065f46; }
-    .tipo-anotacao { background: #fef3c7; color: #92400e; }
-
-    /* Calculadoras */
-    .calc-container {
+    .perfil-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .perfil-stat {
       background: #fafbff;
-      border: 1px solid rgba(11,27,43,0.06);
       border-radius: 8px;
       padding: 16px;
-      margin-bottom: 16px;
+      text-align: center;
     }
-    .calc-result {
-      background: #e0f2fe;
-      border: 2px solid var(--primary);
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 12px;
-      display: none;
-    }
-    .calc-result.show {
-      display: block;
-    }
-    .calc-title {
-      font-size: 16px;
+    .perfil-stat-value {
+      font-size: 24px;
       font-weight: 700;
       color: var(--primary);
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
-    .calc-value {
+    .perfil-stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .info-section {
+      margin-bottom: 24px;
+    }
+    .info-section-title {
       font-size: 18px;
-      font-weight: 700;
+      font-weight: 600;
       color: #0b1b2b;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-
-    /* Filtros */
-    .filtros-container {
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+    .info-item {
       background: #fafbff;
-      border: 1px solid rgba(11,27,43,0.06);
       border-radius: 8px;
       padding: 16px;
-      margin-bottom: 16px;
     }
-    .filtros-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
+    .info-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 4px;
     }
-    .filtro-acoes {
+    .info-value {
+      font-size: 16px;
+      color: #0b1b2b;
+      font-weight: 500;
+    }
+    .financeiro-status {
       display: flex;
-      gap: 8px;
       align-items: center;
+      gap: 8px;
     }
+    .status-pago { color: var(--success); }
+    .status-pendente { color: var(--warning); }
+    .status-atrasado { color: var(--danger); }
 
     /* Modal PDF */
     .modal-overlay {
@@ -549,11 +488,11 @@
       .sidebar{width:64px}
       .brand h3,.brand .advogada-nome,.sidebar-footer{display:none}
       .nav-btn .label{display:none}
-      .contrato-signatures {
-        grid-template-columns: 1fr;
-        gap: 20px;
+      .perfil-header {
+        flex-direction: column;
+        text-align: center;
       }
-      .filtros-grid {
+      .info-grid {
         grid-template-columns: 1fr;
       }
       .modal-pdf {
@@ -623,6 +562,10 @@
         <button class="nav-btn" data-tab="lista">
           <span class="material-icons">folder_open</span>
           <span class="label">Processos</span>
+        </button>
+        <button class="nav-btn" data-tab="perfil">
+          <span class="material-icons">person</span>
+          <span class="label">Perfil</span>
         </button>
         <button class="nav-btn" data-tab="contratos">
           <span class="material-icons">description</span>
@@ -841,6 +784,22 @@
 
           <div id="tableWrapper" style="margin-top:12px;overflow-x:auto">
             <div class="no-data">Carregando registros...</div>
+          </div>
+        </section>
+
+        <!-- PERFIL -->
+        <section id="perfil" class="container tab" style="display:none">
+          <h2><span class="material-icons">person</span>Perfil do Cliente</h2>
+          
+          <div style="margin-bottom: 20px;">
+            <label>Selecionar Cliente</label>
+            <select id="selectClientePerfil" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(11,27,43,0.06);background:#fff;color:#0b1b2b">
+              <option value="">--- selecione um cliente ---</option>
+            </select>
+          </div>
+
+          <div id="perfilConteudo">
+            <div class="no-data">Selecione um cliente para visualizar o perfil.</div>
           </div>
         </section>
 
@@ -1303,6 +1262,7 @@
           'dashboard': 'Dashboard',
           'cadastro': 'Cadastro',
           'lista': 'Processos Registrados',
+          'perfil': 'Perfil do Cliente',
           'contratos': 'Contratos',
           'contratos-criados': 'Contratos Criados',
           'anotacoes': 'Anotações',
@@ -1331,6 +1291,11 @@
         // Atualizar contratos criados
         if (tab === 'contratos-criados') {
           renderizarContratosCriados();
+        }
+
+        // Atualizar perfil
+        if (tab === 'perfil') {
+          atualizarSelectClientesPerfil();
         }
 
         // Atualizar dashboard
@@ -1704,6 +1669,308 @@
       
       renderizarTabela();
     };
+
+    // ========== PERFIL DO CLIENTE ==========
+    function atualizarSelectClientesPerfil() {
+      const processos = carregarProcessos();
+      const select = document.getElementById('selectClientePerfil');
+      
+      select.innerHTML = '<option value="">--- selecione um cliente ---</option>';
+      
+      // Obter clientes únicos
+      const clientesUnicos = [];
+      const cpfsVistos = new Set();
+      
+      processos.forEach(p => {
+        if (p.cpf && !cpfsVistos.has(p.cpf)) {
+          cpfsVistos.add(p.cpf);
+          clientesUnicos.push({
+            nome: p.nome,
+            cpf: p.cpf,
+            email: p.email,
+            telefone: p.telefone
+          });
+        }
+      });
+      
+      clientesUnicos.forEach(cliente => {
+        const option = document.createElement('option');
+        option.value = cliente.cpf;
+        option.textContent = `${cliente.nome} - ${cliente.cpf}`;
+        select.appendChild(option);
+      });
+    }
+
+    document.getElementById('selectClientePerfil').addEventListener('change', (e) => {
+      const cpf = e.target.value;
+      if (cpf) {
+        renderizarPerfilCliente(cpf);
+      } else {
+        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Selecione um cliente para visualizar o perfil.</div>';
+      }
+    });
+
+    function renderizarPerfilCliente(cpf) {
+      const processos = carregarProcessos();
+      const processosCliente = processos.filter(p => p.cpf === cpf);
+      
+      if (processosCliente.length === 0) {
+        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Nenhum processo encontrado para este cliente.</div>';
+        return;
+      }
+      
+      const cliente = processosCliente[0];
+      const interacoes = carregarInteracoes();
+      const interacoesCliente = interacoes.filter(i => 
+        processosCliente.some(p => p.id === i.processoId)
+      );
+      
+      // Calcular estatísticas financeiras
+      const totalHonorarios = processosCliente.reduce((total, p) => total + (parseFloat(p.honorarios) || 0), 0);
+      const totalValorCausa = processosCliente.reduce((total, p) => total + (parseFloat(p.valor) || 0), 0);
+      const processosAtivos = processosCliente.filter(p => 
+        p.status !== 'Arquivado' && p.status !== 'Finalizado' && p.status !== 'Trânsito em Julgado'
+      ).length;
+      
+      // Calcular situação financeira (simulação)
+      const situacaoFinanceira = calcularSituacaoFinanceira(processosCliente);
+      
+      const html = `
+        <div class="perfil-header">
+          <div class="perfil-avatar">${cliente.nome.charAt(0)}</div>
+          <div class="perfil-info">
+            <h1 class="perfil-nome">${cliente.nome}</h1>
+            <p class="perfil-detalhes">
+              CPF: ${cliente.cpf} | Email: ${cliente.email || 'Não informado'} | Telefone: ${cliente.telefone || 'Não informado'}
+            </p>
+          </div>
+        </div>
+        
+        <div class="perfil-stats">
+          <div class="perfil-stat">
+            <div class="perfil-stat-value">${processosCliente.length}</div>
+            <div class="perfil-stat-label">Total de Processos</div>
+          </div>
+          <div class="perfil-stat">
+            <div class="perfil-stat-value">${processosAtivos}</div>
+            <div class="perfil-stat-label">Processos Ativos</div>
+          </div>
+          <div class="perfil-stat">
+            <div class="perfil-stat-value">R$ ${totalHonorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            <div class="perfil-stat-label">Total Honorários</div>
+          </div>
+          <div class="perfil-stat">
+            <div class="perfil-stat-value">R$ ${totalValorCausa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            <div class="perfil-stat-label">Valor Total Causas</div>
+          </div>
+        </div>
+        
+        <div class="info-section">
+          <h3 class="info-section-title">
+            <span class="material-icons">person</span>
+            Informações Pessoais
+          </h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Nome Completo</div>
+              <div class="info-value">${cliente.nome}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">CPF</div>
+              <div class="info-value">${cliente.cpf}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">RG</div>
+              <div class="info-value">${cliente.rg || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Email</div>
+              <div class="info-value">${cliente.email || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Telefone</div>
+              <div class="info-value">${cliente.telefone || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Endereço</div>
+              <div class="info-value">${cliente.endereco || 'Não informado'}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="info-section">
+          <h3 class="info-section-title">
+            <span class="material-icons">attach_money</span>
+            Situação Financeira
+          </h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Status Financeiro</div>
+              <div class="info-value financeiro-status ${situacaoFinanceira.status === 'regular' ? 'status-pago' : situacaoFinanceira.status === 'atraso' ? 'status-atrasado' : 'status-pendente'}">
+                <span class="material-icons" style="font-size: 16px;">
+                  ${situacaoFinanceira.status === 'regular' ? 'check_circle' : situacaoFinanceira.status === 'atraso' ? 'warning' : 'schedule'}
+                </span>
+                ${situacaoFinanceira.descricao}
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Total em Honorários</div>
+              <div class="info-value">R$ ${totalHonorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Valor Pendente</div>
+              <div class="info-value">R$ ${situacaoFinanceira.valorPendente.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Próximo Vencimento</div>
+              <div class="info-value">${situacaoFinanceira.proximoVencimento || 'Não há'}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="info-section">
+          <h3 class="info-section-title">
+            <span class="material-icons">folder_open</span>
+            Processos do Cliente
+          </h3>
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Categoria</th>
+                  <th>Status</th>
+                  <th>Data Abertura</th>
+                  <th>Valor Causa</th>
+                  <th>Honorários</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${processosCliente.map(p => `
+                  <tr>
+                    <td>${p.numero || 'S/N'}</td>
+                    <td>${p.categoria || '-'}</td>
+                    <td>
+                      <span class="status-badge status-${p.status.toLowerCase().replace(' ', '')}">
+                        ${p.status}
+                      </span>
+                    </td>
+                    <td>${p.dataAbertura ? new Date(p.dataAbertura).toLocaleDateString('pt-BR') : '-'}</td>
+                    <td>${p.valor ? `R$ ${parseFloat(p.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '-'}</td>
+                    <td>${p.honorarios ? `R$ ${parseFloat(p.honorarios).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="info-section">
+          <h3 class="info-section-title">
+            <span class="material-icons">history</span>
+            Histórico de Interações
+          </h3>
+          ${interacoesCliente.length > 0 ? `
+            <div>
+              ${interacoesCliente.slice(0, 5).map(i => {
+                const processo = processosCliente.find(p => p.id === i.processoId);
+                const tipoLabel = {
+                  'reuniao': 'Reunião',
+                  'telefonema': 'Telefonema',
+                  'email': 'E-mail',
+                  'anotacao': 'Anotação'
+                }[i.tipo];
+                
+                return `
+                  <div class="note-card">
+                    <div class="note-meta">
+                      <span>${new Date(i.data).toLocaleString('pt-BR')}</span>
+                      <span>${tipoLabel} - ${processo ? processo.numero || 'Processo' : 'Processo'}</span>
+                    </div>
+                    <div class="note-text">${i.detalhes}</div>
+                  </div>
+                `;
+              }).join('')}
+              ${interacoesCliente.length > 5 ? `
+                <div style="text-align: center; margin-top: 12px;">
+                  <button class="btn link" onclick="alert('Total de interações: ${interacoesCliente.length}')">
+                    Ver todas as ${interacoesCliente.length} interações
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          ` : '<div class="no-data">Nenhuma interação registrada para este cliente.</div>'}
+        </div>
+        
+        <div class="actions">
+          <button class="btn primary" onclick="exportarPerfilCliente('${cpf}')">
+            <span class="material-icons">download</span> Exportar Perfil
+          </button>
+          <button class="btn ghost" onclick="imprimirPerfilCliente()">
+            <span class="material-icons">print</span> Imprimir Perfil
+          </button>
+        </div>
+      `;
+      
+      document.getElementById('perfilConteudo').innerHTML = html;
+    }
+
+    function calcularSituacaoFinanceira(processos) {
+      // Simulação de cálculo da situação financeira
+      let valorPendente = 0;
+      let proximoVencimento = null;
+      let status = 'regular';
+      
+      processos.forEach(p => {
+        if (p.formaPagamento === 'Parcelado' && p.parcelas) {
+          const valorParcela = (parseFloat(p.honorarios) || 0) / parseInt(p.parcelas);
+          valorPendente += valorParcela * 2; // Simulação: 2 parcelas pendentes
+        } else if (p.formaPagamento === 'À Vista' && p.honorarios) {
+          valorPendente += parseFloat(p.honorarios) || 0;
+        }
+      });
+      
+      if (valorPendente > 0) {
+        status = 'pendente';
+        // Simular próximo vencimento (5 dias a partir de hoje)
+        const data = new Date();
+        data.setDate(data.getDate() + 5);
+        proximoVencimento = data.toLocaleDateString('pt-BR');
+        
+        if (valorPendente > 1000) {
+          status = 'atraso';
+        }
+      }
+      
+      return {
+        status,
+        descricao: status === 'regular' ? 'Em dia' : status === 'pendente' ? 'Pagamentos pendentes' : 'Pagamentos em atraso',
+        valorPendente,
+        proximoVencimento
+      };
+    }
+
+    function exportarPerfilCliente(cpf) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      doc.setFontSize(18);
+      doc.text('Perfil do Cliente - Sistema Jurídico', 20, 20);
+      
+      doc.setFontSize(12);
+      let y = 40;
+      
+      // Aqui você pode adicionar o conteúdo do perfil ao PDF
+      doc.text('Relatório de Perfil do Cliente', 20, y);
+      y += 10;
+      doc.text('CPF: ' + cpf, 20, y);
+      
+      doc.save(`perfil-cliente-${cpf}-${Date.now()}.pdf`);
+    }
+
+    function imprimirPerfilCliente() {
+      window.print();
+    }
 
     // ========== CONTRATOS CRIADOS ==========
     function renderizarContratosCriados(filtros = {}) {
@@ -2306,7 +2573,7 @@
       const valorCustas = valorCausa * (percentual / 100);
       document.getElementById('valorCustas').textContent = `R$ ${valorCustas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('resultadoCustas').classList.add('show');
-    });
+    };
 
     // ========== CALCULADORA DE PARCELAMENTO ==========
     document.getElementById('btnCalcularParcelamento').addEventListener('click', () => {
@@ -2374,6 +2641,7 @@
       renderizarTabela();
       atualizarSelectProcessos();
       atualizarSelectProcessosInteracao();
+      atualizarSelectClientesPerfil();
       atualizarDashboard();
       atualizarContrato();
       renderizarContratosCriados();
