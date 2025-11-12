@@ -536,6 +536,129 @@
       color: var(--muted);
       font-weight: 600;
     }
+    
+    /* Estilos para Contratos */
+    .contrato-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: white;
+    }
+    .contrato-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .contrato-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .contrato-subtitle {
+      font-size: 14px;
+      color: #666;
+    }
+    .contrato-section {
+      margin-bottom: 20px;
+    }
+    .contrato-section-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #000;
+    }
+    .contrato-field {
+      margin-bottom: 8px;
+    }
+    .contrato-label {
+      font-weight: bold;
+    }
+    .contrato-signatures {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 50px;
+    }
+    .signature-line {
+      margin-bottom: 40px;
+    }
+    .contrato-actions {
+      margin-top: 20px;
+      text-align: center;
+    }
+    
+    /* Estilos para filtros */
+    .filtros-container {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .filtro-acoes {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    /* Estilos para calculadoras */
+    .calc-container {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .calc-result {
+      margin-top: 16px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      display: none;
+    }
+    .calc-result.show {
+      display: block;
+    }
+    .calc-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .calc-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    
+    /* Estilos para interações */
+    .interacao-card {
+      background: #fafbff;
+      border-left: 4px solid var(--primary);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .interacao-meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .interacao-tipo {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .tipo-reuniao { background: #dbeafe; color: #1e40af; }
+    .tipo-telefonema { background: #fef3c7; color: #92400e; }
+    .tipo-email { background: #d1fae5; color: #065f46; }
+    .tipo-anotacao { background: #e9d5ff; color: #6b21a8; }
   </style>
 </head>
 <body>
@@ -1394,6 +1517,9 @@
         return;
       }
       
+      // Atualizar contrato em tempo real
+      atualizarContrato();
+      
       // Salvar contrato
       const contrato = {
         id: Date.now().toString(),
@@ -1414,40 +1540,112 @@
       contratos.push(contrato);
       salvarContratos(contratos);
       
-      // Navegar para a aba de contratos
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector('[data-tab="contratos"]').classList.add('active');
-      document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
-      document.getElementById('contratos').style.display = 'block';
-      document.getElementById('pageTitle').textContent = 'Contratos';
+      mostrarAlerta('alertCadastro', 'Contrato gerado com sucesso!', 'success');
       
-      mostrarAlerta('alertContratos', 'Contrato gerado e salvo com sucesso!', 'success');
+      setTimeout(() => {
+        document.getElementById('alertCadastro').innerHTML = '';
+      }, 3000);
     });
 
     // ========== IMPRIMIR CONTRATO ==========
-    document.getElementById('btnImprimirContrato').addEventListener('click', () => {
-      window.print();
-    });
+    function imprimirContrato() {
+      const contratoElement = document.getElementById('contratoPreview');
+      const ventana = window.open('', '_blank');
+      ventana.document.write(`
+        <html>
+          <head>
+            <title>Contrato - ${document.getElementById('contratoCliente').textContent}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .contrato-container { max-width: 800px; margin: 0 auto; }
+              .contrato-header { text-align: center; margin-bottom: 30px; }
+              .contrato-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+              .contrato-subtitle { font-size: 14px; color: #666; }
+              .contrato-section { margin-bottom: 20px; }
+              .contrato-section-title { font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; }
+              .contrato-field { margin-bottom: 8px; }
+              .contrato-label { font-weight: bold; }
+              .contrato-signatures { display: flex; justify-content: space-between; margin-top: 50px; }
+              .signature-line { margin-bottom: 40px; }
+              @media print {
+                body { margin: 0; }
+                .contrato-actions { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            ${contratoElement.innerHTML}
+          </body>
+        </html>
+      `);
+      ventana.document.close();
+      ventana.print();
+    }
+
+    document.getElementById('btnImprimirContrato').addEventListener('click', imprimirContrato);
 
     // ========== SALVAR CONTRATO PDF ==========
-    document.getElementById('btnSalvarContrato').addEventListener('click', () => {
+    function exportarContratoPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       
-      // Adicionar conteúdo do contrato ao PDF
-      const contratoElement = document.getElementById('contratoPreview');
-      const contratoText = contratoElement.innerText;
-      
+      // Adicionar conteúdo do contrato
       doc.setFontSize(16);
       doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS', 20, 20);
       doc.setFontSize(10);
       
-      const lines = doc.splitTextToSize(contratoText, 170);
-      doc.text(lines, 20, 40);
+      let y = 40;
+      const contratoCliente = document.getElementById('contratoCliente').textContent;
+      const contratoCpf = document.getElementById('contratoCpf').textContent;
+      const contratoEndereco = document.getElementById('contratoEndereco').textContent;
+      const contratoCategoria = document.getElementById('contratoCategoria').textContent;
+      const contratoNumero = document.getElementById('contratoNumero').textContent;
+      const contratoVara = document.getElementById('contratoVara').textContent;
+      const contratoParte = document.getElementById('contratoParte').textContent;
+      const contratoValor = document.getElementById('contratoValor').textContent;
+      const contratoHonorarios = document.getElementById('contratoHonorarios').textContent;
+      const contratoPagamento = document.getElementById('contratoPagamento').textContent;
       
-      doc.save(`contrato-${Date.now()}.pdf`);
+      const campos = [
+        ['CONTRATANTE:', contratoCliente],
+        ['CPF:', contratoCpf],
+        ['ENDEREÇO:', contratoEndereco],
+        ['CONTRATADA:', 'Dra. Advogada - OAB/SP 123.456'],
+        ['CATEGORIA:', contratoCategoria],
+        ['NÚMERO DO PROCESSO:', contratoNumero],
+        ['VARA/COMARCA:', contratoVara],
+        ['PARTE CONTRÁRIA:', contratoParte],
+        ['VALOR DA CAUSA:', contratoValor],
+        ['HONORÁRIOS:', contratoHonorarios],
+        ['FORMA DE PAGAMENTO:', contratoPagamento]
+      ];
+      
+      campos.forEach(([label, value]) => {
+        doc.setFont(undefined, 'bold');
+        doc.text(label, 20, y);
+        doc.setFont(undefined, 'normal');
+        const lines = doc.splitTextToSize(value, 120);
+        doc.text(lines, 70, y);
+        y += lines.length * 7;
+      });
+      
+      // Assinaturas
+      y += 20;
+      doc.text('___________________________________', 20, y);
+      doc.text('CONTRATANTE', 20, y + 10);
+      doc.text(contratoCliente, 20, y + 20);
+      doc.text(`CPF: ${contratoCpf}`, 20, y + 30);
+      
+      doc.text('___________________________________', 120, y);
+      doc.text('CONTRATADA', 120, y + 10);
+      doc.text('Dra. Advogada', 120, y + 20);
+      doc.text('OAB/SP 123.456', 120, y + 30);
+      
+      doc.save(`contrato-${contratoCliente}-${Date.now()}.pdf`);
       mostrarAlerta('alertContratos', 'Contrato salvo como PDF!', 'success');
-    });
+    }
+
+    document.getElementById('btnSalvarContrato').addEventListener('click', exportarContratoPDF);
 
     // ========== EXPORTAR PDF DO CADASTRO ==========
     document.getElementById('btnExportPdf').addEventListener('click', () => {
@@ -1482,8 +1680,8 @@
         ['Parte Contrária', formData.get('parte')],
         ['Status', formData.get('status')],
         ['Data de Abertura', formData.get('dataAbertura')],
-        ['Valor da Causa', formData.get('valor') ? `R$ ${formData.get('valor')}` : ''],
-        ['Honorários', formData.get('honorarios') ? `R$ ${formData.get('honorarios')}` : ''],
+        ['Valor da Causa', formData.get('valor') ? `R$ ${parseFloat(formData.get('valor')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : ''],
+        ['Honorários', formData.get('honorarios') ? `R$ ${parseFloat(formData.get('honorarios')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : ''],
         ['Forma de Pagamento', formData.get('formaPagamento')],
         ['Parcelas', formData.get('parcelas')],
       ];
@@ -1493,13 +1691,14 @@
           doc.setFont(undefined, 'bold');
           doc.text(`${label}:`, 20, y);
           doc.setFont(undefined, 'normal');
-          doc.text(value, 70, y);
-          y += 10;
+          const lines = doc.splitTextToSize(value, 150);
+          doc.text(lines, 70, y);
+          y += lines.length * 7;
         }
       });
       
       if (formData.get('observacoes')) {
-        y += 5;
+        y += 10;
         doc.setFont(undefined, 'bold');
         doc.text('Observações:', 20, y);
         y += 7;
@@ -1508,8 +1707,9 @@
         doc.text(obs, 20, y);
       }
       
-      doc.save(`processo-${Date.now()}.pdf`);
+      doc.save(`processo-${formData.get('nome')}-${Date.now()}.pdf`);
       mostrarAlerta('alertCadastro', 'PDF exportado com sucesso!', 'success');
+      
       setTimeout(() => {
         document.getElementById('alertCadastro').innerHTML = '';
       }, 3000);
@@ -2495,6 +2695,7 @@
 
     document.getElementById('btnLimparInteracao').addEventListener('click', () => {
       document.getElementById('detalhesInteracao').value = '';
+      document.getElementById('dataInteracao').value = new Date().toISOString().split('T')[0];
     });
 
     window.deletarInteracao = function(id) {
@@ -2557,7 +2758,7 @@
       
       const valorHonorarios = valorCausa * (percentual / 100);
       document.getElementById('valorHonorarios').textContent = `R$ ${valorHonorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('resultadoHonorarios').classList.add('show');
+      document.getElementById('resultadoHonorarios').style.display = 'block';
     });
 
     // ========== CALCULADORA DE CUSTAS ==========
@@ -2572,8 +2773,8 @@
       
       const valorCustas = valorCausa * (percentual / 100);
       document.getElementById('valorCustas').textContent = `R$ ${valorCustas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('resultadoCustas').classList.add('show');
-    };
+      document.getElementById('resultadoCustas').style.display = 'block';
+    });
 
     // ========== CALCULADORA DE PARCELAMENTO ==========
     document.getElementById('btnCalcularParcelamento').addEventListener('click', () => {
@@ -2587,7 +2788,7 @@
       
       const valorParcela = valorTotal / numeroParcelas;
       document.getElementById('valorParcela').textContent = `R$ ${valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('resultadoParcelamento').classList.add('show');
+      document.getElementById('resultadoParcelamento').style.display = 'block';
     });
 
     // ========== DASHBOARD ==========
@@ -2636,8 +2837,14 @@
       </div>`;
     }
 
-    // Inicializar ao carregar
+    // ========== INICIALIZAÇÃO ==========
     document.addEventListener('DOMContentLoaded', function() {
+      // Configurar data atual nos campos de data
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('dataInteracao').value = hoje;
+      document.getElementById('dataInicial').value = hoje;
+      
+      // Inicializar dados
       renderizarTabela();
       atualizarSelectProcessos();
       atualizarSelectProcessosInteracao();
@@ -2646,16 +2853,12 @@
       atualizarContrato();
       renderizarContratosCriados();
       
-      // Definir data atual como padrão para interações
-      const hoje = new Date().toISOString().split('T')[0];
-      document.getElementById('dataInteracao').value = hoje;
-      
       // Adicionar dados de exemplo se não houver dados
       const processos = carregarProcessos();
       if (processos.length === 0) {
         // Adicionar processo de exemplo
         const processoExemplo = {
-          id: Date.now().toString(),
+          id: 'exemplo-1',
           dataCadastro: new Date().toISOString(),
           nome: 'João Silva Santos',
           cpf: '123.456.789-00',
@@ -2679,6 +2882,29 @@
         
         processos.push(processoExemplo);
         salvarProcessos(processos);
+        
+        // Adicionar anotação de exemplo
+        const anotacoes = carregarAnotacoes();
+        anotacoes.push({
+          id: 'exemplo-anotacao-1',
+          processoId: 'exemplo-1',
+          texto: 'Primeira audiência marcada para 15/03/2024.',
+          data: new Date().toISOString()
+        });
+        salvarAnotacoes(anotacoes);
+        
+        // Adicionar interação de exemplo
+        const interacoes = carregarInteracoes();
+        interacoes.push({
+          id: 'exemplo-interacao-1',
+          processoId: 'exemplo-1',
+          tipo: 'reuniao',
+          data: new Date().toISOString(),
+          detalhes: 'Reunião inicial com cliente para apresentação do caso.'
+        });
+        salvarInteracoes(interacoes);
+        
+        // Atualizar interface
         renderizarTabela();
         atualizarDashboard();
       }
