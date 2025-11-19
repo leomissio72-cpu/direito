@@ -1447,6 +1447,7 @@
     const NOTES_KEY = 'anotacoes_juridicas';
     const CONTRATOS_KEY = 'contratos_gerados';
     const INTERACOES_KEY = 'interacoes_clientes';
+    const PERFIS_KEY = 'perfis_clientes'; // NOVA CHAVE PARA PERFIS
 
     function salvarProcessos(processos) {
       localStorage.setItem(DB_KEY, JSON.stringify(processos));
@@ -1484,6 +1485,83 @@
     function carregarInteracoes() {
       const data = localStorage.getItem(INTERACOES_KEY);
       return data ? JSON.parse(data) : [];
+    }
+
+    // ========== FUNÇÕES PARA PERFIS DE CLIENTES ==========
+    function salvarPerfis(perfis) {
+      localStorage.setItem(PERFIS_KEY, JSON.stringify(perfis));
+    }
+
+    function carregarPerfis() {
+      const data = localStorage.getItem(PERFIS_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+
+    function criarOuAtualizarPerfilCliente(processo) {
+      const perfis = carregarPerfis();
+      const cpfCliente = processo.cpf;
+      
+      if (!cpfCliente) {
+        console.log('CPF não informado, não é possível criar perfil');
+        return;
+      }
+      
+      // Verificar se já existe perfil para este CPF
+      const perfilExistenteIndex = perfis.findIndex(p => p.cpf === cpfCliente);
+      
+      if (perfilExistenteIndex !== -1) {
+        // Atualizar perfil existente
+        const perfilExistente = perfis[perfilExistenteIndex];
+        
+        // Atualizar informações básicas (mantém as existentes se não forem fornecidas novas)
+        perfilExistente.nome = processo.nome || perfilExistente.nome;
+        perfilExistente.rg = processo.rg || perfilExistente.rg;
+        perfilExistente.telefone = processo.telefone || perfilExistente.telefone;
+        perfilExistente.email = processo.email || perfilExistente.email;
+        perfilExistente.endereco = processo.endereco || perfilExistente.endereco;
+        perfilExistente.dataAtualizacao = new Date().toISOString();
+        
+        // Adicionar processo à lista se não existir
+        if (!perfilExistente.processos.includes(processo.id)) {
+          perfilExistente.processos.push(processo.id);
+        }
+        
+        perfis[perfilExistenteIndex] = perfilExistente;
+      } else {
+        // Criar novo perfil
+        const novoPerfil = {
+          id: Date.now().toString(),
+          cpf: cpfCliente,
+          nome: processo.nome,
+          rg: processo.rg,
+          telefone: processo.telefone,
+          email: processo.email,
+          endereco: processo.endereco,
+          processos: [processo.id],
+          dataCriacao: new Date().toISOString(),
+          dataAtualizacao: new Date().toISOString()
+        };
+        
+        perfis.push(novoPerfil);
+      }
+      
+      salvarPerfis(perfis);
+      console.log('Perfil do cliente criado/atualizado com sucesso');
+    }
+
+    function removerProcessoDoPerfil(cpfCliente, idProcesso) {
+      const perfis = carregarPerfis();
+      const perfilIndex = perfis.findIndex(p => p.cpf === cpfCliente);
+      
+      if (perfilIndex !== -1) {
+        const perfil = perfis[perfilIndex];
+        perfil.processos = perfil.processos.filter(pid => pid !== idProcesso);
+        perfil.dataAtualizacao = new Date().toISOString();
+        
+        // Se não há mais processos, manter o perfil mesmo assim
+        perfis[perfilIndex] = perfil;
+        salvarPerfis(perfis);
+      }
     }
 
     // ========== CONTROLE DE PARCELAS ==========
@@ -1619,10 +1697,13 @@
       processos.push(processo);
       salvarProcessos(processos);
       
+      // CRIAR/ATUALIZAR PERFIL DO CLIENTE AUTOMATICAMENTE
+      criarOuAtualizarPerfilCliente(processo);
+      
       // Criar contrato automaticamente
       criarContratoAutomatico(processo);
       
-      mostrarAlerta('alertCadastro', 'Processo salvo e contrato criado automaticamente!', 'success');
+      mostrarAlerta('alertCadastro', 'Processo salvo e perfil do cliente criado/atualizado!', 'success');
       
       // Limpar formulário
       e.target.reset();
@@ -2025,39 +2106,30 @@
       if (!confirm('Deseja realmente deletar este processo?')) return;
       
       let processos = carregarProcessos();
+      const processoDeletado = processos.find(p => p.id === id);
+      
       processos = processos.filter(p => p.id !== id);
       salvarProcessos(processos);
+      
+      // REMOVER PROCESSO DO PERFIL DO CLIENTE
+      if (processoDeletado && processoDeletado.cpf) {
+        removerProcessoDoPerfil(processoDeletado.cpf, id);
+      }
       
       renderizarTabela();
     };
 
     // ========== PERFIL DO CLIENTE ==========
     function atualizarSelectClientesPerfil() {
-      const processos = carregarProcessos();
+      const perfis = carregarPerfis();
       const select = document.getElementById('selectClientePerfil');
       
       select.innerHTML = '<option value="">--- selecione um cliente ---</option>';
       
-      // Obter clientes únicos
-      const clientesUnicos = [];
-      const cpfsVistos = new Set();
-      
-      processos.forEach(p => {
-        if (p.cpf && !cpfsVistos.has(p.cpf)) {
-          cpfsVistos.add(p.cpf);
-          clientesUnicos.push({
-            nome: p.nome,
-            cpf: p.cpf,
-            email: p.email,
-            telefone: p.telefone
-          });
-        }
-      });
-      
-      clientesUnicos.forEach(cliente => {
+      perfis.forEach(perfil => {
         const option = document.createElement('option');
-        option.value = cliente.cpf;
-        option.textContent = `${cliente.nome} - ${cliente.cpf}`;
+        option.value = perfil.cpf;
+        option.textContent = `${perfil.nome} - ${perfil.cpf}`;
         select.appendChild(option);
       });
     }
@@ -2072,15 +2144,18 @@
     });
 
     function renderizarPerfilCliente(cpf) {
-      const processos = carregarProcessos();
-      const processosCliente = processos.filter(p => p.cpf === cpf);
+      const perfis = carregarPerfis();
+      const perfil = perfis.find(p => p.cpf === cpf);
       
-      if (processosCliente.length === 0) {
-        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Nenhum processo encontrado para este cliente.</div>';
+      if (!perfil) {
+        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Perfil não encontrado para este cliente.</div>';
         return;
       }
       
-      const cliente = processosCliente[0];
+      // Carregar processos completos a partir dos IDs no perfil
+      const todosProcessos = carregarProcessos();
+      const processosCliente = todosProcessos.filter(p => perfil.processos.includes(p.id));
+      
       const interacoes = carregarInteracoes();
       const interacoesCliente = interacoes.filter(i => 
         processosCliente.some(p => p.id === i.processoId)
@@ -2102,11 +2177,11 @@
         </button>
         
         <div class="perfil-header">
-          <div class="perfil-avatar">${cliente.nome.charAt(0)}</div>
+          <div class="perfil-avatar">${perfil.nome.charAt(0)}</div>
           <div class="perfil-info">
-            <h1 class="perfil-nome">${cliente.nome}</h1>
+            <h1 class="perfil-nome">${perfil.nome}</h1>
             <p class="perfil-detalhes">
-              CPF: ${cliente.cpf} | Email: ${cliente.email || 'Não informado'} | Telefone: ${cliente.telefone || 'Não informado'}
+              CPF: ${perfil.cpf} | Email: ${perfil.email || 'Não informado'} | Telefone: ${perfil.telefone || 'Não informado'}
             </p>
           </div>
         </div>
@@ -2138,27 +2213,27 @@
           <div class="info-grid">
             <div class="info-item">
               <div class="info-label">Nome Completo</div>
-              <div class="info-value">${cliente.nome}</div>
+              <div class="info-value">${perfil.nome}</div>
             </div>
             <div class="info-item">
               <div class="info-label">CPF</div>
-              <div class="info-value">${cliente.cpf}</div>
+              <div class="info-value">${perfil.cpf}</div>
             </div>
             <div class="info-item">
               <div class="info-label">RG</div>
-              <div class="info-value">${cliente.rg || 'Não informado'}</div>
+              <div class="info-value">${perfil.rg || 'Não informado'}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Email</div>
-              <div class="info-value">${cliente.email || 'Não informado'}</div>
+              <div class="info-value">${perfil.email || 'Não informado'}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Telefone</div>
-              <div class="info-value">${cliente.telefone || 'Não informado'}</div>
+              <div class="info-value">${perfil.telefone || 'Não informado'}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Endereço</div>
-              <div class="info-value">${cliente.endereco || 'Não informado'}</div>
+              <div class="info-value">${perfil.endereco || 'Não informado'}</div>
             </div>
           </div>
         </div>
@@ -2348,14 +2423,18 @@
         return;
       }
       
-      // Carregar processos
-      const processos = carregarProcessos();
-      const processosCliente = processos.filter(p => p.cpf === clienteSelecionado);
+      // Carregar perfil
+      const perfis = carregarPerfis();
+      const perfil = perfis.find(p => p.cpf === clienteSelecionado);
       
-      if (processosCliente.length === 0) {
-        alert('Nenhum processo encontrado para este cliente');
+      if (!perfil) {
+        alert('Perfil não encontrado para este cliente');
         return;
       }
+      
+      // Carregar processos do cliente
+      const todosProcessos = carregarProcessos();
+      const processosCliente = todosProcessos.filter(p => perfil.processos.includes(p.id));
       
       // Carregar situação financeira
       const situacaoFinanceira = calcularSituacaoFinanceira(processosCliente);
@@ -2368,27 +2447,27 @@
             <div class="grid">
               <div>
                 <label>Nome completo</label>
-                <input type="text" id="editNome" value="${processosCliente[0].nome}" required>
+                <input type="text" id="editNome" value="${perfil.nome}" required>
               </div>
               <div>
                 <label>CPF</label>
-                <input type="text" id="editCpf" value="${processosCliente[0].cpf || ''}">
+                <input type="text" id="editCpf" value="${perfil.cpf || ''}">
               </div>
               <div>
                 <label>RG</label>
-                <input type="text" id="editRg" value="${processosCliente[0].rg || ''}">
+                <input type="text" id="editRg" value="${perfil.rg || ''}">
               </div>
               <div>
                 <label>Telefone</label>
-                <input type="text" id="editTelefone" value="${processosCliente[0].telefone || ''}">
+                <input type="text" id="editTelefone" value="${perfil.telefone || ''}">
               </div>
               <div>
                 <label>E-mail</label>
-                <input type="email" id="editEmail" value="${processosCliente[0].email || ''}">
+                <input type="email" id="editEmail" value="${perfil.email || ''}">
               </div>
               <div>
                 <label>Endereço</label>
-                <input type="text" id="editEndereco" value="${processosCliente[0].endereco || ''}">
+                <input type="text" id="editEndereco" value="${perfil.endereco || ''}">
               </div>
             </div>
             
@@ -2495,27 +2574,26 @@
 
     // Função para salvar as edições do perfil
     function salvarEdicoesPerfil(cpfCliente) {
-      const processos = carregarProcessos();
-      const processosCliente = processos.filter(p => p.cpf === cpfCliente);
+      const perfis = carregarPerfis();
+      const perfilIndex = perfis.findIndex(p => p.cpf === cpfCliente);
       
-      // Atualizar dados básicos do cliente em todos os processos
-      const nome = document.getElementById('editNome').value;
-      const rg = document.getElementById('editRg').value;
-      const telefone = document.getElementById('editTelefone').value;
-      const email = document.getElementById('editEmail').value;
-      const endereco = document.getElementById('editEndereco').value;
+      if (perfilIndex === -1) {
+        alert('Perfil não encontrado');
+        return;
+      }
       
-      processos.forEach(p => {
-        if (p.cpf === cpfCliente) {
-          p.nome = nome;
-          p.rg = rg;
-          p.telefone = telefone;
-          p.email = email;
-          p.endereco = endereco;
-        }
-      });
+      const perfil = perfis[perfilIndex];
+      
+      // Atualizar dados básicos do perfil
+      perfil.nome = document.getElementById('editNome').value;
+      perfil.rg = document.getElementById('editRg').value;
+      perfil.telefone = document.getElementById('editTelefone').value;
+      perfil.email = document.getElementById('editEmail').value;
+      perfil.endereco = document.getElementById('editEndereco').value;
+      perfil.dataAtualizacao = new Date().toISOString();
       
       // Atualizar dados dos processos
+      const processos = carregarProcessos();
       const inputsProcesso = document.querySelectorAll('#listaProcessosEdicao input, #listaProcessosEdicao select');
       inputsProcesso.forEach(input => {
         const processoId = input.dataset.id;
@@ -2529,6 +2607,7 @@
       });
       
       // Salvar alterações
+      salvarPerfis(perfis);
       salvarProcessos(processos);
       
       // Atualizar situação financeira (simulação)
@@ -3198,6 +3277,7 @@
       localStorage.removeItem(NOTES_KEY);
       localStorage.removeItem(CONTRATOS_KEY);
       localStorage.removeItem(INTERACOES_KEY);
+      localStorage.removeItem(PERFIS_KEY);
       
       alert('Todos os dados foram removidos com sucesso.');
       renderizarTabela();
@@ -3619,6 +3699,9 @@
         processos.push(processoExemplo);
         salvarProcessos(processos);
         invalidarCacheProcessos(); // Invalidar cache após salvar
+        
+        // CRIAR PERFIL DO CLIENTE AUTOMATICAMENTE
+        criarOuAtualizarPerfilCliente(processoExemplo);
         
         // Adicionar anotação de exemplo
         const anotacoes = carregarAnotacoes();
