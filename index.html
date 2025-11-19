@@ -613,6 +613,139 @@
       padding-bottom: 8px;
     }
 
+    /* NOVOS ESTILOS PARA DADOS FINANCEIROS E ANOTAÇÕES NO PERFIL */
+    .dados-financeiros-container, .anotacoes-container {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .financeiro-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .financeiro-card {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    
+    .financeiro-card .valor {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 8px 0;
+    }
+    
+    .financeiro-card .label {
+      font-size: 14px;
+      color: var(--muted);
+    }
+    
+    .financeiro-card.recebido .valor {
+      color: var(--success);
+    }
+    
+    .financeiro-card.pendente .valor {
+      color: var(--warning);
+    }
+    
+    .financeiro-card.atrasado .valor {
+      color: var(--danger);
+    }
+    
+    .financeiro-card.total .valor {
+      color: var(--primary);
+    }
+    
+    .transacoes-lista {
+      margin-top: 16px;
+    }
+    
+    .transacao-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .transacao-info {
+      flex: 1;
+    }
+    
+    .transacao-descricao {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .transacao-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    
+    .transacao-valor {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    
+    .transacao-paga {
+      color: var(--success);
+    }
+    
+    .transacao-pendente {
+      color: var(--warning);
+    }
+    
+    .transacao-atrasada {
+      color: var(--danger);
+    }
+    
+    .anotacoes-lista {
+      margin-top: 16px;
+    }
+    
+    .anotacao-item {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .anotacao-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .anotacao-data {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    
+    .anotacao-tipo {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #e0e7ff;
+      color: var(--primary);
+    }
+    
+    .anotacao-texto {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
     @media (max-width:980px){
       .grid{grid-template-columns:1fr}
       .sidebar{width:64px}
@@ -628,6 +761,9 @@
         grid-template-columns: 1fr;
       }
       .perfil-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .financeiro-summary {
         grid-template-columns: repeat(2, 1fr);
       }
     }
@@ -1567,6 +1703,7 @@
     const INTERACOES_KEY = 'interacoes_clientes';
     const PERFIS_KEY = 'perfis_clientes';
     const DOCUMENTOS_KEY = 'documentos_processo';
+    const FINANCEIRO_KEY = 'dados_financeiros';
 
     // FUNÇÕES DE ARMAZENAMENTO
     function salvarProcessos(processos) {
@@ -1622,6 +1759,16 @@
 
     function carregarDocumentos() {
       const data = localStorage.getItem(DOCUMENTOS_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+
+    // NOVAS FUNÇÕES PARA DADOS FINANCEIROS
+    function salvarDadosFinanceiros(dados) {
+      localStorage.setItem(FINANCEIRO_KEY, JSON.stringify(dados));
+    }
+
+    function carregarDadosFinanceiros() {
+      const data = localStorage.getItem(FINANCEIRO_KEY);
       return data ? JSON.parse(data) : [];
     }
 
@@ -2799,6 +2946,7 @@
       localStorage.removeItem(INTERACOES_KEY);
       localStorage.removeItem(PERFIS_KEY);
       localStorage.removeItem(DOCUMENTOS_KEY);
+      localStorage.removeItem(FINANCEIRO_KEY);
       
       alert('Todos os dados foram removidos com sucesso.');
       renderizarTabela();
@@ -3010,6 +3158,286 @@
       });
     }
 
+    // ========== PERFIL DO CLIENTE ==========
+    function atualizarSelectClientesPerfil() {
+      const processos = carregarProcessos();
+      const select = document.getElementById('selectClientePerfil');
+      
+      select.innerHTML = '<option value="">--- selecione um cliente ---</option>';
+      
+      const clientesUnicos = {};
+      processos.forEach(p => {
+        if (!clientesUnicos[p.cpf]) {
+          clientesUnicos[p.cpf] = p;
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = `${p.nome} - ${p.cpf || 'Sem CPF'}`;
+          select.appendChild(option);
+        }
+      });
+    }
+
+    document.getElementById('selectClientePerfil').addEventListener('change', function() {
+      const processoId = this.value;
+      if (!processoId) {
+        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Selecione um cliente para visualizar o perfil.</div>';
+        return;
+      }
+      
+      const processos = carregarProcessos();
+      const processo = processos.find(p => p.id === processoId);
+      if (!processo) return;
+      
+      renderizarPerfilCliente(processo);
+    });
+
+    function renderizarPerfilCliente(processo) {
+      const container = document.getElementById('perfilConteudo');
+      
+      // Carregar dados financeiros e anotações específicas para este processo
+      const dadosFinanceiros = carregarDadosFinanceiros().filter(df => df.processoId === processo.id);
+      const anotacoes = carregarAnotacoes().filter(a => a.processoId === processo.id);
+      
+      // Calcular totais financeiros
+      const totalRecebido = dadosFinanceiros
+        .filter(df => df.status === 'pago')
+        .reduce((total, df) => total + (parseFloat(df.valor) || 0), 0);
+        
+      const totalPendente = dadosFinanceiros
+        .filter(df => df.status === 'pendente')
+        .reduce((total, df) => total + (parseFloat(df.valor) || 0), 0);
+        
+      const totalAtrasado = dadosFinanceiros
+        .filter(df => df.status === 'atrasado')
+        .reduce((total, df) => total + (parseFloat(df.valor) || 0), 0);
+      
+      let html = `
+        <div class="perfil-header">
+          <div class="perfil-avatar">${processo.nome.charAt(0)}</div>
+          <div class="perfil-info">
+            <h2 class="perfil-nome">${processo.nome}</h2>
+            <p class="perfil-detalhes">
+              CPF: ${processo.cpf || 'Não informado'} | 
+              Telefone: ${processo.telefone || 'Não informado'} | 
+              Email: ${processo.email || 'Não informado'}
+            </p>
+          </div>
+        </div>
+        
+        <div class="perfil-stats">
+          <div class="perfil-stat">
+            <div class="perfil-stat-label">Processos Ativos</div>
+            <div class="perfil-stat-value">1</div>
+          </div>
+          <div class="perfil-stat">
+            <div class="perfil-stat-label">Valor Total da Causa</div>
+            <div class="perfil-stat-value">R$ ${(parseFloat(processo.valor) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+          </div>
+          <div class="perfil-stat">
+            <div class="perfil-stat-label">Honorários</div>
+            <div class="perfil-stat-value">R$ ${(parseFloat(processo.honorarios) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+          </div>
+          <div class="perfil-stat">
+            <div class="perfil-stat-label">Status</div>
+            <div class="perfil-stat-value">
+              <span class="status-badge status-${processo.status.toLowerCase().replace(' ', '-')}">${processo.status}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="info-section">
+          <h3 class="info-section-title">
+            <span class="material-icons">info</span>
+            Informações do Processo
+          </h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Nome da Ação</div>
+              <div class="info-value">${processo.nomeAcao || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Categoria</div>
+              <div class="info-value">${processo.categoria || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Número do Processo</div>
+              <div class="info-value">${processo.numero || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Vara/Comarca</div>
+              <div class="info-value">${processo.vara || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Parte Contrária</div>
+              <div class="info-value">${processo.parte || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Data de Abertura</div>
+              <div class="info-value">${processo.dataAbertura ? new Date(processo.dataAbertura).toLocaleDateString('pt-BR') : 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Forma de Pagamento</div>
+              <div class="info-value">${processo.formaPagamento || 'Não informado'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Parcelas</div>
+              <div class="info-value">${processo.parcelas || 'Não informado'}</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- NOVA SEÇÃO: DADOS FINANCEIROS -->
+        <div class="dados-financeiros-container">
+          <h3 class="info-section-title">
+            <span class="material-icons">attach_money</span>
+            Dados Financeiros
+          </h3>
+          
+          <div class="financeiro-summary">
+            <div class="financeiro-card recebido">
+              <div class="label">Recebido</div>
+              <div class="valor">R$ ${totalRecebido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            </div>
+            <div class="financeiro-card pendente">
+              <div class="label">Pendente</div>
+              <div class="valor">R$ ${totalPendente.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            </div>
+            <div class="financeiro-card atrasado">
+              <div class="label">Atrasado</div>
+              <div class="valor">R$ ${totalAtrasado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            </div>
+            <div class="financeiro-card total">
+              <div class="label">Total</div>
+              <div class="valor">R$ ${(totalRecebido + totalPendente + totalAtrasado).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            </div>
+          </div>
+          
+          <div class="actions">
+            <button class="btn primary" onclick="adicionarTransacao('${processo.id}')">
+              <span class="material-icons">add</span> Adicionar Transação
+            </button>
+            <button class="btn ghost" onclick="editarDadosFinanceiros('${processo.id}')">
+              <span class="material-icons">edit</span> Editar Dados
+            </button>
+          </div>
+          
+          <div class="transacoes-lista">
+            <h4>Histórico de Transações</h4>
+            ${dadosFinanceiros.length > 0 ? 
+              dadosFinanceiros.map(df => `
+                <div class="transacao-item">
+                  <div class="transacao-info">
+                    <div class="transacao-descricao">${df.descricao}</div>
+                    <div class="transacao-meta">
+                      ${new Date(df.data).toLocaleDateString('pt-BR')} | 
+                      Vencimento: ${df.dataVencimento ? new Date(df.dataVencimento).toLocaleDateString('pt-BR') : 'N/A'}
+                    </div>
+                  </div>
+                  <div class="transacao-valor transacao-${df.status}">
+                    R$ ${(parseFloat(df.valor) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                  </div>
+                </div>
+              `).join('') : 
+              '<div class="no-data">Nenhuma transação registrada.</div>'
+            }
+          </div>
+        </div>
+        
+        <!-- NOVA SEÇÃO: ANOTAÇÕES DO PROCESSO -->
+        <div class="anotacoes-container">
+          <h3 class="info-section-title">
+            <span class="material-icons">note</span>
+            Anotações do Processo
+          </h3>
+          
+          <div class="actions">
+            <button class="btn primary" onclick="adicionarAnotacaoPerfil('${processo.id}')">
+              <span class="material-icons">add</span> Adicionar Anotação
+            </button>
+          </div>
+          
+          <div class="anotacoes-lista">
+            ${anotacoes.length > 0 ? 
+              anotacoes.map(a => `
+                <div class="anotacao-item">
+                  <div class="anotacao-meta">
+                    <span class="anotacao-data">${new Date(a.data).toLocaleString('pt-BR')}</span>
+                    <span class="anotacao-tipo">Anotação</span>
+                  </div>
+                  <div class="anotacao-texto">${a.texto}</div>
+                </div>
+              `).join('') : 
+              '<div class="no-data">Nenhuma anotação registrada.</div>'
+            }
+          </div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+
+    // Funções para gerenciar dados financeiros
+    window.adicionarTransacao = function(processoId) {
+      const descricao = prompt('Descrição da transação:');
+      if (!descricao) return;
+      
+      const valor = parseFloat(prompt('Valor (R$):')) || 0;
+      if (valor <= 0) {
+        alert('Valor inválido.');
+        return;
+      }
+      
+      const dataVencimento = prompt('Data de vencimento (YYYY-MM-DD):');
+      const status = prompt('Status (pago/pendente/atrasado):', 'pendente');
+      
+      const dadosFinanceiros = carregarDadosFinanceiros();
+      dadosFinanceiros.push({
+        id: Date.now().toString(),
+        processoId,
+        descricao,
+        valor,
+        data: new Date().toISOString(),
+        dataVencimento: dataVencimento ? dataVencimento + 'T00:00:00' : null,
+        status
+      });
+      
+      salvarDadosFinanceiros(dadosFinanceiros);
+      
+      // Atualizar a visualização do perfil
+      const processos = carregarProcessos();
+      const processo = processos.find(p => p.id === processoId);
+      if (processo) {
+        renderizarPerfilCliente(processo);
+      }
+    };
+
+    window.editarDadosFinanceiros = function(processoId) {
+      alert('Funcionalidade de edição em desenvolvimento.');
+    };
+
+    // Funções para gerenciar anotações no perfil
+    window.adicionarAnotacaoPerfil = function(processoId) {
+      const texto = prompt('Digite a anotação:');
+      if (!texto) return;
+      
+      const anotacoes = carregarAnotacoes();
+      anotacoes.push({
+        id: Date.now().toString(),
+        processoId,
+        texto,
+        data: new Date().toISOString()
+      });
+      
+      salvarAnotacoes(anotacoes);
+      
+      // Atualizar a visualização do perfil
+      const processos = carregarProcessos();
+      const processo = processos.find(p => p.id === processoId);
+      if (processo) {
+        renderizarPerfilCliente(processo);
+      }
+    };
+
     // ========== UTILITÁRIOS ==========
     function mostrarAlerta(containerId, mensagem, tipo) {
       const container = document.getElementById(containerId);
@@ -3088,6 +3516,19 @@
           detalhes: 'Reunião inicial com cliente para apresentação do caso.'
         });
         salvarInteracoes(interacoes);
+        
+        // Adicionar dados financeiros de exemplo
+        const dadosFinanceiros = carregarDadosFinanceiros();
+        dadosFinanceiros.push({
+          id: 'exemplo-financeiro-1',
+          processoId: 'exemplo-1',
+          descricao: 'Honorários iniciais',
+          valor: 1000,
+          data: new Date().toISOString(),
+          dataVencimento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T00:00:00',
+          status: 'pendente'
+        });
+        salvarDadosFinanceiros(dadosFinanceiros);
         
         renderizarTabela();
         atualizarDashboard();
