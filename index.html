@@ -676,6 +676,71 @@
                 gap: 30px;
             }
         }
+
+        /* Novos estilos para múltiplos processos */
+        .cliente-processos {
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+
+        .processos-lista {
+            margin-top: 16px;
+        }
+
+        .processo-item {
+            background: #f8fafc;
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .processo-info h4 {
+            margin-bottom: 8px;
+            color: #0b1b2b;
+        }
+
+        .processo-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .processo-acoes {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .selecao-cliente {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .cliente-info {
+            margin-top: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .cliente-info p {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -741,6 +806,10 @@
             <div id="dashboard" class="tab active">
                 <div class="stats-grid">
                     <div class="stat-card">
+                        <div class="stat-label">Total de Clientes</div>
+                        <div class="stat-value" id="total-clientes">0</div>
+                    </div>
+                    <div class="stat-card">
                         <div class="stat-label">Total de Processos</div>
                         <div class="stat-value" id="total-processos">0</div>
                     </div>
@@ -751,10 +820,6 @@
                     <div class="stat-card">
                         <div class="stat-label">Honorários Mensais</div>
                         <div class="stat-value" id="honorarios-mensais">R$ 0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Parcelas Pendentes</div>
-                        <div class="stat-value" id="parcelas-pendentes">0</div>
                     </div>
                 </div>
 
@@ -774,6 +839,36 @@
                     <h2>Cadastro de Processo</h2>
                     <div id="alert-cadastro"></div>
                     
+                    <!-- Seção de Seleção de Cliente -->
+                    <div class="selecao-cliente">
+                        <h3>Seleção de Cliente</h3>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="selecionar-cliente">Buscar Cliente Existente</label>
+                                <select id="selecionar-cliente">
+                                    <option value="">Selecione um cliente...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="novo-cliente">Ou cadastrar novo cliente</label>
+                                <button type="button" class="btn btn-ghost" id="btn-novo-cliente">
+                                    <span class="material-icons">person_add</span>
+                                    Novo Cliente
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="info-cliente-selecionado" class="cliente-info" style="display: none;">
+                            <h4>Cliente Selecionado</h4>
+                            <div id="detalhes-cliente">
+                                <!-- Detalhes do cliente serão preenchidos aqui -->
+                            </div>
+                            <div class="processos-lista" id="processos-cliente">
+                                <!-- Lista de processos do cliente será preenchida aqui -->
+                            </div>
+                        </div>
+                    </div>
+                    
                     <form id="form-processo">
                         <div class="grid">
                             <div class="form-group">
@@ -783,6 +878,17 @@
                             <div class="form-group">
                                 <label for="cliente-cpf">CPF</label>
                                 <input type="text" id="cliente-cpf" placeholder="000.000.000-00">
+                            </div>
+                        </div>
+
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="cliente-telefone">Telefone</label>
+                                <input type="text" id="cliente-telefone" placeholder="(11) 99999-9999">
+                            </div>
+                            <div class="form-group">
+                                <label for="cliente-email">E-mail</label>
+                                <input type="email" id="cliente-email" placeholder="cliente@email.com">
                             </div>
                         </div>
 
@@ -1117,8 +1223,9 @@
     </div>
 
     <script>
-        // Sistema de Armazenamento
+        // Sistema de Armazenamento - Adicionando chave para clientes
         const STORAGE_KEYS = {
+            CLIENTES: 'sistema_juridico_clientes',
             PROCESSOS: 'sistema_juridico_processos',
             PARCELAS: 'sistema_juridico_parcelas',
             IMAGENS: 'sistema_juridico_imagens',
@@ -1126,7 +1233,16 @@
             CONTRATOS: 'sistema_juridico_contratos'
         };
 
-        // Funções de Armazenamento
+        // Funções de Armazenamento - Adicionando funções para clientes
+        function salvarClientes(clientes) {
+            localStorage.setItem(STORAGE_KEYS.CLIENTES, JSON.stringify(clientes));
+        }
+
+        function carregarClientes() {
+            const data = localStorage.getItem(STORAGE_KEYS.CLIENTES);
+            return data ? JSON.parse(data) : [];
+        }
+
         function salvarProcessos(processos) {
             localStorage.setItem(STORAGE_KEYS.PROCESSOS, JSON.stringify(processos));
         }
@@ -1192,6 +1308,8 @@
                 // Atualizar dados específicos da aba
                 if (tabId === 'dashboard') {
                     atualizarDashboard();
+                } else if (tabId === 'cadastro') {
+                    atualizarSelectClientes();
                 } else if (tabId === 'processos') {
                     carregarTabelaProcessos();
                 } else if (tabId === 'perfil') {
@@ -1202,6 +1320,94 @@
                     atualizarSelectProcessosContratos();
                 }
             });
+        });
+
+        // Função para atualizar o select de clientes
+        function atualizarSelectClientes() {
+            const clientes = carregarClientes();
+            const select = document.getElementById('selecionar-cliente');
+            
+            select.innerHTML = '<option value="">Selecione um cliente...</option>';
+            clientes.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id;
+                option.textContent = `${cliente.nome} - ${cliente.cpf || 'CPF não informado'}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Evento para selecionar cliente existente
+        document.getElementById('selecionar-cliente').addEventListener('change', function() {
+            const clienteId = this.value;
+            const clientes = carregarClientes();
+            const cliente = clientes.find(c => c.id === clienteId);
+            
+            if (cliente) {
+                // Preencher os campos do formulário com os dados do cliente
+                document.getElementById('cliente-nome').value = cliente.nome;
+                document.getElementById('cliente-cpf').value = cliente.cpf || '';
+                document.getElementById('cliente-telefone').value = cliente.telefone || '';
+                document.getElementById('cliente-email').value = cliente.email || '';
+                
+                // Mostrar informações do cliente selecionado
+                const infoContainer = document.getElementById('info-cliente-selecionado');
+                const detalhesCliente = document.getElementById('detalhes-cliente');
+                const processosCliente = document.getElementById('processos-cliente');
+                
+                detalhesCliente.innerHTML = `
+                    <p><strong>Nome:</strong> ${cliente.nome}</p>
+                    <p><strong>CPF:</strong> ${cliente.cpf || 'Não informado'}</p>
+                    <p><strong>Telefone:</strong> ${cliente.telefone || 'Não informado'}</p>
+                    <p><strong>E-mail:</strong> ${cliente.email || 'Não informado'}</p>
+                `;
+                
+                // Carregar processos do cliente
+                const processos = carregarProcessos().filter(p => p.clienteId === clienteId);
+                if (processos.length > 0) {
+                    processosCliente.innerHTML = `
+                        <h5>Processos deste cliente:</h5>
+                        ${processos.map(processo => `
+                            <div class="processo-item">
+                                <div class="processo-info">
+                                    <h4>${processo.numero || 'Número não informado'}</h4>
+                                    <div class="processo-meta">
+                                        <span>Categoria: ${processo.categoria || 'N/A'}</span>
+                                        <span>Status: ${processo.status}</span>
+                                        <span>Honorários: R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                    </div>
+                                </div>
+                                <div class="processo-acoes">
+                                    <button class="btn btn-ghost btn-sm" onclick="verDetalhesProcesso('${processo.id}')">
+                                        <span class="material-icons" style="font-size: 16px;">visibility</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                } else {
+                    processosCliente.innerHTML = '<p>Este cliente ainda não possui processos cadastrados.</p>';
+                }
+                
+                infoContainer.style.display = 'block';
+            } else {
+                document.getElementById('info-cliente-selecionado').style.display = 'none';
+            }
+        });
+
+        // Evento para cadastrar novo cliente
+        document.getElementById('btn-novo-cliente').addEventListener('click', function() {
+            // Limpar campos do formulário
+            document.getElementById('cliente-nome').value = '';
+            document.getElementById('cliente-cpf').value = '';
+            document.getElementById('cliente-telefone').value = '';
+            document.getElementById('cliente-email').value = '';
+            
+            // Limpar seleção de cliente
+            document.getElementById('selecionar-cliente').value = '';
+            document.getElementById('info-cliente-selecionado').style.display = 'none';
+            
+            // Focar no campo de nome do cliente
+            document.getElementById('cliente-nome').focus();
         });
 
         // Calculadora de Honorários
@@ -1253,14 +1459,38 @@
             }
         });
 
-        // Formulário de Cadastro de Processo
+        // Formulário de Cadastro de Processo - Modificado para lidar com clientes
         document.getElementById('form-processo').addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Verificar se é um cliente existente ou novo
+            const clienteSelecionadoId = document.getElementById('selecionar-cliente').value;
+            let clienteId = clienteSelecionadoId;
+            
+            // Se não há cliente selecionado, criar um novo
+            if (!clienteSelecionadoId) {
+                const clientes = carregarClientes();
+                const novoCliente = {
+                    id: Date.now().toString(),
+                    nome: document.getElementById('cliente-nome').value,
+                    cpf: document.getElementById('cliente-cpf').value,
+                    telefone: document.getElementById('cliente-telefone').value,
+                    email: document.getElementById('cliente-email').value,
+                    dataCadastro: new Date().toISOString()
+                };
+                
+                clientes.push(novoCliente);
+                salvarClientes(clientes);
+                clienteId = novoCliente.id;
+                
+                // Atualizar o select de clientes
+                atualizarSelectClientes();
+            }
+            
+            // Criar o processo
             const processo = {
                 id: Date.now().toString(),
-                clienteNome: document.getElementById('cliente-nome').value,
-                clienteCpf: document.getElementById('cliente-cpf').value,
+                clienteId: clienteId,
                 numero: document.getElementById('processo-numero').value,
                 categoria: document.getElementById('processo-categoria').value,
                 vara: document.getElementById('processo-vara').value,
@@ -1308,6 +1538,7 @@
             this.reset();
             document.getElementById('quantidade-parcelas').disabled = true;
             document.getElementById('resultado-calculo').style.display = 'none';
+            document.getElementById('info-cliente-selecionado').style.display = 'none';
             
             // Atualizar dashboard
             atualizarDashboard();
@@ -1318,6 +1549,7 @@
             document.getElementById('form-processo').reset();
             document.getElementById('quantidade-parcelas').disabled = true;
             document.getElementById('resultado-calculo').style.display = 'none';
+            document.getElementById('info-cliente-selecionado').style.display = 'none';
         });
 
         // Função para mostrar alertas
@@ -1338,12 +1570,14 @@
             }, 5000);
         }
 
-        // Atualizar Dashboard
+        // Atualizar Dashboard - Modificado para mostrar estatísticas de clientes
         function atualizarDashboard() {
+            const clientes = carregarClientes();
             const processos = carregarProcessos();
             const parcelas = carregarParcelas();
             
             // Estatísticas
+            document.getElementById('total-clientes').textContent = clientes.length;
             document.getElementById('total-processos').textContent = processos.length;
             document.getElementById('processos-ativos').textContent = processos.filter(p => 
                 p.status !== 'Finalizado' && p.status !== 'Arquivado'
@@ -1353,9 +1587,8 @@
             document.getElementById('honorarios-mensais').textContent = `R$ ${honorariosTotais.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             
             const parcelasPendentes = parcelas.filter(p => p.status === 'pendente').length;
-            document.getElementById('parcelas-pendentes').textContent = parcelasPendentes;
             
-            // Processos Recentes
+            // Processos Recentes - Agora mostra também o nome do cliente
             const processosRecentes = processos.slice(-5).reverse();
             const container = document.getElementById('processos-recentes');
             
@@ -1374,28 +1607,32 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${processosRecentes.map(processo => `
-                                <tr>
-                                    <td>${processo.clienteNome}</td>
-                                    <td>${processo.numero || 'N/A'}</td>
-                                    <td><span class="status-badge status-${processo.status.toLowerCase().replace(' ', '-')}">${processo.status}</span></td>
-                                    <td>R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    <td>
-                                        <button class="btn btn-ghost" onclick="verDetalhesProcesso('${processo.id}')" style="padding: 4px 8px; font-size: 12px;">
-                                            <span class="material-icons" style="font-size: 16px;">visibility</span>
-                                            Ver
-                                        </button>
-                                    </td>
-                                </tr>
-                            `).join('')}
+                            ${processosRecentes.map(processo => {
+                                const cliente = clientes.find(c => c.id === processo.clienteId);
+                                return `
+                                    <tr>
+                                        <td>${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
+                                        <td>${processo.numero || 'N/A'}</td>
+                                        <td><span class="status-badge status-${processo.status.toLowerCase().replace(' ', '-')}">${processo.status}</span></td>
+                                        <td>R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                        <td>
+                                            <button class="btn btn-ghost" onclick="verDetalhesProcesso('${processo.id}')" style="padding: 4px 8px; font-size: 12px;">
+                                                <span class="material-icons" style="font-size: 16px;">visibility</span>
+                                                Ver
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 `;
             }
         }
 
-        // Carregar Tabela de Processos
+        // Carregar Tabela de Processos - Modificado para mostrar nome do cliente
         function carregarTabelaProcessos() {
+            const clientes = carregarClientes();
             const processos = carregarProcessos();
             const container = document.getElementById('tabela-processos');
             
@@ -1420,14 +1657,15 @@
                     </thead>
                     <tbody>
                         ${processos.map(processo => {
+                            const cliente = clientes.find(c => c.id === processo.clienteId);
                             const parcelasProcesso = carregarParcelas().filter(p => p.processoId === processo.id);
                             const parcelasPagas = parcelasProcesso.filter(p => p.status === 'paga').length;
                             const totalParcelas = processo.parcelas || parcelasProcesso.length;
                             
                             return `
                                 <tr>
-                                    <td>${processo.clienteNome}</td>
-                                    <td>${processo.clienteCpf || 'N/A'}</td>
+                                    <td>${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
+                                    <td>${cliente ? cliente.cpf || 'N/A' : 'N/A'}</td>
                                     <td>${processo.numero || 'N/A'}</td>
                                     <td>${processo.categoria || 'N/A'}</td>
                                     <td>
@@ -1456,19 +1694,23 @@
             `;
         }
 
-        // Funções Globais para Processos
+        // Funções Globais para Processos - Modificadas para lidar com clientes
         window.verDetalhesProcesso = function(id) {
+            const clientes = carregarClientes();
             const processos = carregarProcessos();
             const processo = processos.find(p => p.id === id);
             if (!processo) return;
             
+            const cliente = clientes.find(c => c.id === processo.clienteId);
             const parcelas = carregarParcelas().filter(p => p.processoId === id);
             
             document.getElementById('modal-processo-conteudo').innerHTML = `
                 <div style="margin-bottom: 20px;">
                     <h4>Dados do Cliente</h4>
-                    <p><strong>Nome:</strong> ${processo.clienteNome}</p>
-                    <p><strong>CPF:</strong> ${processo.clienteCpf || 'Não informado'}</p>
+                    <p><strong>Nome:</strong> ${cliente ? cliente.nome : 'Cliente não encontrado'}</p>
+                    <p><strong>CPF:</strong> ${cliente ? cliente.cpf || 'Não informado' : 'Não informado'}</p>
+                    ${cliente && cliente.telefone ? `<p><strong>Telefone:</strong> ${cliente.telefone}</p>` : ''}
+                    ${cliente && cliente.email ? `<p><strong>E-mail:</strong> ${cliente.email}</p>` : ''}
                 </div>
                 
                 <div style="margin-bottom: 20px;">
@@ -1557,7 +1799,7 @@
             processos.forEach(processo => {
                 const option = document.createElement('option');
                 option.value = processo.id;
-                option.textContent = `${processo.clienteNome} - ${processo.numero || 'S/N'}`;
+                option.textContent = `${processo.numero || 'S/N'} - ${processo.categoria || 'N/A'}`;
                 select.appendChild(option);
             });
         }
@@ -1571,17 +1813,19 @@
                 return;
             }
             
+            const clientes = carregarClientes();
             const processo = carregarProcessos().find(p => p.id === processoId);
+            const cliente = clientes.find(c => c.id === processo.clienteId);
             const imagens = carregarImagens().filter(i => i.processoId === processoId);
             const anotacoes = carregarAnotacoes().filter(a => a.processoId === processoId);
             const parcelas = carregarParcelas().filter(p => p.processoId === processoId);
             
             container.innerHTML = `
                 <div class="perfil-header">
-                    <div class="perfil-avatar">${processo.clienteNome.charAt(0)}</div>
+                    <div class="perfil-avatar">${cliente ? cliente.nome.charAt(0) : 'C'}</div>
                     <div class="perfil-info">
-                        <h2>${processo.clienteNome}</h2>
-                        <p style="color: var(--muted);">CPF: ${processo.clienteCpf || 'Não informado'} | Processo: ${processo.numero || 'Não informado'}</p>
+                        <h2>${cliente ? cliente.nome : 'Cliente não encontrado'}</h2>
+                        <p style="color: var(--muted);">CPF: ${cliente ? cliente.cpf || 'Não informado' : 'Não informado'} | Processo: ${processo.numero || 'Não informado'}</p>
                     </div>
                 </div>
 
@@ -1815,7 +2059,7 @@
             processos.forEach(processo => {
                 const option = document.createElement('option');
                 option.value = processo.id;
-                option.textContent = `${processo.clienteNome} - ${processo.numero || 'S/N'}`;
+                option.textContent = `${processo.numero || 'S/N'} - ${processo.categoria || 'N/A'}`;
                 select.appendChild(option);
             });
         }
@@ -1845,7 +2089,7 @@
             container.innerHTML = `
                 <div style="margin-bottom: 20px;">
                     <h3>Parcelas do Processo</h3>
-                    <p><strong>Cliente:</strong> ${processo.clienteNome}</p>
+                    <p><strong>Número do Processo:</strong> ${processo.numero || 'Não informado'}</p>
                     <p><strong>Total:</strong> R$ ${processo.honorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                 </div>
                 <div class="parcelas-grid">
@@ -1916,7 +2160,7 @@
             processos.forEach(processo => {
                 const option = document.createElement('option');
                 option.value = processo.id;
-                option.textContent = `${processo.clienteNome} - ${processo.numero || 'S/N'}`;
+                option.textContent = `${processo.numero || 'S/N'} - ${processo.categoria || 'N/A'}`;
                 select.appendChild(option);
             });
         }
@@ -1930,15 +2174,17 @@
                 return;
             }
             
+            const clientes = carregarClientes();
             const processo = carregarProcessos().find(p => p.id === processoId);
+            const cliente = clientes.find(c => c.id === processo.clienteId);
             const parcelas = carregarParcelas().filter(p => p.processoId === processoId);
             const parcelasPagas = parcelas.filter(p => p.status === 'paga');
             
             container.innerHTML = `
                 <div class="perfil-header">
-                    <div class="perfil-avatar">${processo.clienteNome.charAt(0)}</div>
+                    <div class="perfil-avatar">${cliente ? cliente.nome.charAt(0) : 'C'}</div>
                     <div class="perfil-info">
-                        <h2>${processo.clienteNome}</h2>
+                        <h2>${cliente ? cliente.nome : 'Cliente não encontrado'}</h2>
                         <p style="color: var(--muted);">Processo: ${processo.numero || 'Não informado'}</p>
                     </div>
                 </div>
@@ -1985,14 +2231,17 @@
 
         // Função para criar contrato automaticamente
         function criarContratoAutomatico(processo) {
+            const clientes = carregarClientes();
+            const cliente = clientes.find(c => c.id === processo.clienteId);
+            
             const contratos = carregarContratos();
             const contrato = {
                 id: processo.id + '_contrato',
                 processoId: processo.id,
                 dataCriacao: new Date().toISOString(),
                 tipo: 'Contrato de Prestação de Serviços Advocatícios',
-                cliente: processo.clienteNome,
-                cpf: processo.clienteCpf,
+                cliente: cliente ? cliente.nome : 'Cliente não encontrado',
+                cpf: cliente ? cliente.cpf : 'Não informado',
                 valor: processo.honorarios,
                 parcelas: processo.parcelas,
                 valorParcela: processo.honorarios / processo.parcelas
@@ -2004,8 +2253,11 @@
 
         // Gerar Contrato
         window.gerarContrato = function(processoId) {
+            const clientes = carregarClientes();
             const processo = carregarProcessos().find(p => p.id === processoId);
             if (!processo) return;
+            
+            const cliente = clientes.find(c => c.id === processo.clienteId);
             
             const contratoHTML = `
                 <div class="contrato-container">
@@ -2018,11 +2270,11 @@
                         <div class="contrato-section-title">DADAS DAS PARTES</div>
                         <div class="contrato-field">
                             <span class="contrato-label">CONTRATANTE:</span>
-                            <span class="contrato-value">${processo.clienteNome}</span>
+                            <span class="contrato-value">${cliente ? cliente.nome : 'Cliente não encontrado'}</span>
                         </div>
                         <div class="contrato-field">
                             <span class="contrato-label">CPF:</span>
-                            <span class="contrato-value">${processo.clienteCpf || 'Não informado'}</span>
+                            <span class="contrato-value">${cliente ? cliente.cpf || 'Não informado' : 'Não informado'}</span>
                         </div>
                         <div class="contrato-field">
                             <span class="contrato-label">ENDEREÇO:</span>
@@ -2080,8 +2332,8 @@
                         <div>
                             <div class="signature-line">___________________________________</div>
                             <div>CONTRATANTE</div>
-                            <div>${processo.clienteNome}</div>
-                            <div>CPF: ${processo.clienteCpf || 'Não informado'}</div>
+                            <div>${cliente ? cliente.nome : 'Cliente não encontrado'}</div>
+                            <div>CPF: ${cliente ? cliente.cpf || 'Não informado' : 'Não informado'}</div>
                         </div>
                         <div>
                             <div class="signature-line">___________________________________</div>
@@ -2105,12 +2357,15 @@
 
         // Gerar Recibo
         window.gerarRecibo = function(parcelaId) {
+            const clientes = carregarClientes();
             const parcelas = carregarParcelas();
             const parcela = parcelas.find(p => p.id === parcelaId);
             if (!parcela) return;
             
             const processo = carregarProcessos().find(p => p.id === parcela.processoId);
             if (!processo) return;
+            
+            const cliente = clientes.find(c => c.id === processo.clienteId);
             
             const reciboHTML = `
                 <div class="recibo-container">
@@ -2120,8 +2375,8 @@
                     </div>
                     
                     <div class="recibo-detalhes">
-                        <p><strong>Recebemos de:</strong> ${processo.clienteNome}</p>
-                        <p><strong>CPF:</strong> ${processo.clienteCpf || 'Não informado'}</p>
+                        <p><strong>Recebemos de:</strong> ${cliente ? cliente.nome : 'Cliente não encontrado'}</p>
+                        <p><strong>CPF:</strong> ${cliente ? cliente.cpf || 'Não informado' : 'Não informado'}</p>
                         <p><strong>Processo:</strong> ${processo.numero || 'Não informado'}</p>
                         <p><strong>Referente a:</strong> Parcela ${parcela.numero} de ${processo.parcelas} - Honorários Advocatícios</p>
                         <p><strong>Data do Pagamento:</strong> ${new Date(parcela.dataPagamento).toLocaleDateString('pt-BR')}</p>
@@ -2170,6 +2425,7 @@
             const periodo = document.getElementById('relatorio-periodo').value;
             const container = document.getElementById('relatorio-conteudo');
             
+            const clientes = carregarClientes();
             const processos = carregarProcessos();
             const parcelas = carregarParcelas();
             
@@ -2240,7 +2496,8 @@
                     parcelasPendentes.forEach(p => {
                         const processo = processos.find(proc => proc.id === p.processoId);
                         if (processo) {
-                            const key = processo.clienteNome;
+                            const cliente = clientes.find(c => c.id === processo.clienteId);
+                            const key = cliente ? cliente.nome : 'Cliente não encontrado';
                             parcelasAgrupadas[key] = (parcelasAgrupadas[key] || 0) + p.valor;
                         }
                     });
@@ -2299,9 +2556,51 @@
             });
         });
 
-        // Inicialização
+        // Inicialização - Adicionando migração de dados antigos
         document.addEventListener('DOMContentLoaded', function() {
+            // Migrar dados antigos se necessário
+            const processosAntigos = carregarProcessos();
+            const clientes = carregarClientes();
+            
+            // Se há processos mas não há clientes, migrar os dados
+            if (processosAntigos.length > 0 && clientes.length === 0) {
+                // Verificar se os processos antigos têm a estrutura antiga
+                const primeiroProcesso = processosAntigos[0];
+                if (primeiroProcesso.clienteNome && !primeiroProcesso.clienteId) {
+                    // Migrar dados antigos para nova estrutura
+                    processosAntigos.forEach(processo => {
+                        // Verificar se já existe um cliente com este CPF
+                        let clienteExistente = clientes.find(c => c.cpf === processo.clienteCpf);
+                        
+                        if (!clienteExistente) {
+                            // Criar novo cliente
+                            const novoCliente = {
+                                id: processo.id + '_cliente',
+                                nome: processo.clienteNome,
+                                cpf: processo.clienteCpf,
+                                dataCadastro: processo.dataCadastro || new Date().toISOString()
+                            };
+                            clientes.push(novoCliente);
+                            
+                            // Atualizar o processo com o ID do cliente
+                            processo.clienteId = novoCliente.id;
+                        } else {
+                            // Usar o cliente existente
+                            processo.clienteId = clienteExistente.id;
+                        }
+                        
+                        // Remover os campos antigos do cliente do processo
+                        delete processo.clienteNome;
+                        delete processo.clienteCpf;
+                    });
+                    
+                    salvarClientes(clientes);
+                    salvarProcessos(processosAntigos);
+                }
+            }
+            
             atualizarDashboard();
+            atualizarSelectClientes();
             atualizarSelectProcessosPerfil();
             atualizarSelectProcessosParcelas();
             atualizarSelectProcessosContratos();
@@ -2309,11 +2608,24 @@
             // Adicionar dados de exemplo se não houver dados
             const processos = carregarProcessos();
             if (processos.length === 0) {
+                // Criar cliente de exemplo
+                const clienteExemplo = {
+                    id: 'exemplo-cliente-1',
+                    nome: 'João Silva Santos',
+                    cpf: '123.456.789-00',
+                    telefone: '(11) 99999-9999',
+                    email: 'joao.silva@email.com',
+                    dataCadastro: new Date().toISOString()
+                };
+                
+                const clientes = carregarClientes();
+                clientes.push(clienteExemplo);
+                salvarClientes(clientes);
+                
                 // Criar processo de exemplo
                 const processoExemplo = {
                     id: 'exemplo-1',
-                    clienteNome: 'João Silva Santos',
-                    clienteCpf: '123.456.789-00',
+                    clienteId: 'exemplo-cliente-1',
                     numero: '0001234-56.2024.8.26.0001',
                     categoria: 'Cível',
                     vara: '3ª Vara Cível de São Paulo',
@@ -2364,6 +2676,7 @@
                 criarContratoAutomatico(processoExemplo);
                 
                 atualizarDashboard();
+                atualizarSelectClientes();
             }
         });
     </script>
