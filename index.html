@@ -731,6 +731,52 @@
       gap: 10px;
       justify-content: flex-end;
     }
+    
+    /* Estilos para upload de documentos */
+    .documentos-container {
+      margin-top: 20px;
+    }
+    .upload-area {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .upload-area:hover {
+      border-color: var(--primary);
+      background-color: #f8fafc;
+    }
+    .upload-area.active {
+      border-color: var(--primary);
+      background-color: #e0e7ff;
+    }
+    .documentos-lista {
+      display: grid;
+      gap: 12px;
+    }
+    .documento-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+    }
+    .documento-info {
+      flex: 1;
+    }
+    .documento-nome {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .documento-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -927,6 +973,9 @@
               </div>
 
               <div>
+                <label>Nome da Ação *</label>
+                <input name="nomeAcao" type="text" required placeholder="Ex: Ação de Indenização por Danos Morais" id="inputNomeAcao">
+
                 <label>Categoria do processo</label>
                 <select name="categoria" id="inputCategoria">
                   <option value="">Selecione...</option>
@@ -993,6 +1042,39 @@
 
                 <label>Quantidade de Parcelas</label>
                 <input name="parcelas" type="number" min="1" placeholder="Ex: 12" id="parcelasInput">
+              </div>
+
+              <!-- NOVA SEÇÃO: CÁLCULO DE HONORÁRIOS SEM PREJUÍZO -->
+              <div class="col-full" style="background:#f8fafc;padding:16px;border-radius:8px;margin-top:16px">
+                <h3 style="margin-top:0;color:var(--primary)">Cálculo de Honorários Sem Prejuízo</h3>
+                <div class="grid">
+                  <div>
+                    <label>Custos Fixos Mensais do Escritório (R$)</label>
+                    <input type="number" step="0.01" id="custosFixos" placeholder="Ex: 5000.00" value="5000.00">
+                  </div>
+                  <div>
+                    <label>Horas Estimadas de Trabalho</label>
+                    <input type="number" id="horasEstimadas" placeholder="Ex: 20" value="20">
+                  </div>
+                  <div>
+                    <label>Valor por Hora do Advogado (R$)</label>
+                    <input type="number" step="0.01" id="valorHora" placeholder="Ex: 150.00" value="150.00">
+                  </div>
+                  <div>
+                    <label>Percentual de Lucro (%)</label>
+                    <input type="number" step="0.1" id="percentualLucro" placeholder="Ex: 30" value="30">
+                  </div>
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn primary" id="btnCalcularHonorariosMinimos">
+                    <span class="material-icons">calculate</span> Calcular Honorários Mínimos
+                  </button>
+                </div>
+                <div id="resultadoCalculoHonorarios" style="display:none;margin-top:12px;padding:12px;background:white;border-radius:8px;border-left:4px solid var(--primary)">
+                  <div style="font-weight:700;color:var(--primary)">Honorários Mínimos Recomendados:</div>
+                  <div id="valorHonorariosMinimos" style="font-size:18px;font-weight:700">R$ 0,00</div>
+                  <div id="detalhesCalculo" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
+                </div>
               </div>
 
               <div class="col-full">
@@ -1090,6 +1172,10 @@
 
             <div class="contrato-section">
               <div class="contrato-section-title">OBJETO DO CONTRATO</div>
+              <div class="contrato-field">
+                <span class="contrato-label">NOME DA AÇÃO:</span>
+                <span class="contrato-value" id="contratoNomeAcao">[Nome da Ação]</span>
+              </div>
               <div class="contrato-field">
                 <span class="contrato-label">CATEGORIA:</span>
                 <span class="contrato-value" id="contratoCategoria">[Categoria do Processo]</span>
@@ -1447,7 +1533,8 @@
     const NOTES_KEY = 'anotacoes_juridicas';
     const CONTRATOS_KEY = 'contratos_gerados';
     const INTERACOES_KEY = 'interacoes_clientes';
-    const PERFIS_KEY = 'perfis_clientes'; // NOVA CHAVE PARA PERFIS
+    const PERFIS_KEY = 'perfis_clientes';
+    const DOCUMENTOS_KEY = 'documentos_processo';
 
     function salvarProcessos(processos) {
       localStorage.setItem(DB_KEY, JSON.stringify(processos));
@@ -1497,72 +1584,65 @@
       return data ? JSON.parse(data) : [];
     }
 
-    function criarOuAtualizarPerfilCliente(processo) {
-      const perfis = carregarPerfis();
-      const cpfCliente = processo.cpf;
+    // ========== FUNÇÕES PARA DOCUMENTOS ==========
+    function salvarDocumentos(documentos) {
+      localStorage.setItem(DOCUMENTOS_KEY, JSON.stringify(documentos));
+    }
+
+    function carregarDocumentos() {
+      const data = localStorage.getItem(DOCUMENTOS_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+
+    // ========== CÁLCULO DE HONORÁRIOS SEM PREJUÍZO ==========
+    function calcularHonorariosMinimos(custosFixos, horasEstimadas, valorHora, percentualLucro) {
+      // Custo das horas de trabalho
+      const custoHoras = horasEstimadas * valorHora;
       
-      if (!cpfCliente) {
-        console.log('CPF não informado, não é possível criar perfil');
+      // Parte proporcional dos custos fixos (considerando que o processo usa 10% do tempo mensal)
+      const custoFixoProporcional = custosFixos * 0.1;
+      
+      // Custo total
+      const custoTotal = custoHoras + custoFixoProporcional;
+      
+      // Honorários mínimos (custo total + lucro)
+      const honorariosMinimos = custoTotal * (1 + (percentualLucro / 100));
+      
+      return {
+        honorariosMinimos: Math.round(honorariosMinimos * 100) / 100,
+        custoHoras: Math.round(custoHoras * 100) / 100,
+        custoFixoProporcional: Math.round(custoFixoProporcional * 100) / 100,
+        custoTotal: Math.round(custoTotal * 100) / 100
+      };
+    }
+
+    document.getElementById('btnCalcularHonorariosMinimos').addEventListener('click', () => {
+      const custosFixos = parseFloat(document.getElementById('custosFixos').value) || 0;
+      const horasEstimadas = parseInt(document.getElementById('horasEstimadas').value) || 0;
+      const valorHora = parseFloat(document.getElementById('valorHora').value) || 0;
+      const percentualLucro = parseFloat(document.getElementById('percentualLucro').value) || 0;
+      
+      if (custosFixos <= 0 || horasEstimadas <= 0 || valorHora <= 0) {
+        alert('Preencha todos os campos de cálculo de honorários.');
         return;
       }
       
-      // Verificar se já existe perfil para este CPF
-      const perfilExistenteIndex = perfis.findIndex(p => p.cpf === cpfCliente);
+      const resultado = calcularHonorariosMinimos(custosFixos, horasEstimadas, valorHora, percentualLucro);
       
-      if (perfilExistenteIndex !== -1) {
-        // Atualizar perfil existente
-        const perfilExistente = perfis[perfilExistenteIndex];
-        
-        // Atualizar informações básicas (mantém as existentes se não forem fornecidas novas)
-        perfilExistente.nome = processo.nome || perfilExistente.nome;
-        perfilExistente.rg = processo.rg || perfilExistente.rg;
-        perfilExistente.telefone = processo.telefone || perfilExistente.telefone;
-        perfilExistente.email = processo.email || perfilExistente.email;
-        perfilExistente.endereco = processo.endereco || perfilExistente.endereco;
-        perfilExistente.dataAtualizacao = new Date().toISOString();
-        
-        // Adicionar processo à lista se não existir
-        if (!perfilExistente.processos.includes(processo.id)) {
-          perfilExistente.processos.push(processo.id);
-        }
-        
-        perfis[perfilExistenteIndex] = perfilExistente;
-      } else {
-        // Criar novo perfil
-        const novoPerfil = {
-          id: Date.now().toString(),
-          cpf: cpfCliente,
-          nome: processo.nome,
-          rg: processo.rg,
-          telefone: processo.telefone,
-          email: processo.email,
-          endereco: processo.endereco,
-          processos: [processo.id],
-          dataCriacao: new Date().toISOString(),
-          dataAtualizacao: new Date().toISOString()
-        };
-        
-        perfis.push(novoPerfil);
-      }
+      document.getElementById('valorHonorariosMinimos').textContent = `R$ ${resultado.honorariosMinimos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('detalhesCalculo').innerHTML = `
+        <strong>Detalhamento:</strong><br>
+        • Custo horas (${horasEstimadas}h × R$ ${valorHora.toLocaleString('pt-BR', {minimumFractionDigits: 2})}): R$ ${resultado.custoHoras.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+        • Custo fixo proporcional (10% de R$ ${custosFixos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}): R$ ${resultado.custoFixoProporcional.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+        • Custo total: R$ ${resultado.custoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+        • Lucro (${percentualLucro}%): R$ ${(resultado.honorariosMinimos - resultado.custoTotal).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+      `;
       
-      salvarPerfis(perfis);
-      console.log('Perfil do cliente criado/atualizado com sucesso');
-    }
-
-    function removerProcessoDoPerfil(cpfCliente, idProcesso) {
-      const perfis = carregarPerfis();
-      const perfilIndex = perfis.findIndex(p => p.cpf === cpfCliente);
+      document.getElementById('resultadoCalculoHonorarios').style.display = 'block';
       
-      if (perfilIndex !== -1) {
-        const perfil = perfis[perfilIndex];
-        perfil.processos = perfil.processos.filter(pid => pid !== idProcesso);
-        perfil.dataAtualizacao = new Date().toISOString();
-        
-        // Se não há mais processos, manter o perfil mesmo assim
-        perfis[perfilIndex] = perfil;
-        salvarPerfis(perfis);
-      }
-    }
+      // Preencher automaticamente o campo de honorários com o valor mínimo
+      document.getElementById('inputHonorarios').value = resultado.honorariosMinimos;
+    });
 
     // ========== CONTROLE DE PARCELAS ==========
     document.getElementById('formaPagamento').addEventListener('change', (e) => {
@@ -1648,6 +1728,7 @@
       document.getElementById('contratoCliente').textContent = formData.get('nome') || '[Nome do Cliente]';
       document.getElementById('contratoCpf').textContent = formData.get('cpf') || '[CPF do Cliente]';
       document.getElementById('contratoEndereco').textContent = formData.get('endereco') || '[Endereço do Cliente]';
+      document.getElementById('contratoNomeAcao').textContent = formData.get('nomeAcao') || '[Nome da Ação]';
       document.getElementById('contratoCategoria').textContent = formData.get('categoria') || '[Categoria do Processo]';
       document.getElementById('contratoNumero').textContent = formData.get('numero') || '[Número do Processo]';
       document.getElementById('contratoVara').textContent = formData.get('vara') || '[Vara/Comarca]';
@@ -1670,6 +1751,13 @@
       e.preventDefault();
       
       const formData = new FormData(e.target);
+      const custosFixos = parseFloat(document.getElementById('custosFixos').value) || 0;
+      const horasEstimadas = parseInt(document.getElementById('horasEstimadas').value) || 0;
+      const valorHora = parseFloat(document.getElementById('valorHora').value) || 0;
+      const percentualLucro = parseFloat(document.getElementById('percentualLucro').value) || 0;
+      
+      const honorariosMinimos = calcularHonorariosMinimos(custosFixos, horasEstimadas, valorHora, percentualLucro).honorariosMinimos;
+      
       const processo = {
         id: Date.now().toString(),
         dataCadastro: new Date().toISOString(),
@@ -1680,6 +1768,7 @@
         email: formData.get('email'),
         responsavel: formData.get('responsavel'),
         endereco: formData.get('endereco'),
+        nomeAcao: formData.get('nomeAcao'),
         categoria: formData.get('categoria'),
         numero: formData.get('numero'),
         vara: formData.get('vara'),
@@ -1688,6 +1777,11 @@
         dataAbertura: formData.get('dataAbertura'),
         valor: formData.get('valor'),
         honorarios: formData.get('honorarios'),
+        custosFixos,
+        horasEstimadas,
+        valorHora,
+        percentualLucro,
+        honorariosMinimos,
         formaPagamento: formData.get('formaPagamento'),
         parcelas: formData.get('parcelas'),
         observacoes: formData.get('observacoes')
@@ -1697,17 +1791,15 @@
       processos.push(processo);
       salvarProcessos(processos);
       
-      // CRIAR/ATUALIZAR PERFIL DO CLIENTE AUTOMATICAMENTE
-      criarOuAtualizarPerfilCliente(processo);
-      
       // Criar contrato automaticamente
       criarContratoAutomatico(processo);
       
-      mostrarAlerta('alertCadastro', 'Processo salvo e perfil do cliente criado/atualizado!', 'success');
+      mostrarAlerta('alertCadastro', 'Processo salvo com sucesso!', 'success');
       
       // Limpar formulário
       e.target.reset();
       document.getElementById('parcelasInput').disabled = true;
+      document.getElementById('resultadoCalculoHonorarios').style.display = 'none';
       
       // Atualizar dashboard e gráficos
       atualizarDashboard();
@@ -1726,6 +1818,7 @@
         cliente: processo.nome,
         cpf: processo.cpf,
         endereco: processo.endereco,
+        nomeAcao: processo.nomeAcao,
         categoria: processo.categoria,
         numeroProcesso: processo.numero,
         vara: processo.vara,
@@ -1746,6 +1839,7 @@
     document.getElementById('btnLimparForm').addEventListener('click', () => {
       document.getElementById('formCadastro').reset();
       document.getElementById('parcelasInput').disabled = true;
+      document.getElementById('resultadoCalculoHonorarios').style.display = 'none';
       atualizarContrato();
     });
 
@@ -1769,6 +1863,7 @@
         cliente: formData.get('nome'),
         cpf: formData.get('cpf'),
         endereco: formData.get('endereco'),
+        nomeAcao: formData.get('nomeAcao'),
         categoria: formData.get('categoria'),
         numeroProcesso: formData.get('numero'),
         vara: formData.get('vara'),
@@ -1840,6 +1935,7 @@
       const contratoCliente = document.getElementById('contratoCliente').textContent;
       const contratoCpf = document.getElementById('contratoCpf').textContent;
       const contratoEndereco = document.getElementById('contratoEndereco').textContent;
+      const contratoNomeAcao = document.getElementById('contratoNomeAcao').textContent;
       const contratoCategoria = document.getElementById('contratoCategoria').textContent;
       const contratoNumero = document.getElementById('contratoNumero').textContent;
       const contratoVara = document.getElementById('contratoVara').textContent;
@@ -1853,6 +1949,7 @@
         ['CPF:', contratoCpf],
         ['ENDEREÇO:', contratoEndereco],
         ['CONTRATADA:', 'Dra. Advogada - OAB/SP 123.456'],
+        ['NOME DA AÇÃO:', contratoNomeAcao],
         ['CATEGORIA:', contratoCategoria],
         ['NÚMERO DO PROCESSO:', contratoNumero],
         ['VARA/COMARCA:', contratoVara],
@@ -1916,6 +2013,7 @@
         ['E-mail', formData.get('email')],
         ['Responsável', formData.get('responsavel')],
         ['Endereço', formData.get('endereco')],
+        ['Nome da Ação', formData.get('nomeAcao')],
         ['Categoria', formData.get('categoria')],
         ['Número do Processo', formData.get('numero')],
         ['Vara/Comarca', formData.get('vara')],
@@ -1970,7 +2068,8 @@
           p.nome.toLowerCase().includes(busca) ||
           (p.cpf && p.cpf.includes(busca)) ||
           (p.numero && p.numero.includes(busca)) ||
-          (p.categoria && p.categoria.toLowerCase().includes(busca))
+          (p.categoria && p.categoria.toLowerCase().includes(busca)) ||
+          (p.nomeAcao && p.nomeAcao.toLowerCase().includes(busca))
         );
       });
       
@@ -1982,12 +2081,13 @@
       }
       
       let html = '<table><thead><tr>';
-      html += '<th>Nome</th><th>Categoria</th><th>Número</th><th>Status</th><th>Data Abertura</th><th>Pagamento</th><th>Ações</th>';
+      html += '<th>Nome</th><th>Ação</th><th>Categoria</th><th>Número</th><th>Status</th><th>Data Abertura</th><th>Pagamento</th><th>Ações</th>';
       html += '</tr></thead><tbody>';
       
       processosFiltrados.forEach(p => {
         html += '<tr>';
         html += `<td>${p.nome}</td>`;
+        html += `<td>${p.nomeAcao || '-'}</td>`;
         html += `<td>${p.categoria || '-'}</td>`;
         html += `<td>${p.numero || '-'}</td>`;
         html += `<td>
@@ -2059,10 +2159,10 @@
         return;
       }
       
-      let csv = 'Nome,CPF,Telefone,Email,Categoria,Número,Status,Data Abertura,Valor,Honorários,Forma Pagamento,Parcelas\n';
+      let csv = 'Nome,CPF,Telefone,Email,Nome Ação,Categoria,Número,Status,Data Abertura,Valor,Honorários,Forma Pagamento,Parcelas\n';
       
       processos.forEach(p => {
-        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}","${p.formaPagamento || ''}","${p.parcelas || ''}"\n`;
+        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.nomeAcao || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}","${p.formaPagamento || ''}","${p.parcelas || ''}"\n`;
       });
       
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -2086,6 +2186,7 @@
       detalhes += `Email: ${processo.email || '-'}\n`;
       detalhes += `Responsável: ${processo.responsavel || '-'}\n`;
       detalhes += `Endereço: ${processo.endereco || '-'}\n`;
+      detalhes += `Nome da Ação: ${processo.nomeAcao || '-'}\n`;
       detalhes += `Categoria: ${processo.categoria || '-'}\n`;
       detalhes += `Número: ${processo.numero || '-'}\n`;
       detalhes += `Vara: ${processo.vara || '-'}\n`;
@@ -2094,6 +2195,7 @@
       detalhes += `Data Abertura: ${processo.dataAbertura || '-'}\n`;
       detalhes += `Valor da Causa: R$ ${processo.valor || '0'}\n`;
       detalhes += `Honorários: R$ ${processo.honorarios || '0'}\n`;
+      detalhes += `Honorários Mínimos: R$ ${processo.honorariosMinimos || '0'}\n`;
       detalhes += `Forma de Pagamento: ${processo.formaPagamento || '-'}\n`;
       detalhes += `Parcelas: ${processo.parcelas || '-'}\n`;
       detalhes += `Observações: ${processo.observacoes || '-'}\n`;
@@ -2106,30 +2208,31 @@
       if (!confirm('Deseja realmente deletar este processo?')) return;
       
       let processos = carregarProcessos();
-      const processoDeletado = processos.find(p => p.id === id);
-      
       processos = processos.filter(p => p.id !== id);
       salvarProcessos(processos);
-      
-      // REMOVER PROCESSO DO PERFIL DO CLIENTE
-      if (processoDeletado && processoDeletado.cpf) {
-        removerProcessoDoPerfil(processoDeletado.cpf, id);
-      }
       
       renderizarTabela();
     };
 
     // ========== PERFIL DO CLIENTE ==========
     function atualizarSelectClientesPerfil() {
-      const perfis = carregarPerfis();
+      const processos = carregarProcessos();
       const select = document.getElementById('selectClientePerfil');
       
       select.innerHTML = '<option value="">--- selecione um cliente ---</option>';
       
-      perfis.forEach(perfil => {
+      // Obter clientes únicos
+      const clientesUnicos = {};
+      processos.forEach(p => {
+        if (p.cpf && !clientesUnicos[p.cpf]) {
+          clientesUnicos[p.cpf] = p;
+        }
+      });
+      
+      Object.values(clientesUnicos).forEach(cliente => {
         const option = document.createElement('option');
-        option.value = perfil.cpf;
-        option.textContent = `${perfil.nome} - ${perfil.cpf}`;
+        option.value = cliente.cpf;
+        option.textContent = `${cliente.nome} - ${cliente.cpf}`;
         select.appendChild(option);
       });
     }
@@ -2144,18 +2247,15 @@
     });
 
     function renderizarPerfilCliente(cpf) {
-      const perfis = carregarPerfis();
-      const perfil = perfis.find(p => p.cpf === cpf);
+      const processos = carregarProcessos();
+      const processosCliente = processos.filter(p => p.cpf === cpf);
       
-      if (!perfil) {
-        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Perfil não encontrado para este cliente.</div>';
+      if (processosCliente.length === 0) {
+        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Nenhum processo encontrado para este cliente.</div>';
         return;
       }
       
-      // Carregar processos completos a partir dos IDs no perfil
-      const todosProcessos = carregarProcessos();
-      const processosCliente = todosProcessos.filter(p => perfil.processos.includes(p.id));
-      
+      const cliente = processosCliente[0];
       const interacoes = carregarInteracoes();
       const interacoesCliente = interacoes.filter(i => 
         processosCliente.some(p => p.id === i.processoId)
@@ -2172,16 +2272,12 @@
       const situacaoFinanceira = calcularSituacaoFinanceira(processosCliente);
       
       const html = `
-        <button class="btn primary" onclick="editarDadosPerfilCliente()" style="margin-bottom: 20px;">
-          <span class="material-icons">edit</span> Editar Dados
-        </button>
-        
         <div class="perfil-header">
-          <div class="perfil-avatar">${perfil.nome.charAt(0)}</div>
+          <div class="perfil-avatar">${cliente.nome.charAt(0)}</div>
           <div class="perfil-info">
-            <h1 class="perfil-nome">${perfil.nome}</h1>
+            <h1 class="perfil-nome">${cliente.nome}</h1>
             <p class="perfil-detalhes">
-              CPF: ${perfil.cpf} | Email: ${perfil.email || 'Não informado'} | Telefone: ${perfil.telefone || 'Não informado'}
+              CPF: ${cliente.cpf} | Email: ${cliente.email || 'Não informado'} | Telefone: ${cliente.telefone || 'Não informado'}
             </p>
           </div>
         </div>
@@ -2213,27 +2309,27 @@
           <div class="info-grid">
             <div class="info-item">
               <div class="info-label">Nome Completo</div>
-              <div class="info-value">${perfil.nome}</div>
+              <div class="info-value">${cliente.nome}</div>
             </div>
             <div class="info-item">
               <div class="info-label">CPF</div>
-              <div class="info-value">${perfil.cpf}</div>
+              <div class="info-value">${cliente.cpf}</div>
             </div>
             <div class="info-item">
               <div class="info-label">RG</div>
-              <div class="info-value">${perfil.rg || 'Não informado'}</div>
+              <div class="info-value">${cliente.rg || 'Não informado'}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Email</div>
-              <div class="info-value">${perfil.email || 'Não informado'}</div>
+              <div class="info-value">${cliente.email || 'Não informado'}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Telefone</div>
-              <div class="info-value">${perfil.telefone || 'Não informado'}</div>
+              <div class="info-value">${cliente.telefone || 'Não informado'}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Endereço</div>
-              <div class="info-value">${perfil.endereco || 'Não informado'}</div>
+              <div class="info-value">${cliente.endereco || 'Não informado'}</div>
             </div>
           </div>
         </div>
@@ -2277,7 +2373,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>Número</th>
+                  <th>Nome da Ação</th>
                   <th>Categoria</th>
                   <th>Status</th>
                   <th>Data Abertura</th>
@@ -2288,7 +2384,7 @@
               <tbody>
                 ${processosCliente.map(p => `
                   <tr>
-                    <td>${p.numero || 'S/N'}</td>
+                    <td>${p.nomeAcao || 'S/N'}</td>
                     <td>${p.categoria || '-'}</td>
                     <td>
                       <span class="status-badge status-${p.status.toLowerCase().replace(' ', '')}">
@@ -2325,7 +2421,7 @@
                   <div class="note-card">
                     <div class="note-meta">
                       <span>${new Date(i.data).toLocaleString('pt-BR')}</span>
-                      <span>${tipoLabel} - ${processo ? processo.numero || 'Processo' : 'Processo'}</span>
+                      <span>${tipoLabel} - ${processo ? processo.nomeAcao || 'Processo' : 'Processo'}</span>
                     </div>
                     <div class="note-text">${i.detalhes}</div>
                   </div>
@@ -2412,224 +2508,6 @@
       window.print();
     }
 
-    // ========== EDIÇÃO DE DADOS DO CLIENTE ==========
-    window.editarDadosPerfilCliente = function() {
-      // Obter o cliente selecionado
-      const selectCliente = document.getElementById('selectClientePerfil');
-      const clienteSelecionado = selectCliente.value;
-      
-      if (!clienteSelecionado) {
-        alert('Selecione um cliente primeiro');
-        return;
-      }
-      
-      // Carregar perfil
-      const perfis = carregarPerfis();
-      const perfil = perfis.find(p => p.cpf === clienteSelecionado);
-      
-      if (!perfil) {
-        alert('Perfil não encontrado para este cliente');
-        return;
-      }
-      
-      // Carregar processos do cliente
-      const todosProcessos = carregarProcessos();
-      const processosCliente = todosProcessos.filter(p => perfil.processos.includes(p.id));
-      
-      // Carregar situação financeira
-      const situacaoFinanceira = calcularSituacaoFinanceira(processosCliente);
-      
-      // Criar formulário de edição
-      const formHTML = `
-        <div class="container" style="margin-top: 20px;">
-          <h3>Editar Dados do Cliente</h3>
-          <form id="formEditarPerfil">
-            <div class="grid">
-              <div>
-                <label>Nome completo</label>
-                <input type="text" id="editNome" value="${perfil.nome}" required>
-              </div>
-              <div>
-                <label>CPF</label>
-                <input type="text" id="editCpf" value="${perfil.cpf || ''}">
-              </div>
-              <div>
-                <label>RG</label>
-                <input type="text" id="editRg" value="${perfil.rg || ''}">
-              </div>
-              <div>
-                <label>Telefone</label>
-                <input type="text" id="editTelefone" value="${perfil.telefone || ''}">
-              </div>
-              <div>
-                <label>E-mail</label>
-                <input type="email" id="editEmail" value="${perfil.email || ''}">
-              </div>
-              <div>
-                <label>Endereço</label>
-                <input type="text" id="editEndereco" value="${perfil.endereco || ''}">
-              </div>
-            </div>
-            
-            <h4 style="margin-top: 20px;">Situação Financeira</h4>
-            <div class="grid">
-              <div>
-                <label>Status Financeiro</label>
-                <select id="editStatusFinanceiro">
-                  <option value="Em dia" ${situacaoFinanceira.status === 'regular' ? 'selected' : ''}>Em dia</option>
-                  <option value="Pendente" ${situacaoFinanceira.status === 'pendente' ? 'selected' : ''}>Pendente</option>
-                  <option value="Atraso" ${situacaoFinanceira.status === 'atraso' ? 'selected' : ''}>Atraso</option>
-                </select>
-              </div>
-              <div>
-                <label>Total em Honorários (R$)</label>
-                <input type="number" id="editTotalHonorarios" step="0.01" value="${situacaoFinanceira.valorPendente}">
-              </div>
-              <div>
-                <label>Valor Pendente (R$)</label>
-                <input type="number" id="editValorPendente" step="0.01" value="${situacaoFinanceira.valorPendente}">
-              </div>
-              <div>
-                <label>Primeiro Vencimento</label>
-                <input type="date" id="editPrimeiroVencimento" value="${situacaoFinanceira.proximoVencimento ? new Date(situacaoFinanceira.proximoVencimento.split('/').reverse().join('-')).toISOString().split('T')[0] : ''}">
-              </div>
-            </div>
-            
-            <h4 style="margin-top: 20px;">Processos do Cliente</h4>
-            <div id="listaProcessosEdicao">
-              ${processosCliente.map((processo, index) => `
-                <div class="processo-edicao">
-                  <h5>Processo ${index + 1}</h5>
-                  <div class="grid">
-                    <div>
-                      <label>Número</label>
-                      <input type="text" value="${processo.numero || ''}" data-field="numero" data-id="${processo.id}">
-                    </div>
-                    <div>
-                      <label>Categoria</label>
-                      <select data-field="categoria" data-id="${processo.id}">
-                        <option value="">Selecione...</option>
-                        <option value="Cível" ${processo.categoria === 'Cível' ? 'selected' : ''}>Cível</option>
-                        <option value="Trabalhista" ${processo.categoria === 'Trabalhista' ? 'selected' : ''}>Trabalhista</option>
-                        <option value="Penal" ${processo.categoria === 'Penal' ? 'selected' : ''}>Penal</option>
-                        <option value="Família" ${processo.categoria === 'Família' ? 'selected' : ''}>Família</option>
-                        <option value="Consumidor" ${processo.categoria === 'Consumidor' ? 'selected' : ''}>Consumidor</option>
-                        <option value="Tributário" ${processo.categoria === 'Tributário' ? 'selected' : ''}>Tributário</option>
-                        <option value="Administrativo" ${processo.categoria === 'Administrativo' ? 'selected' : ''}>Administrativo</option>
-                        <option value="Previdenciário" ${processo.categoria === 'Previdenciário' ? 'selected' : ''}>Previdenciário</option>
-                        <option value="Outros" ${processo.categoria === 'Outros' ? 'selected' : ''}>Outros</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label>Status</label>
-                      <select data-field="status" data-id="${processo.id}">
-                        ${STATUS_OPTIONS.map(status => 
-                          `<option value="${status}" ${processo.status === status ? 'selected' : ''}>${status}</option>`
-                        ).join('')}
-                      </select>
-                    </div>
-                    <div>
-                      <label>Data Abertura</label>
-                      <input type="date" value="${processo.dataAbertura || ''}" data-field="dataAbertura" data-id="${processo.id}">
-                    </div>
-                    <div>
-                      <label>Valor Causa (R$)</label>
-                      <input type="number" step="0.01" value="${processo.valor || ''}" data-field="valor" data-id="${processo.id}">
-                    </div>
-                    <div>
-                      <label>Honorários (R$)</label>
-                      <input type="number" step="0.01" value="${processo.honorarios || ''}" data-field="honorarios" data-id="${processo.id}">
-                    </div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            
-            <div class="actions" style="margin-top: 20px;">
-              <button type="submit" class="btn primary">
-                <span class="material-icons">save</span> Salvar Alterações
-              </button>
-              <button type="button" class="btn ghost" id="btnCancelarEdicao">
-                <span class="material-icons">cancel</span> Cancelar
-              </button>
-            </div>
-          </form>
-        </div>
-      `;
-      
-      // Inserir formulário na página
-      document.getElementById('perfilConteudo').innerHTML = formHTML;
-      
-      // Configurar evento de submit
-      document.getElementById('formEditarPerfil').addEventListener('submit', function(e) {
-        e.preventDefault();
-        salvarEdicoesPerfil(clienteSelecionado);
-      });
-      
-      // Configurar botão cancelar
-      document.getElementById('btnCancelarEdicao').addEventListener('click', function() {
-        renderizarPerfilCliente(clienteSelecionado);
-      });
-    };
-
-    // Função para salvar as edições do perfil
-    function salvarEdicoesPerfil(cpfCliente) {
-      const perfis = carregarPerfis();
-      const perfilIndex = perfis.findIndex(p => p.cpf === cpfCliente);
-      
-      if (perfilIndex === -1) {
-        alert('Perfil não encontrado');
-        return;
-      }
-      
-      const perfil = perfis[perfilIndex];
-      
-      // Atualizar dados básicos do perfil
-      perfil.nome = document.getElementById('editNome').value;
-      perfil.rg = document.getElementById('editRg').value;
-      perfil.telefone = document.getElementById('editTelefone').value;
-      perfil.email = document.getElementById('editEmail').value;
-      perfil.endereco = document.getElementById('editEndereco').value;
-      perfil.dataAtualizacao = new Date().toISOString();
-      
-      // Atualizar dados dos processos
-      const processos = carregarProcessos();
-      const inputsProcesso = document.querySelectorAll('#listaProcessosEdicao input, #listaProcessosEdicao select');
-      inputsProcesso.forEach(input => {
-        const processoId = input.dataset.id;
-        const campo = input.dataset.field;
-        const valor = input.value;
-        
-        const processo = processos.find(p => p.id === processoId);
-        if (processo) {
-          processo[campo] = valor;
-        }
-      });
-      
-      // Salvar alterações
-      salvarPerfis(perfis);
-      salvarProcessos(processos);
-      
-      // Atualizar situação financeira (simulação)
-      const situacaoFinanceira = {
-        status: document.getElementById('editStatusFinanceiro').value,
-        totalHonorarios: parseFloat(document.getElementById('editTotalHonorarios').value) || 0,
-        valorPendente: parseFloat(document.getElementById('editValorPendente').value) || 0,
-        primeiroVencimento: document.getElementById('editPrimeiroVencimento').value
-      };
-      
-      // Salvar situação financeira (em um sistema real, isso seria armazenado separadamente)
-      localStorage.setItem(`situacao_financeira_${cpfCliente}`, JSON.stringify(situacaoFinanceira));
-      
-      // Mostrar mensagem de sucesso
-      mostrarAlerta('perfilConteudo', 'Dados atualizados com sucesso!', 'success');
-      
-      // Voltar para visualização do perfil
-      setTimeout(() => {
-        renderizarPerfilCliente(cpfCliente);
-      }, 2000);
-    }
-
     // ========== CONTRATOS CRIADOS ==========
     function renderizarContratosCriados(filtros = {}) {
       const contratos = carregarContratos();
@@ -2685,13 +2563,14 @@
       contratosFiltrados.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
       
       let html = '<table><thead><tr>';
-      html += '<th>Cliente</th><th>CPF</th><th>Categoria</th><th>Nº Processo</th><th>Vara</th><th>Valor Causa</th><th>Honorários</th><th>Data Criação</th><th>Ações</th>';
+      html += '<th>Cliente</th><th>CPF</th><th>Nome da Ação</th><th>Categoria</th><th>Nº Processo</th><th>Vara</th><th>Valor Causa</th><th>Honorários</th><th>Data Criação</th><th>Ações</th>';
       html += '</tr></thead><tbody>';
       
       contratosFiltrados.forEach(c => {
         html += '<tr>';
         html += `<td>${c.cliente}</td>`;
         html += `<td>${c.cpf || '-'}</td>`;
+        html += `<td>${c.nomeAcao || '-'}</td>`;
         html += `<td>${c.categoria || '-'}</td>`;
         html += `<td>${c.numeroProcesso || '-'}</td>`;
         html += `<td>${c.vara || '-'}</td>`;
@@ -2751,10 +2630,10 @@
         return;
       }
       
-      let csv = 'Cliente,CPF,Categoria,Número Processo,Vara,Valor Causa,Honorários,Forma Pagamento,Data Criação\n';
+      let csv = 'Cliente,CPF,Nome Ação,Categoria,Número Processo,Vara,Valor Causa,Honorários,Forma Pagamento,Data Criação\n';
       
       contratos.forEach(c => {
-        csv += `"${c.cliente}","${c.cpf || ''}","${c.categoria || ''}","${c.numeroProcesso || ''}","${c.vara || ''}","${c.valorCausa || ''}","${c.honorarios || ''}","${c.formaPagamento || ''}","${new Date(c.dataCriacao).toLocaleDateString('pt-BR')}"\n`;
+        csv += `"${c.cliente}","${c.cpf || ''}","${c.nomeAcao || ''}","${c.categoria || ''}","${c.numeroProcesso || ''}","${c.vara || ''}","${c.valorCausa || ''}","${c.honorarios || ''}","${c.formaPagamento || ''}","${new Date(c.dataCriacao).toLocaleDateString('pt-BR')}"\n`;
       });
       
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -2803,6 +2682,7 @@
         ['CPF:', contrato.cpf || 'Não informado'],
         ['ENDEREÇO:', contrato.endereco || 'Não informado'],
         ['CONTRATADA:', 'Dra. Advogada - OAB/SP 123.456'],
+        ['NOME DA AÇÃO:', contrato.nomeAcao || 'Não informado'],
         ['CATEGORIA:', contrato.categoria || 'Não informado'],
         ['NÚMERO DO PROCESSO:', contrato.numeroProcesso || 'Não informado'],
         ['VARA/COMARCA:', contrato.vara || 'Não informado'],
@@ -2867,6 +2747,10 @@
 
           <div class="contrato-section">
             <div class="contrato-section-title">OBJETO DO CONTRATO</div>
+            <div class="contrato-field">
+              <span class="contrato-label">NOME DA AÇÃO:</span>
+              <span class="contrato-value">${contrato.nomeAcao || 'Não informado'}</span>
+            </div>
             <div class="contrato-field">
               <span class="contrato-label">CATEGORIA:</span>
               <span class="contrato-value">${contrato.categoria || 'Não informado'}</span>
@@ -2972,7 +2856,7 @@
       processos.forEach(p => {
         const option = document.createElement('option');
         option.value = p.id;
-        option.textContent = `${p.nome} - ${p.numero || 'S/N'}`;
+        option.textContent = `${p.nome} - ${p.nomeAcao || p.numero || 'S/N'}`;
         select.appendChild(option);
       });
     }
@@ -3060,7 +2944,7 @@
       processos.forEach(p => {
         const option = document.createElement('option');
         option.value = p.id;
-        option.textContent = `${p.nome} - ${p.numero || 'S/N'}`;
+        option.textContent = `${p.nome} - ${p.nomeAcao || p.numero || 'S/N'}`;
         select.appendChild(option);
       });
     }
@@ -3216,7 +3100,7 @@
       
       const valorHonorarios = valorCausa * (percentual / 100);
       document.getElementById('valorHonorarios').textContent = `R$ ${valorHonorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('resultadoHonorarios').style.display = 'block';
+      document.getElementById('resultadoHonorarios').classList.add('show');
     });
 
     // ========== CALCULADORA DE CUSTAS ==========
@@ -3231,7 +3115,7 @@
       
       const valorCustas = valorCausa * (percentual / 100);
       document.getElementById('valorCustas').textContent = `R$ ${valorCustas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('resultadoCustas').style.display = 'block';
+      document.getElementById('resultadoCustas').classList.add('show');
     });
 
     // ========== CALCULADORA DE PARCELAMENTO ==========
@@ -3246,7 +3130,7 @@
       
       const valorParcela = valorTotal / numeroParcelas;
       document.getElementById('valorParcela').textContent = `R$ ${valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('resultadoParcelamento').style.display = 'block';
+      document.getElementById('resultadoParcelamento').classList.add('show');
     });
 
     // ========== DASHBOARD ==========
@@ -3278,6 +3162,7 @@
       localStorage.removeItem(CONTRATOS_KEY);
       localStorage.removeItem(INTERACOES_KEY);
       localStorage.removeItem(PERFIS_KEY);
+      localStorage.removeItem(DOCUMENTOS_KEY);
       
       alert('Todos os dados foram removidos com sucesso.');
       renderizarTabela();
@@ -3656,6 +3541,7 @@
       const hoje = new Date().toISOString().split('T')[0];
       document.getElementById('dataInteracao').value = hoje;
       document.getElementById('dataInicial').value = hoje;
+      document.getElementById('inputDataAbertura').value = hoje;
       
       // Inicializar dados
       renderizarTabela();
@@ -3683,6 +3569,7 @@
           email: 'joao.silva@email.com',
           responsavel: 'Dra. Advogada',
           endereco: 'Rua das Flores, 123, Centro, São Paulo - SP',
+          nomeAcao: 'Ação de Indenização por Danos Morais',
           categoria: 'Cível',
           numero: '0001234-56.2024.8.26.0001',
           vara: '3ª Vara Cível de São Paulo',
@@ -3691,6 +3578,11 @@
           dataAbertura: '2024-01-15',
           valor: '50000',
           honorarios: '5000',
+          custosFixos: 5000,
+          horasEstimadas: 20,
+          valorHora: 150,
+          percentualLucro: 30,
+          honorariosMinimos: 4600,
           formaPagamento: 'Parcelado',
           parcelas: '10',
           observacoes: 'Processo sobre cobrança indevida.'
@@ -3699,9 +3591,6 @@
         processos.push(processoExemplo);
         salvarProcessos(processos);
         invalidarCacheProcessos(); // Invalidar cache após salvar
-        
-        // CRIAR PERFIL DO CLIENTE AUTOMATICAMENTE
-        criarOuAtualizarPerfilCliente(processoExemplo);
         
         // Adicionar anotação de exemplo
         const anotacoes = carregarAnotacoes();
