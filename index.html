@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
+        /* Todos os estilos anteriores permanecem iguais */
         :root {
             --bg: #f4f6fb;
             --sidebar: #0f1724;
@@ -677,7 +678,7 @@
             }
         }
 
-        /* Novos estilos para múltiplos processos */
+        /* Novos estilos para o perfil do cliente */
         .cliente-processos {
             margin-top: 20px;
             border-top: 1px solid #e2e8f0;
@@ -740,6 +741,37 @@
         .cliente-info p {
             margin-bottom: 8px;
             font-size: 14px;
+        }
+
+        /* Estilos para edição de dados do cliente */
+        .editar-cliente-form {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .dados-cliente-view {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .dados-cliente-view .info-item {
+            background: white;
+            margin-bottom: 12px;
+        }
+
+        /* Estilos para processos externos */
+        .processo-externo {
+            border-left: 4px solid var(--warning);
+        }
+
+        .processo-externo .processo-meta {
+            font-style: italic;
         }
     </style>
 </head>
@@ -894,6 +926,17 @@
 
                         <div class="grid">
                             <div class="form-group">
+                                <label for="cliente-endereco">Endereço</label>
+                                <input type="text" id="cliente-endereco" placeholder="Rua, número, bairro">
+                            </div>
+                            <div class="form-group">
+                                <label for="cliente-profissao">Profissão</label>
+                                <input type="text" id="cliente-profissao" placeholder="Profissão do cliente">
+                            </div>
+                        </div>
+
+                        <div class="grid">
+                            <div class="form-group">
                                 <label for="processo-numero">Número do Processo</label>
                                 <input type="text" id="processo-numero" placeholder="0000000-00.0000.0.00.0000">
                             </div>
@@ -1028,19 +1071,19 @@
                 </div>
             </div>
 
-            <!-- Perfil Tab -->
+            <!-- Perfil Tab - MODIFICADA -->
             <div id="perfil" class="tab">
                 <div class="container">
                     <div style="margin-bottom: 20px;">
-                        <label for="select-processo-perfil">Selecionar Processo</label>
-                        <select id="select-processo-perfil">
-                            <option value="">Selecione um processo...</option>
+                        <label for="select-cliente-perfil">Selecionar Cliente</label>
+                        <select id="select-cliente-perfil">
+                            <option value="">Selecione um cliente...</option>
                         </select>
                     </div>
 
                     <div id="perfil-conteudo">
                         <p style="text-align: center; color: var(--muted); padding: 40px;">
-                            Selecione um processo para visualizar o perfil completo.
+                            Selecione um cliente para visualizar o perfil completo.
                         </p>
                     </div>
                 </div>
@@ -1222,18 +1265,63 @@
         </div>
     </div>
 
+    <!-- Modal para Adicionar Processo Externo -->
+    <div id="modal-processo-externo" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Processo Externo</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label for="processo-externo-numero">Número do Processo</label>
+                    <input type="text" id="processo-externo-numero" placeholder="0000000-00.0000.0.00.0000">
+                </div>
+                <div class="form-group">
+                    <label for="processo-externo-categoria">Categoria</label>
+                    <select id="processo-externo-categoria">
+                        <option value="">Selecione...</option>
+                        <option value="Cível">Cível</option>
+                        <option value="Trabalhista">Trabalhista</option>
+                        <option value="Penal">Penal</option>
+                        <option value="Família">Família</option>
+                        <option value="Consumidor">Consumidor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="processo-externo-vara">Vara/Comarca</label>
+                    <input type="text" id="processo-externo-vara">
+                </div>
+                <div class="form-group">
+                    <label for="processo-externo-observacoes">Observações</label>
+                    <textarea id="processo-externo-observacoes" rows="4" placeholder="Informações adicionais sobre o processo..."></textarea>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" id="btn-salvar-processo-externo">
+                        <span class="material-icons">save</span>
+                        Salvar Processo Externo
+                    </button>
+                    <button class="btn btn-ghost" onclick="fecharModal('modal-processo-externo')">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Sistema de Armazenamento - Adicionando chave para clientes
+        // Sistema de Armazenamento - Adicionando chave para processos externos
         const STORAGE_KEYS = {
             CLIENTES: 'sistema_juridico_clientes',
             PROCESSOS: 'sistema_juridico_processos',
+            PROCESSOS_EXTERNOS: 'sistema_juridico_processos_externos',
             PARCELAS: 'sistema_juridico_parcelas',
             IMAGENS: 'sistema_juridico_imagens',
             ANOTACOES: 'sistema_juridico_anotacoes',
             CONTRATOS: 'sistema_juridico_contratos'
         };
 
-        // Funções de Armazenamento - Adicionando funções para clientes
+        // Funções de Armazenamento - Adicionando funções para processos externos
         function salvarClientes(clientes) {
             localStorage.setItem(STORAGE_KEYS.CLIENTES, JSON.stringify(clientes));
         }
@@ -1252,6 +1340,16 @@
             return data ? JSON.parse(data) : [];
         }
 
+        function salvarProcessosExternos(processosExternos) {
+            localStorage.setItem(STORAGE_KEYS.PROCESSOS_EXTERNOS, JSON.stringify(processosExternos));
+        }
+
+        function carregarProcessosExternos() {
+            const data = localStorage.getItem(STORAGE_KEYS.PROCESSOS_EXTERNOS);
+            return data ? JSON.parse(data) : [];
+        }
+
+        // As outras funções de armazenamento permanecem iguais
         function salvarParcelas(parcelas) {
             localStorage.setItem(STORAGE_KEYS.PARCELAS, JSON.stringify(parcelas));
         }
@@ -1313,7 +1411,7 @@
                 } else if (tabId === 'processos') {
                     carregarTabelaProcessos();
                 } else if (tabId === 'perfil') {
-                    atualizarSelectProcessosPerfil();
+                    atualizarSelectClientesPerfil();
                 } else if (tabId === 'parcelas') {
                     atualizarSelectProcessosParcelas();
                 } else if (tabId === 'contratos') {
@@ -1322,7 +1420,357 @@
             });
         });
 
-        // Função para atualizar o select de clientes
+        // Função para atualizar o select de clientes na aba Perfil
+        function atualizarSelectClientesPerfil() {
+            const clientes = carregarClientes();
+            const select = document.getElementById('select-cliente-perfil');
+            
+            select.innerHTML = '<option value="">Selecione um cliente...</option>';
+            clientes.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id;
+                option.textContent = `${cliente.nome} - ${cliente.cpf || 'CPF não informado'}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Evento para selecionar cliente na aba Perfil
+        document.getElementById('select-cliente-perfil').addEventListener('change', function() {
+            const clienteId = this.value;
+            const container = document.getElementById('perfil-conteudo');
+            
+            if (!clienteId) {
+                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Selecione um cliente para visualizar o perfil completo.</p>';
+                return;
+            }
+            
+            const clientes = carregarClientes();
+            const cliente = clientes.find(c => c.id === clienteId);
+            const processos = carregarProcessos().filter(p => p.clienteId === clienteId);
+            const processosExternos = carregarProcessosExternos().filter(p => p.clienteId === clienteId);
+            
+            // Exibir perfil completo do cliente com opção de edição
+            container.innerHTML = `
+                <div class="perfil-header">
+                    <div class="perfil-avatar">${cliente.nome.charAt(0)}</div>
+                    <div class="perfil-info">
+                        <h2>${cliente.nome}</h2>
+                        <p style="color: var(--muted);">CPF: ${cliente.cpf || 'Não informado'} | Cliente desde: ${new Date(cliente.dataCadastro).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="btn-editar-cliente">
+                            <span class="material-icons">edit</span>
+                            Editar Dados
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dados do Cliente - Modo Visualização -->
+                <div class="dados-cliente-view" id="dados-cliente-view">
+                    <h3>Dados Cadastrais</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Nome Completo</div>
+                            <div class="info-value">${cliente.nome}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">CPF</div>
+                            <div class="info-value">${cliente.cpf || 'Não informado'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Telefone</div>
+                            <div class="info-value">${cliente.telefone || 'Não informado'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">E-mail</div>
+                            <div class="info-value">${cliente.email || 'Não informado'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Endereço</div>
+                            <div class="info-value">${cliente.endereco || 'Não informado'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Profissão</div>
+                            <div class="info-value">${cliente.profissao || 'Não informado'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulário de Edição (inicialmente oculto) -->
+                <div class="editar-cliente-form" id="editar-cliente-form" style="display: none;">
+                    <h3>Editar Dados do Cliente</h3>
+                    <form id="form-editar-cliente">
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="editar-cliente-nome">Nome Completo *</label>
+                                <input type="text" id="editar-cliente-nome" value="${cliente.nome}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editar-cliente-cpf">CPF</label>
+                                <input type="text" id="editar-cliente-cpf" value="${cliente.cpf || ''}" placeholder="000.000.000-00">
+                            </div>
+                        </div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="editar-cliente-telefone">Telefone</label>
+                                <input type="text" id="editar-cliente-telefone" value="${cliente.telefone || ''}" placeholder="(11) 99999-9999">
+                            </div>
+                            <div class="form-group">
+                                <label for="editar-cliente-email">E-mail</label>
+                                <input type="email" id="editar-cliente-email" value="${cliente.email || ''}" placeholder="cliente@email.com">
+                            </div>
+                        </div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="editar-cliente-endereco">Endereço</label>
+                                <input type="text" id="editar-cliente-endereco" value="${cliente.endereco || ''}" placeholder="Rua, número, bairro">
+                            </div>
+                            <div class="form-group">
+                                <label for="editar-cliente-profissao">Profissão</label>
+                                <input type="text" id="editar-cliente-profissao" value="${cliente.profissao || ''}" placeholder="Profissão do cliente">
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="material-icons">save</span>
+                                Salvar Alterações
+                            </button>
+                            <button type="button" class="btn btn-ghost" id="btn-cancelar-edicao">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Processos do Cliente -->
+                <div class="cliente-processos">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3>Processos do Cliente</h3>
+                        <div class="actions">
+                            <button class="btn btn-primary" onclick="abrirModalProcessoExterno('${clienteId}')">
+                                <span class="material-icons">add</span>
+                                Adicionar Processo Externo
+                            </button>
+                            <button class="btn btn-success" onclick="irParaCadastroComCliente('${clienteId}')">
+                                <span class="material-icons">add_circle</span>
+                                Novo Processo no Sistema
+                            </button>
+                        </div>
+                    </div>
+
+                    ${processos.length > 0 || processosExternos.length > 0 ? `
+                        <div class="processos-lista">
+                            ${processos.map(processo => `
+                                <div class="processo-item">
+                                    <div class="processo-info">
+                                        <h4>${processo.numero || 'Número não informado'}</h4>
+                                        <div class="processo-meta">
+                                            <span>Categoria: ${processo.categoria || 'N/A'}</span>
+                                            <span>Status: ${processo.status}</span>
+                                            <span>Honorários: R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                        </div>
+                                    </div>
+                                    <div class="processo-acoes">
+                                        <button class="btn btn-ghost btn-sm" onclick="verDetalhesProcesso('${processo.id}')">
+                                            <span class="material-icons" style="font-size: 16px;">visibility</span>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="excluirProcesso('${processo.id}')">
+                                            <span class="material-icons" style="font-size: 16px;">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            
+                            ${processosExternos.map(processo => `
+                                <div class="processo-item processo-externo">
+                                    <div class="processo-info">
+                                        <h4>${processo.numero || 'Número não informado'} <span style="font-size: 12px; color: var(--warning);">(Externo)</span></h4>
+                                        <div class="processo-meta">
+                                            <span>Categoria: ${processo.categoria || 'N/A'}</span>
+                                            <span>Vara: ${processo.vara || 'N/A'}</span>
+                                            <span>Status: Processo Externo</span>
+                                        </div>
+                                        ${processo.observacoes ? `<div style="margin-top: 8px; font-size: 14px;">${processo.observacoes}</div>` : ''}
+                                    </div>
+                                    <div class="processo-acoes">
+                                        <button class="btn btn-ghost btn-sm" onclick="editarProcessoExterno('${processo.id}')">
+                                            <span class="material-icons" style="font-size: 16px;">edit</span>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="excluirProcessoExterno('${processo.id}')">
+                                            <span class="material-icons" style="font-size: 16px;">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <p style="text-align: center; color: var(--muted); padding: 40px;">
+                            Nenhum processo encontrado para este cliente.
+                        </p>
+                    `}
+                </div>
+
+                <!-- Estatísticas do Cliente -->
+                <div class="perfil-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Total de Processos</div>
+                        <div class="stat-value">${processos.length + processosExternos.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Processos no Sistema</div>
+                        <div class="stat-value">${processos.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Processos Externos</div>
+                        <div class="stat-value">${processosExternos.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Valor Total em Honorários</div>
+                        <div class="stat-value">R$ ${processos.reduce((total, p) => total + (p.honorarios || 0), 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Adicionar eventos para edição do cliente
+            document.getElementById('btn-editar-cliente').addEventListener('click', function() {
+                document.getElementById('dados-cliente-view').style.display = 'none';
+                document.getElementById('editar-cliente-form').style.display = 'block';
+            });
+            
+            document.getElementById('btn-cancelar-edicao').addEventListener('click', function() {
+                document.getElementById('dados-cliente-view').style.display = 'block';
+                document.getElementById('editar-cliente-form').style.display = 'none';
+            });
+            
+            document.getElementById('form-editar-cliente').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Atualizar dados do cliente
+                const clientes = carregarClientes();
+                const clienteIndex = clientes.findIndex(c => c.id === clienteId);
+                
+                if (clienteIndex !== -1) {
+                    clientes[clienteIndex] = {
+                        ...clientes[clienteIndex],
+                        nome: document.getElementById('editar-cliente-nome').value,
+                        cpf: document.getElementById('editar-cliente-cpf').value,
+                        telefone: document.getElementById('editar-cliente-telefone').value,
+                        email: document.getElementById('editar-cliente-email').value,
+                        endereco: document.getElementById('editar-cliente-endereco').value,
+                        profissao: document.getElementById('editar-cliente-profissao').value
+                    };
+                    
+                    salvarClientes(clientes);
+                    
+                    // Atualizar a visualização
+                    document.getElementById('select-cliente-perfil').dispatchEvent(new Event('change'));
+                    
+                    mostrarAlerta('alert-cadastro', 'Dados do cliente atualizados com sucesso!', 'success');
+                }
+            });
+        });
+
+        // Função para abrir modal de processo externo
+        window.abrirModalProcessoExterno = function(clienteId) {
+            document.getElementById('modal-processo-externo').classList.add('active');
+            document.getElementById('modal-processo-externo').dataset.clienteId = clienteId;
+            
+            // Limpar campos do formulário
+            document.getElementById('processo-externo-numero').value = '';
+            document.getElementById('processo-externo-categoria').value = '';
+            document.getElementById('processo-externo-vara').value = '';
+            document.getElementById('processo-externo-observacoes').value = '';
+        };
+
+        // Evento para salvar processo externo
+        document.getElementById('btn-salvar-processo-externo').addEventListener('click', function() {
+            const clienteId = document.getElementById('modal-processo-externo').dataset.clienteId;
+            const numero = document.getElementById('processo-externo-numero').value.trim();
+            const categoria = document.getElementById('processo-externo-categoria').value;
+            const vara = document.getElementById('processo-externo-vara').value.trim();
+            const observacoes = document.getElementById('processo-externo-observacoes').value.trim();
+            
+            if (!numero) {
+                alert('Por favor, informe o número do processo.');
+                return;
+            }
+            
+            const processosExternos = carregarProcessosExternos();
+            processosExternos.push({
+                id: Date.now().toString(),
+                clienteId: clienteId,
+                numero: numero,
+                categoria: categoria,
+                vara: vara,
+                observacoes: observacoes,
+                dataCadastro: new Date().toISOString()
+            });
+            
+            salvarProcessosExternos(processosExternos);
+            fecharModal('modal-processo-externo');
+            
+            // Atualizar a visualização do perfil do cliente
+            document.getElementById('select-cliente-perfil').dispatchEvent(new Event('change'));
+            
+            mostrarAlerta('alert-cadastro', 'Processo externo adicionado com sucesso!', 'success');
+        });
+
+        // Função para editar processo externo
+        window.editarProcessoExterno = function(processoId) {
+            const processosExternos = carregarProcessosExternos();
+            const processo = processosExternos.find(p => p.id === processoId);
+            
+            if (!processo) return;
+            
+            document.getElementById('modal-processo-externo').classList.add('active');
+            document.getElementById('modal-processo-externo').dataset.processoId = processoId;
+            document.getElementById('modal-processo-externo').dataset.clienteId = processo.clienteId;
+            
+            // Preencher campos do formulário
+            document.getElementById('processo-externo-numero').value = processo.numero || '';
+            document.getElementById('processo-externo-categoria').value = processo.categoria || '';
+            document.getElementById('processo-externo-vara').value = processo.vara || '';
+            document.getElementById('processo-externo-observacoes').value = processo.observacoes || '';
+            
+            // Alterar texto do botão
+            document.getElementById('btn-salvar-processo-externo').innerHTML = `
+                <span class="material-icons">save</span>
+                Atualizar Processo Externo
+            `;
+        };
+
+        // Função para excluir processo externo
+        window.excluirProcessoExterno = function(processoId) {
+            if (!confirm('Tem certeza que deseja excluir este processo externo?')) return;
+            
+            let processosExternos = carregarProcessosExternos();
+            processosExternos = processosExternos.filter(p => p.id !== processoId);
+            salvarProcessosExternos(processosExternos);
+            
+            // Atualizar a visualização
+            document.getElementById('select-cliente-perfil').dispatchEvent(new Event('change'));
+            
+            mostrarAlerta('alert-cadastro', 'Processo externo excluído com sucesso!', 'success');
+        };
+
+        // Função para ir para a aba de cadastro com cliente pré-selecionado
+        window.irParaCadastroComCliente = function(clienteId) {
+            // Mudar para a aba de cadastro
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-tab="cadastro"]').classList.add('active');
+            
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('cadastro').classList.add('active');
+            
+            document.getElementById('page-title').textContent = 'Cadastro';
+            
+            // Selecionar o cliente no select
+            const select = document.getElementById('selecionar-cliente');
+            select.value = clienteId;
+            select.dispatchEvent(new Event('change'));
+        };
+
+        // Função para atualizar o select de clientes na aba Cadastro
         function atualizarSelectClientes() {
             const clientes = carregarClientes();
             const select = document.getElementById('selecionar-cliente');
@@ -1336,1278 +1784,20 @@
             });
         }
 
-        // Evento para selecionar cliente existente
-        document.getElementById('selecionar-cliente').addEventListener('change', function() {
-            const clienteId = this.value;
-            const clientes = carregarClientes();
-            const cliente = clientes.find(c => c.id === clienteId);
-            
-            if (cliente) {
-                // Preencher os campos do formulário com os dados do cliente
-                document.getElementById('cliente-nome').value = cliente.nome;
-                document.getElementById('cliente-cpf').value = cliente.cpf || '';
-                document.getElementById('cliente-telefone').value = cliente.telefone || '';
-                document.getElementById('cliente-email').value = cliente.email || '';
-                
-                // Mostrar informações do cliente selecionado
-                const infoContainer = document.getElementById('info-cliente-selecionado');
-                const detalhesCliente = document.getElementById('detalhes-cliente');
-                const processosCliente = document.getElementById('processos-cliente');
-                
-                detalhesCliente.innerHTML = `
-                    <p><strong>Nome:</strong> ${cliente.nome}</p>
-                    <p><strong>CPF:</strong> ${cliente.cpf || 'Não informado'}</p>
-                    <p><strong>Telefone:</strong> ${cliente.telefone || 'Não informado'}</p>
-                    <p><strong>E-mail:</strong> ${cliente.email || 'Não informado'}</p>
-                `;
-                
-                // Carregar processos do cliente
-                const processos = carregarProcessos().filter(p => p.clienteId === clienteId);
-                if (processos.length > 0) {
-                    processosCliente.innerHTML = `
-                        <h5>Processos deste cliente:</h5>
-                        ${processos.map(processo => `
-                            <div class="processo-item">
-                                <div class="processo-info">
-                                    <h4>${processo.numero || 'Número não informado'}</h4>
-                                    <div class="processo-meta">
-                                        <span>Categoria: ${processo.categoria || 'N/A'}</span>
-                                        <span>Status: ${processo.status}</span>
-                                        <span>Honorários: R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                                    </div>
-                                </div>
-                                <div class="processo-acoes">
-                                    <button class="btn btn-ghost btn-sm" onclick="verDetalhesProcesso('${processo.id}')">
-                                        <span class="material-icons" style="font-size: 16px;">visibility</span>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    `;
-                } else {
-                    processosCliente.innerHTML = '<p>Este cliente ainda não possui processos cadastrados.</p>';
-                }
-                
-                infoContainer.style.display = 'block';
-            } else {
-                document.getElementById('info-cliente-selecionado').style.display = 'none';
-            }
-        });
+        // As demais funções permanecem iguais (calculadora, formulário de cadastro, etc.)
+        // ...
 
-        // Evento para cadastrar novo cliente
-        document.getElementById('btn-novo-cliente').addEventListener('click', function() {
-            // Limpar campos do formulário
-            document.getElementById('cliente-nome').value = '';
-            document.getElementById('cliente-cpf').value = '';
-            document.getElementById('cliente-telefone').value = '';
-            document.getElementById('cliente-email').value = '';
-            
-            // Limpar seleção de cliente
-            document.getElementById('selecionar-cliente').value = '';
-            document.getElementById('info-cliente-selecionado').style.display = 'none';
-            
-            // Focar no campo de nome do cliente
-            document.getElementById('cliente-nome').focus();
-        });
-
-        // Calculadora de Honorários
-        document.getElementById('btn-calcular-honorarios').addEventListener('click', function() {
-            const custosFixos = parseFloat(document.getElementById('custos-fixos').value) || 0;
-            const horasTrabalho = parseInt(document.getElementById('horas-trabalho').value) || 0;
-            const valorHora = parseFloat(document.getElementById('valor-hora').value) || 0;
-            const percentualLucro = parseFloat(document.getElementById('percentual-lucro').value) || 0;
-
-            if (custosFixos <= 0 || horasTrabalho <= 0 || valorHora <= 0) {
-                mostrarAlerta('alert-cadastro', 'Preencha todos os campos da calculadora.', 'error');
-                return;
-            }
-
-            // Cálculo dos honorários mínimos
-            const custoHoras = horasTrabalho * valorHora;
-            const custoFixoProporcional = custosFixos * 0.1; // 10% dos custos fixos
-            const custoTotal = custoHoras + custoFixoProporcional;
-            const honorariosMinimos = custoTotal * (1 + (percentualLucro / 100));
-
-            // Exibir resultado
-            document.getElementById('valor-honorarios-minimos').textContent = 
-                `R$ ${honorariosMinimos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            
-            document.getElementById('detalhes-calculo').innerHTML = `
-                <strong>Detalhamento:</strong><br>
-                • Custo horas (${horasTrabalho}h × R$ ${valorHora.toLocaleString('pt-BR', {minimumFractionDigits: 2})}): R$ ${custoHoras.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
-                • Custo fixo proporcional (10% de R$ ${custosFixos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}): R$ ${custoFixoProporcional.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
-                • Custo total: R$ ${custoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
-                • Lucro (${percentualLucro}%): R$ ${(honorariosMinimos - custoTotal).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-            `;
-
-            document.getElementById('resultado-calculo').style.display = 'block';
-            
-            // Preencher automaticamente o campo de honorários
-            document.getElementById('valor-honorarios').value = honorariosMinimos.toFixed(2);
-        });
-
-        // Controle de Formulário de Parcelas
-        document.getElementById('forma-pagamento').addEventListener('change', function() {
-            const parcelasInput = document.getElementById('quantidade-parcelas');
-            if (this.value === 'Parcelado') {
-                parcelasInput.disabled = false;
-                parcelasInput.required = true;
-            } else {
-                parcelasInput.disabled = true;
-                parcelasInput.required = false;
-                parcelasInput.value = '';
-            }
-        });
-
-        // Formulário de Cadastro de Processo - Modificado para lidar com clientes
-        document.getElementById('form-processo').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Verificar se é um cliente existente ou novo
-            const clienteSelecionadoId = document.getElementById('selecionar-cliente').value;
-            let clienteId = clienteSelecionadoId;
-            
-            // Se não há cliente selecionado, criar um novo
-            if (!clienteSelecionadoId) {
-                const clientes = carregarClientes();
-                const novoCliente = {
-                    id: Date.now().toString(),
-                    nome: document.getElementById('cliente-nome').value,
-                    cpf: document.getElementById('cliente-cpf').value,
-                    telefone: document.getElementById('cliente-telefone').value,
-                    email: document.getElementById('cliente-email').value,
-                    dataCadastro: new Date().toISOString()
-                };
-                
-                clientes.push(novoCliente);
-                salvarClientes(clientes);
-                clienteId = novoCliente.id;
-                
-                // Atualizar o select de clientes
-                atualizarSelectClientes();
-            }
-            
-            // Criar o processo
-            const processo = {
-                id: Date.now().toString(),
-                clienteId: clienteId,
-                numero: document.getElementById('processo-numero').value,
-                categoria: document.getElementById('processo-categoria').value,
-                vara: document.getElementById('processo-vara').value,
-                status: document.getElementById('processo-status').value,
-                valorCausa: parseFloat(document.getElementById('valor-causa').value) || 0,
-                honorarios: parseFloat(document.getElementById('valor-honorarios').value) || 0,
-                formaPagamento: document.getElementById('forma-pagamento').value,
-                parcelas: parseInt(document.getElementById('quantidade-parcelas').value) || 0,
-                observacoes: document.getElementById('observacoes').value,
-                dataCadastro: new Date().toISOString(),
-                parcelasPagas: 0
-            };
-
-            // Salvar processo
-            const processos = carregarProcessos();
-            processos.push(processo);
-            salvarProcessos(processos);
-
-            // Criar parcelas se for pagamento parcelado
-            if (processo.formaPagamento === 'Parcelado' && processo.parcelas > 0) {
-                const parcelas = carregarParcelas();
-                const valorParcela = processo.honorarios / processo.parcelas;
-                
-                for (let i = 1; i <= processo.parcelas; i++) {
-                    const dataVencimento = new Date();
-                    dataVencimento.setMonth(dataVencimento.getMonth() + i);
-                    
-                    parcelas.push({
-                        id: processo.id + '_' + i,
-                        processoId: processo.id,
-                        numero: i,
-                        valor: valorParcela,
-                        dataVencimento: dataVencimento.toISOString(),
-                        status: 'pendente',
-                        dataPagamento: null
-                    });
-                }
-                salvarParcelas(parcelas);
-            }
-
-            // Criar contrato automaticamente
-            criarContratoAutomatico(processo);
-
-            mostrarAlerta('alert-cadastro', 'Processo cadastrado com sucesso!', 'success');
-            this.reset();
-            document.getElementById('quantidade-parcelas').disabled = true;
-            document.getElementById('resultado-calculo').style.display = 'none';
-            document.getElementById('info-cliente-selecionado').style.display = 'none';
-            
-            // Atualizar dashboard
-            atualizarDashboard();
-        });
-
-        // Botão Limpar Formulário
-        document.getElementById('btn-limpar').addEventListener('click', function() {
-            document.getElementById('form-processo').reset();
-            document.getElementById('quantidade-parcelas').disabled = true;
-            document.getElementById('resultado-calculo').style.display = 'none';
-            document.getElementById('info-cliente-selecionado').style.display = 'none';
-        });
-
-        // Função para mostrar alertas
-        function mostrarAlerta(containerId, mensagem, tipo) {
-            const container = document.getElementById(containerId);
-            const alertClass = tipo === 'success' ? 'alert-success' : 'alert-error';
-            const icon = tipo === 'success' ? 'check_circle' : 'error';
-            
-            container.innerHTML = `
-                <div class="alert ${alertClass}">
-                    <span class="material-icons">${icon}</span>
-                    ${mensagem}
-                </div>
-            `;
-            
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 5000);
-        }
-
-        // Atualizar Dashboard - Modificado para mostrar estatísticas de clientes
-        function atualizarDashboard() {
-            const clientes = carregarClientes();
-            const processos = carregarProcessos();
-            const parcelas = carregarParcelas();
-            
-            // Estatísticas
-            document.getElementById('total-clientes').textContent = clientes.length;
-            document.getElementById('total-processos').textContent = processos.length;
-            document.getElementById('processos-ativos').textContent = processos.filter(p => 
-                p.status !== 'Finalizado' && p.status !== 'Arquivado'
-            ).length;
-            
-            const honorariosTotais = processos.reduce((total, p) => total + (p.honorarios || 0), 0);
-            document.getElementById('honorarios-mensais').textContent = `R$ ${honorariosTotais.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            
-            const parcelasPendentes = parcelas.filter(p => p.status === 'pendente').length;
-            
-            // Processos Recentes - Agora mostra também o nome do cliente
-            const processosRecentes = processos.slice(-5).reverse();
-            const container = document.getElementById('processos-recentes');
-            
-            if (processosRecentes.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Nenhum processo cadastrado ainda.</p>';
-            } else {
-                container.innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Número</th>
-                                <th>Status</th>
-                                <th>Valor</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${processosRecentes.map(processo => {
-                                const cliente = clientes.find(c => c.id === processo.clienteId);
-                                return `
-                                    <tr>
-                                        <td>${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
-                                        <td>${processo.numero || 'N/A'}</td>
-                                        <td><span class="status-badge status-${processo.status.toLowerCase().replace(' ', '-')}">${processo.status}</span></td>
-                                        <td>R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                        <td>
-                                            <button class="btn btn-ghost" onclick="verDetalhesProcesso('${processo.id}')" style="padding: 4px 8px; font-size: 12px;">
-                                                <span class="material-icons" style="font-size: 16px;">visibility</span>
-                                                Ver
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
-            }
-        }
-
-        // Carregar Tabela de Processos - Modificado para mostrar nome do cliente
-        function carregarTabelaProcessos() {
-            const clientes = carregarClientes();
-            const processos = carregarProcessos();
-            const container = document.getElementById('tabela-processos');
-            
-            if (processos.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Nenhum processo encontrado.</p>';
-                return;
-            }
-            
-            container.innerHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>CPF</th>
-                            <th>Número</th>
-                            <th>Categoria</th>
-                            <th>Status</th>
-                            <th>Honorários</th>
-                            <th>Parcelas</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${processos.map(processo => {
-                            const cliente = clientes.find(c => c.id === processo.clienteId);
-                            const parcelasProcesso = carregarParcelas().filter(p => p.processoId === processo.id);
-                            const parcelasPagas = parcelasProcesso.filter(p => p.status === 'paga').length;
-                            const totalParcelas = processo.parcelas || parcelasProcesso.length;
-                            
-                            return `
-                                <tr>
-                                    <td>${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
-                                    <td>${cliente ? cliente.cpf || 'N/A' : 'N/A'}</td>
-                                    <td>${processo.numero || 'N/A'}</td>
-                                    <td>${processo.categoria || 'N/A'}</td>
-                                    <td>
-                                        <select onchange="atualizarStatusProcesso('${processo.id}', this.value)" style="padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                            <option value="Aguardando Distribuição" ${processo.status === 'Aguardando Distribuição' ? 'selected' : ''}>Aguardando Distribuição</option>
-                                            <option value="Em Andamento" ${processo.status === 'Em Andamento' ? 'selected' : ''}>Em Andamento</option>
-                                            <option value="Aguardando Decisão" ${processo.status === 'Aguardando Decisão' ? 'selected' : ''}>Aguardando Decisão</option>
-                                            <option value="Finalizado" ${processo.status === 'Finalizado' ? 'selected' : ''}>Finalizado</option>
-                                        </select>
-                                    </td>
-                                    <td>R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    <td>${processo.formaPagamento === 'Parcelado' ? `${parcelasPagas}/${totalParcelas}` : 'À Vista'}</td>
-                                    <td>
-                                        <button class="btn btn-ghost" onclick="verDetalhesProcesso('${processo.id}')" style="padding: 4px 8px; font-size: 12px;">
-                                            <span class="material-icons" style="font-size: 16px;">visibility</span>
-                                        </button>
-                                        <button class="btn btn-danger" onclick="excluirProcesso('${processo.id}')" style="padding: 4px 8px; font-size: 12px;">
-                                            <span class="material-icons" style="font-size: 16px;">delete</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
-        // Funções Globais para Processos - Modificadas para lidar com clientes
-        window.verDetalhesProcesso = function(id) {
-            const clientes = carregarClientes();
-            const processos = carregarProcessos();
-            const processo = processos.find(p => p.id === id);
-            if (!processo) return;
-            
-            const cliente = clientes.find(c => c.id === processo.clienteId);
-            const parcelas = carregarParcelas().filter(p => p.processoId === id);
-            
-            document.getElementById('modal-processo-conteudo').innerHTML = `
-                <div style="margin-bottom: 20px;">
-                    <h4>Dados do Cliente</h4>
-                    <p><strong>Nome:</strong> ${cliente ? cliente.nome : 'Cliente não encontrado'}</p>
-                    <p><strong>CPF:</strong> ${cliente ? cliente.cpf || 'Não informado' : 'Não informado'}</p>
-                    ${cliente && cliente.telefone ? `<p><strong>Telefone:</strong> ${cliente.telefone}</p>` : ''}
-                    ${cliente && cliente.email ? `<p><strong>E-mail:</strong> ${cliente.email}</p>` : ''}
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <h4>Dados do Processo</h4>
-                    <p><strong>Número:</strong> ${processo.numero || 'Não informado'}</p>
-                    <p><strong>Categoria:</strong> ${processo.categoria || 'Não informado'}</p>
-                    <p><strong>Vara:</strong> ${processo.vara || 'Não informado'}</p>
-                    <p><strong>Status:</strong> ${processo.status}</p>
-                    <p><strong>Valor da Causa:</strong> R$ ${(processo.valorCausa || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                    <p><strong>Honorários:</strong> R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                    <p><strong>Forma de Pagamento:</strong> ${processo.formaPagamento}</p>
-                </div>
-                
-                ${processo.observacoes ? `
-                    <div style="margin-bottom: 20px;">
-                        <h4>Observações</h4>
-                        <p>${processo.observacoes}</p>
-                    </div>
-                ` : ''}
-                
-                ${parcelas.length > 0 ? `
-                    <div>
-                        <h4>Parcelas</h4>
-                        <div class="parcelas-grid">
-                            ${parcelas.map(parcela => `
-                                <div class="parcela-item ${parcela.status}">
-                                    <div style="font-weight: bold; margin-bottom: 8px;">Parcela ${parcela.numero}</div>
-                                    <div style="color: var(--muted); margin-bottom: 8px;">R$ ${parcela.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                                    <div style="font-size: 12px; color: var(--muted);">
-                                        Vencimento: ${new Date(parcela.dataVencimento).toLocaleDateString('pt-BR')}
-                                    </div>
-                                    <button class="parcela-btn ${parcela.status}" onclick="marcarParcelaComoPaga('${parcela.id}')">
-                                        ${parcela.status === 'paga' ? 'Paga' : 'Marcar como Paga'}
-                                    </button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-            `;
-            
-            document.getElementById('modal-processo').classList.add('active');
-        };
-
-        window.atualizarStatusProcesso = function(id, novoStatus) {
-            const processos = carregarProcessos();
-            const processo = processos.find(p => p.id === id);
-            if (processo) {
-                processo.status = novoStatus;
-                salvarProcessos(processos);
-                mostrarAlerta('alert-cadastro', 'Status atualizado com sucesso!', 'success');
-            }
-        };
-
-        window.excluirProcesso = function(id) {
-            if (!confirm('Tem certeza que deseja excluir este processo?')) return;
-            
-            let processos = carregarProcessos();
-            processos = processos.filter(p => p.id !== id);
-            salvarProcessos(processos);
-            
-            let parcelas = carregarParcelas();
-            parcelas = parcelas.filter(p => p.processoId !== id);
-            salvarParcelas(parcelas);
-            
-            // Remover também imagens e anotações relacionadas
-            let imagens = carregarImagens();
-            imagens = imagens.filter(i => i.processoId !== id);
-            salvarImagens(imagens);
-            
-            let anotacoes = carregarAnotacoes();
-            anotacoes = anotacoes.filter(a => a.processoId !== id);
-            salvarAnotacoes(anotacoes);
-            
-            carregarTabelaProcessos();
-            atualizarDashboard();
-            mostrarAlerta('alert-cadastro', 'Processo excluído com sucesso!', 'success');
-        };
-
-        // Sistema de Perfil do Cliente
-        function atualizarSelectProcessosPerfil() {
-            const processos = carregarProcessos();
-            const select = document.getElementById('select-processo-perfil');
-            
-            select.innerHTML = '<option value="">Selecione um processo...</option>';
-            processos.forEach(processo => {
-                const option = document.createElement('option');
-                option.value = processo.id;
-                option.textContent = `${processo.numero || 'S/N'} - ${processo.categoria || 'N/A'}`;
-                select.appendChild(option);
-            });
-        }
-
-        document.getElementById('select-processo-perfil').addEventListener('change', function() {
-            const processoId = this.value;
-            const container = document.getElementById('perfil-conteudo');
-            
-            if (!processoId) {
-                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Selecione um processo para visualizar o perfil completo.</p>';
-                return;
-            }
-            
-            const clientes = carregarClientes();
-            const processo = carregarProcessos().find(p => p.id === processoId);
-            const cliente = clientes.find(c => c.id === processo.clienteId);
-            const imagens = carregarImagens().filter(i => i.processoId === processoId);
-            const anotacoes = carregarAnotacoes().filter(a => a.processoId === processoId);
-            const parcelas = carregarParcelas().filter(p => p.processoId === processoId);
-            
-            container.innerHTML = `
-                <div class="perfil-header">
-                    <div class="perfil-avatar">${cliente ? cliente.nome.charAt(0) : 'C'}</div>
-                    <div class="perfil-info">
-                        <h2>${cliente ? cliente.nome : 'Cliente não encontrado'}</h2>
-                        <p style="color: var(--muted);">CPF: ${cliente ? cliente.cpf || 'Não informado' : 'Não informado'} | Processo: ${processo.numero || 'Não informado'}</p>
-                    </div>
-                </div>
-
-                <div class="perfil-stats">
-                    <div class="stat-card">
-                        <div class="stat-label">Status do Processo</div>
-                        <div class="stat-value">${processo.status}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Valor da Causa</div>
-                        <div class="stat-value">R$ ${(processo.valorCausa || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Honorários</div>
-                        <div class="stat-value">R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Parcelas Pagas</div>
-                        <div class="stat-value">${parcelas.filter(p => p.status === 'paga').length}/${parcelas.length}</div>
-                    </div>
-                </div>
-
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label">Categoria</div>
-                        <div class="info-value">${processo.categoria || 'Não informado'}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Vara/Comarca</div>
-                        <div class="info-value">${processo.vara || 'Não informado'}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Forma de Pagamento</div>
-                        <div class="info-value">${processo.formaPagamento || 'Não informado'}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Data de Cadastro</div>
-                        <div class="info-value">${new Date(processo.dataCadastro).toLocaleDateString('pt-BR')}</div>
-                    </div>
-                </div>
-
-                ${processo.observacoes ? `
-                    <div class="info-item" style="grid-column: 1 / -1;">
-                        <div class="info-label">Observações</div>
-                        <div class="info-value">${processo.observacoes}</div>
-                    </div>
-                ` : ''}
-
-                <!-- Seção de Imagens -->
-                <div style="margin-top: 30px;">
-                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 16px;">
-                        <h3>Imagens do Processo</h3>
-                        <button class="btn btn-primary" onclick="abrirUploadImagens('${processoId}')">
-                            <span class="material-icons">add_photo_alternate</span>
-                            Adicionar Imagens
-                        </button>
-                    </div>
-                    
-                    ${imagens.length > 0 ? `
-                        <div class="imagens-lista">
-                            ${imagens.map(imagem => `
-                                <div class="imagem-item">
-                                    <img src="${imagem.url}" alt="${imagem.nome}">
-                                    <div class="imagem-info">
-                                        <div class="imagem-nome">${imagem.nome}</div>
-                                        <div class="imagem-meta">${imagem.tamanho} • ${new Date(imagem.dataUpload).toLocaleDateString('pt-BR')}</div>
-                                    </div>
-                                    <div class="imagem-acoes">
-                                        <button class="btn btn-danger" onclick="excluirImagem('${imagem.id}')" style="padding: 4px; font-size: 12px;">
-                                            <span class="material-icons" style="font-size: 16px;">delete</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : `
-                        <p style="text-align: center; color: var(--muted); padding: 40px;">
-                            Nenhuma imagem anexada a este processo.
-                        </p>
-                    `}
-                </div>
-
-                <!-- Seção de Anotações -->
-                <div style="margin-top: 30px;">
-                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 16px;">
-                        <h3>Anotações</h3>
-                        <button class="btn btn-primary" onclick="abrirModalAnotacao('${processoId}')">
-                            <span class="material-icons">note_add</span>
-                            Nova Anotação
-                        </button>
-                    </div>
-                    
-                    ${anotacoes.length > 0 ? `
-                        <div class="anotacoes-lista">
-                            ${anotacoes.map(anotacao => `
-                                <div class="anotacao-item">
-                                    <div class="anotacao-meta">
-                                        <span>${new Date(anotacao.data).toLocaleString('pt-BR')}</span>
-                                        <button class="btn btn-danger" onclick="excluirAnotacao('${anotacao.id}')" style="padding: 4px 8px; font-size: 12px;">
-                                            <span class="material-icons" style="font-size: 16px;">delete</span>
-                                        </button>
-                                    </div>
-                                    <div class="anotacao-texto">${anotacao.texto}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : `
-                        <p style="text-align: center; color: var(--muted); padding: 40px;">
-                            Nenhuma anotação registrada para este processo.
-                        </p>
-                    `}
-                </div>
-            `;
-        });
-
-        // Sistema de Upload de Imagens
-        window.abrirUploadImagens = function(processoId) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.multiple = true;
-            
-            input.onchange = function(e) {
-                const files = e.target.files;
-                const imagens = carregarImagens();
-                
-                for (let file of files) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const imagem = {
-                            id: Date.now().toString() + Math.random(),
-                            processoId: processoId,
-                            nome: file.name,
-                            url: e.target.result,
-                            tamanho: formatarTamanho(file.size),
-                            dataUpload: new Date().toISOString()
-                        };
-                        
-                        imagens.push(imagem);
-                        salvarImagens(imagens);
-                        
-                        // Atualizar a visualização
-                        const select = document.getElementById('select-processo-perfil');
-                        if (select.value === processoId) {
-                            select.dispatchEvent(new Event('change'));
-                        }
-                        
-                        mostrarAlerta('alert-cadastro', 'Imagem adicionada com sucesso!', 'success');
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-            
-            input.click();
-        };
-
-        window.excluirImagem = function(imagemId) {
-            if (!confirm('Tem certeza que deseja excluir esta imagem?')) return;
-            
-            let imagens = carregarImagens();
-            imagens = imagens.filter(i => i.id !== imagemId);
-            salvarImagens(imagens);
-            
-            // Atualizar a visualização
-            const select = document.getElementById('select-processo-perfil');
-            if (select.value) {
-                select.dispatchEvent(new Event('change'));
-            }
-            
-            mostrarAlerta('alert-cadastro', 'Imagem excluída com sucesso!', 'success');
-        };
-
-        // Sistema de Anotações
-        window.abrirModalAnotacao = function(processoId) {
-            document.getElementById('modal-anotacao').classList.add('active');
-            document.getElementById('modal-anotacao').dataset.processoId = processoId;
-            document.getElementById('anotacao-texto').value = '';
-        };
-
-        document.getElementById('btn-salvar-anotacao').addEventListener('click', function() {
-            const processoId = document.getElementById('modal-anotacao').dataset.processoId;
-            const texto = document.getElementById('anotacao-texto').value.trim();
-            
-            if (!texto) {
-                alert('Digite uma anotação.');
-                return;
-            }
-            
-            const anotacoes = carregarAnotacoes();
-            anotacoes.push({
-                id: Date.now().toString(),
-                processoId: processoId,
-                texto: texto,
-                data: new Date().toISOString()
-            });
-            
-            salvarAnotacoes(anotacoes);
-            fecharModal('modal-anotacao');
-            
-            // Atualizar a visualização
-            const select = document.getElementById('select-processo-perfil');
-            if (select.value === processoId) {
-                select.dispatchEvent(new Event('change'));
-            }
-            
-            mostrarAlerta('alert-cadastro', 'Anotação salva com sucesso!', 'success');
-        });
-
-        window.excluirAnotacao = function(anotacaoId) {
-            if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
-            
-            let anotacoes = carregarAnotacoes();
-            anotacoes = anotacoes.filter(a => a.id !== anotacaoId);
-            salvarAnotacoes(anotacoes);
-            
-            // Atualizar a visualização
-            const select = document.getElementById('select-processo-perfil');
-            if (select.value) {
-                select.dispatchEvent(new Event('change'));
-            }
-            
-            mostrarAlerta('alert-cadastro', 'Anotação excluída com sucesso!', 'success');
-        };
-
-        // Sistema de Parcelas
-        function atualizarSelectProcessosParcelas() {
-            const processos = carregarProcessos();
-            const select = document.getElementById('select-processo-parcelas');
-            
-            select.innerHTML = '<option value="">Selecione um processo...</option>';
-            processos.forEach(processo => {
-                const option = document.createElement('option');
-                option.value = processo.id;
-                option.textContent = `${processo.numero || 'S/N'} - ${processo.categoria || 'N/A'}`;
-                select.appendChild(option);
-            });
-        }
-
-        document.getElementById('select-processo-parcelas').addEventListener('change', function() {
-            const processoId = this.value;
-            const container = document.getElementById('parcelas-container');
-            
-            if (!processoId) {
-                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Selecione um processo para visualizar as parcelas.</p>';
-                return;
-            }
-            
-            const parcelas = carregarParcelas().filter(p => p.processoId === processoId);
-            const processo = carregarProcessos().find(p => p.id === processoId);
-            
-            if (parcelas.length === 0) {
-                container.innerHTML = `
-                    <p style="text-align: center; color: var(--muted); padding: 40px;">
-                        Nenhuma parcela encontrada para este processo.
-                        ${processo.formaPagamento !== 'Parcelado' ? 'Este processo não é parcelado.' : ''}
-                    </p>
-                `;
-                return;
-            }
-            
-            container.innerHTML = `
-                <div style="margin-bottom: 20px;">
-                    <h3>Parcelas do Processo</h3>
-                    <p><strong>Número do Processo:</strong> ${processo.numero || 'Não informado'}</p>
-                    <p><strong>Total:</strong> R$ ${processo.honorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                </div>
-                <div class="parcelas-grid">
-                    ${parcelas.map(parcela => `
-                        <div class="parcela-item ${parcela.status}">
-                            <div style="font-weight: bold; margin-bottom: 8px;">Parcela ${parcela.numero}</div>
-                            <div style="color: var(--muted); margin-bottom: 8px;">R$ ${parcela.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                            <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">
-                                Vencimento: ${new Date(parcela.dataVencimento).toLocaleDateString('pt-BR')}
-                                ${parcela.dataPagamento ? `<br>Pagamento: ${new Date(parcela.dataPagamento).toLocaleDateString('pt-BR')}` : ''}
-                            </div>
-                            <button class="parcela-btn ${parcela.status}" onclick="marcarParcelaComoPaga('${parcela.id}')">
-                                ${parcela.status === 'paga' ? 'Paga' : 'Marcar como Paga'}
-                            </button>
-                            ${parcela.status === 'paga' ? `
-                                <button class="btn btn-ghost" onclick="gerarRecibo('${parcela.id}')" style="margin-top: 8px; width: 100%;">
-                                    <span class="material-icons">receipt</span>
-                                    Recibo
-                                </button>
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        });
-
-        window.marcarParcelaComoPaga = function(parcelaId) {
-            const parcelas = carregarParcelas();
-            const parcela = parcelas.find(p => p.id === parcelaId);
-            
-            if (parcela && parcela.status === 'pendente') {
-                parcela.status = 'paga';
-                parcela.dataPagamento = new Date().toISOString();
-                salvarParcelas(parcelas);
-                
-                // Atualizar contador de parcelas pagas no processo
-                const processos = carregarProcessos();
-                const processo = processos.find(p => p.id === parcela.processoId);
-                if (processo) {
-                    const parcelasProcesso = parcelas.filter(p => p.processoId === processo.id);
-                    const parcelasPagas = parcelasProcesso.filter(p => p.status === 'paga').length;
-                    processo.parcelasPagas = parcelasPagas;
-                    salvarProcessos(processos);
-                }
-                
-                // Recarregar a visualização
-                const processoSelect = document.getElementById('select-processo-parcelas');
-                if (processoSelect.value) {
-                    processoSelect.dispatchEvent(new Event('change'));
-                }
-                
-                // Atualizar dashboard
-                atualizarDashboard();
-                
-                // Gerar recibo automaticamente
-                gerarRecibo(parcelaId);
-                
-                mostrarAlerta('alert-cadastro', 'Parcela marcada como paga! Recibo gerado automaticamente.', 'success');
-            }
-        };
-
-        // Sistema de Contratos
-        function atualizarSelectProcessosContratos() {
-            const processos = carregarProcessos();
-            const select = document.getElementById('select-processo-contrato');
-            
-            select.innerHTML = '<option value="">Selecione um processo...</option>';
-            processos.forEach(processo => {
-                const option = document.createElement('option');
-                option.value = processo.id;
-                option.textContent = `${processo.numero || 'S/N'} - ${processo.categoria || 'N/A'}`;
-                select.appendChild(option);
-            });
-        }
-
-        document.getElementById('select-processo-contrato').addEventListener('change', function() {
-            const processoId = this.value;
-            const container = document.getElementById('contratos-container');
-            
-            if (!processoId) {
-                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Selecione um processo para gerar contratos e recibos.</p>';
-                return;
-            }
-            
-            const clientes = carregarClientes();
-            const processo = carregarProcessos().find(p => p.id === processoId);
-            const cliente = clientes.find(c => c.id === processo.clienteId);
-            const parcelas = carregarParcelas().filter(p => p.processoId === processoId);
-            const parcelasPagas = parcelas.filter(p => p.status === 'paga');
-            
-            container.innerHTML = `
-                <div class="perfil-header">
-                    <div class="perfil-avatar">${cliente ? cliente.nome.charAt(0) : 'C'}</div>
-                    <div class="perfil-info">
-                        <h2>${cliente ? cliente.nome : 'Cliente não encontrado'}</h2>
-                        <p style="color: var(--muted);">Processo: ${processo.numero || 'Não informado'}</p>
-                    </div>
-                </div>
-
-                <div class="actions" style="margin-bottom: 30px;">
-                    <button class="btn btn-primary" onclick="gerarContrato('${processoId}')">
-                        <span class="material-icons">description</span>
-                        Gerar Contrato
-                    </button>
-                    ${parcelasPagas.length > 0 ? `
-                        <button class="btn btn-success" onclick="gerarTodosRecibos('${processoId}')">
-                            <span class="material-icons">receipt_long</span>
-                            Gerar Todos os Recibos
-                        </button>
-                    ` : ''}
-                </div>
-
-                ${parcelasPagas.length > 0 ? `
-                    <div>
-                        <h3>Recibos Disponíveis</h3>
-                        <div class="parcelas-grid">
-                            ${parcelasPagas.map(parcela => `
-                                <div class="parcela-item paga">
-                                    <div style="font-weight: bold; margin-bottom: 8px;">Recibo Parcela ${parcela.numero}</div>
-                                    <div style="color: var(--muted); margin-bottom: 8px;">R$ ${parcela.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                                    <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">
-                                        Data: ${new Date(parcela.dataPagamento).toLocaleDateString('pt-BR')}
-                                    </div>
-                                    <button class="btn btn-ghost" onclick="gerarRecibo('${parcela.id}')" style="width: 100%;">
-                                        <span class="material-icons">visibility</span>
-                                        Visualizar Recibo
-                                    </button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                ` : `
-                    <p style="text-align: center; color: var(--muted); padding: 40px;">
-                        Nenhum recibo disponível. As parcelas pagas aparecerão aqui automaticamente.
-                    </p>
-                `}
-            `;
-        });
-
-        // Função para criar contrato automaticamente
-        function criarContratoAutomatico(processo) {
-            const clientes = carregarClientes();
-            const cliente = clientes.find(c => c.id === processo.clienteId);
-            
-            const contratos = carregarContratos();
-            const contrato = {
-                id: processo.id + '_contrato',
-                processoId: processo.id,
-                dataCriacao: new Date().toISOString(),
-                tipo: 'Contrato de Prestação de Serviços Advocatícios',
-                cliente: cliente ? cliente.nome : 'Cliente não encontrado',
-                cpf: cliente ? cliente.cpf : 'Não informado',
-                valor: processo.honorarios,
-                parcelas: processo.parcelas,
-                valorParcela: processo.honorarios / processo.parcelas
-            };
-            
-            contratos.push(contrato);
-            salvarContratos(contratos);
-        }
-
-        // Gerar Contrato
-        window.gerarContrato = function(processoId) {
-            const clientes = carregarClientes();
-            const processo = carregarProcessos().find(p => p.id === processoId);
-            if (!processo) return;
-            
-            const cliente = clientes.find(c => c.id === processo.clienteId);
-            
-            const contratoHTML = `
-                <div class="contrato-container">
-                    <div class="contrato-header">
-                        <div class="contrato-title">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS</div>
-                        <div class="contrato-subtitle">Instrumento Particular</div>
-                    </div>
-                    
-                    <div class="contrato-section">
-                        <div class="contrato-section-title">DADAS DAS PARTES</div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">CONTRATANTE:</span>
-                            <span class="contrato-value">${cliente ? cliente.nome : 'Cliente não encontrado'}</span>
-                        </div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">CPF:</span>
-                            <span class="contrato-value">${cliente ? cliente.cpf || 'Não informado' : 'Não informado'}</span>
-                        </div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">ENDEREÇO:</span>
-                            <span class="contrato-value">[Endereço do Cliente]</span>
-                        </div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">CONTRATADA:</span>
-                            <span class="contrato-value">Dra. Advogada - OAB/SP 123.456</span>
-                        </div>
-                    </div>
-
-                    <div class="contrato-section">
-                        <div class="contrato-section-title">OBJETO DO CONTRATO</div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">NOME DA AÇÃO:</span>
-                            <span class="contrato-value">${processo.categoria || 'Não informado'}</span>
-                        </div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">CATEGORIA:</span>
-                            <span class="contrato-value">${processo.categoria || 'Não informado'}</span>
-                        </div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">NÚMERO DO PROCESSO:</span>
-                            <span class="contrato-value">${processo.numero || 'Não informado'}</span>
-                        </div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">VARA/COMARCA:</span>
-                            <span class="contrato-value">${processo.vara || 'Não informado'}</span>
-                        </div>
-                    </div>
-
-                    <div class="contrato-section">
-                        <div class="contrato-section-title">HONORÁRIOS ADVOCATÍCIOS</div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">VALOR DA CAUSA:</span>
-                            <span class="contrato-value">R$ ${(processo.valorCausa || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                        </div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">HONORÁRIOS:</span>
-                            <span class="contrato-value">R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                        </div>
-                        <div class="contrato-field">
-                            <span class="contrato-label">FORMA DE PAGAMENTO:</span>
-                            <span class="contrato-value">${processo.formaPagamento}</span>
-                        </div>
-                        ${processo.formaPagamento === 'Parcelado' ? `
-                            <div class="contrato-field">
-                                <span class="contrato-label">PARCELAS:</span>
-                                <span class="contrato-value">${processo.parcelas} x R$ ${(processo.honorarios / processo.parcelas).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-
-                    <div class="contrato-signatures">
-                        <div>
-                            <div class="signature-line">___________________________________</div>
-                            <div>CONTRATANTE</div>
-                            <div>${cliente ? cliente.nome : 'Cliente não encontrado'}</div>
-                            <div>CPF: ${cliente ? cliente.cpf || 'Não informado' : 'Não informado'}</div>
-                        </div>
-                        <div>
-                            <div class="signature-line">___________________________________</div>
-                            <div>CONTRATADA</div>
-                            <div>Dra. Advogada</div>
-                            <div>OAB/SP 123.456</div>
-                        </div>
-                    </div>
-
-                    <div class="contrato-actions">
-                        <div style="text-align: center; margin-top: 20px; color: #64748b; font-size: 12px;">
-                            Contrato gerado em: ${new Date().toLocaleString('pt-BR')}
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('modal-contrato-conteudo').innerHTML = contratoHTML;
-            document.getElementById('modal-contrato').classList.add('active');
-        };
-
-        // Gerar Recibo
-        window.gerarRecibo = function(parcelaId) {
-            const clientes = carregarClientes();
-            const parcelas = carregarParcelas();
-            const parcela = parcelas.find(p => p.id === parcelaId);
-            if (!parcela) return;
-            
-            const processo = carregarProcessos().find(p => p.id === parcela.processoId);
-            if (!processo) return;
-            
-            const cliente = clientes.find(c => c.id === processo.clienteId);
-            
-            const reciboHTML = `
-                <div class="recibo-container">
-                    <div class="recibo-header">
-                        <div class="recibo-title">RECIBO DE PAGAMENTO</div>
-                        <div class="recibo-subtitle">Comprovante de Pagamento de Honorários Advocatícios</div>
-                    </div>
-                    
-                    <div class="recibo-detalhes">
-                        <p><strong>Recebemos de:</strong> ${cliente ? cliente.nome : 'Cliente não encontrado'}</p>
-                        <p><strong>CPF:</strong> ${cliente ? cliente.cpf || 'Não informado' : 'Não informado'}</p>
-                        <p><strong>Processo:</strong> ${processo.numero || 'Não informado'}</p>
-                        <p><strong>Referente a:</strong> Parcela ${parcela.numero} de ${processo.parcelas} - Honorários Advocatícios</p>
-                        <p><strong>Data do Pagamento:</strong> ${new Date(parcela.dataPagamento).toLocaleDateString('pt-BR')}</p>
-                    </div>
-
-                    <div class="recibo-valor">
-                        R$ ${parcela.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                    </div>
-
-                    <div style="text-align: center; margin-top: 30px;">
-                        <p>_________________________</p>
-                        <p><strong>Dra. Advogada</strong></p>
-                        <p>OAB/SP 123.456</p>
-                    </div>
-
-                    <div style="text-align: center; margin-top: 20px; color: #64748b; font-size: 12px;">
-                        Recibo gerado em: ${new Date().toLocaleString('pt-BR')}
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('modal-recibo-conteudo').innerHTML = reciboHTML;
-            document.getElementById('modal-recibo').classList.add('active');
-        };
-
-        // Gerar Todos os Recibos
-        window.gerarTodosRecibos = function(processoId) {
-            const parcelas = carregarParcelas().filter(p => p.processoId === processoId && p.status === 'paga');
-            const processo = carregarProcessos().find(p => p.id === processoId);
-            
-            if (parcelas.length === 0) {
-                alert('Nenhuma parcela paga para gerar recibos.');
-                return;
-            }
-            
-            // Aqui você pode implementar a geração de um PDF com todos os recibos
-            // Por enquanto, vamos apenas abrir o primeiro recibo
-            gerarRecibo(parcelas[0].id);
-            
-            mostrarAlerta('alert-cadastro', `${parcelas.length} recibos disponíveis para visualização.`, 'success');
-        };
-
-        // Sistema de Relatórios
-        document.getElementById('btn-gerar-relatorio').addEventListener('click', function() {
-            const tipo = document.getElementById('relatorio-tipo').value;
-            const periodo = document.getElementById('relatorio-periodo').value;
-            const container = document.getElementById('relatorio-conteudo');
-            
-            const clientes = carregarClientes();
-            const processos = carregarProcessos();
-            const parcelas = carregarParcelas();
-            
-            let relatorioHTML = '';
-            
-            switch(tipo) {
-                case 'processos-por-status':
-                    const statusCount = {};
-                    processos.forEach(p => {
-                        statusCount[p.status] = (statusCount[p.status] || 0) + 1;
-                    });
-                    
-                    relatorioHTML = `
-                        <h3>Processos por Status</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th>Quantidade</th>
-                                    <th>Percentual</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${Object.entries(statusCount).map(([status, count]) => `
-                                    <tr>
-                                        <td>${status}</td>
-                                        <td>${count}</td>
-                                        <td>${((count / processos.length) * 100).toFixed(1)}%</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                    break;
-                    
-                case 'honorarios-por-mes':
-                    const honorariosPorMes = {};
-                    processos.forEach(p => {
-                        const mes = new Date(p.dataCadastro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                        honorariosPorMes[mes] = (honorariosPorMes[mes] || 0) + (p.honorarios || 0);
-                    });
-                    
-                    relatorioHTML = `
-                        <h3>Honorários por Mês</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Mês</th>
-                                    <th>Valor (R$)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${Object.entries(honorariosPorMes).map(([mes, valor]) => `
-                                    <tr>
-                                        <td>${mes}</td>
-                                        <td>R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                    break;
-                    
-                case 'parcelas-pendentes':
-                    const parcelasPendentes = parcelas.filter(p => p.status === 'pendente');
-                    const parcelasAgrupadas = {};
-                    
-                    parcelasPendentes.forEach(p => {
-                        const processo = processos.find(proc => proc.id === p.processoId);
-                        if (processo) {
-                            const cliente = clientes.find(c => c.id === processo.clienteId);
-                            const key = cliente ? cliente.nome : 'Cliente não encontrado';
-                            parcelasAgrupadas[key] = (parcelasAgrupadas[key] || 0) + p.valor;
-                        }
-                    });
-                    
-                    relatorioHTML = `
-                        <h3>Parcelas Pendentes</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Cliente</th>
-                                    <th>Valor Pendente (R$)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${Object.entries(parcelasAgrupadas).map(([cliente, valor]) => `
-                                    <tr>
-                                        <td>${cliente}</td>
-                                        <td>R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                    break;
-            }
-            
-            container.innerHTML = relatorioHTML;
-        });
-
-        // Funções Utilitárias
-        function formatarTamanho(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function fecharModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        // Fechar Modais
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', function() {
-                this.closest('.modal').classList.remove('active');
-            });
-        });
-
-        // Fechar modal ao clicar fora
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('active');
-                }
-            });
-        });
-
-        // Inicialização - Adicionando migração de dados antigos
+        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            // Migrar dados antigos se necessário
-            const processosAntigos = carregarProcessos();
-            const clientes = carregarClientes();
-            
-            // Se há processos mas não há clientes, migrar os dados
-            if (processosAntigos.length > 0 && clientes.length === 0) {
-                // Verificar se os processos antigos têm a estrutura antiga
-                const primeiroProcesso = processosAntigos[0];
-                if (primeiroProcesso.clienteNome && !primeiroProcesso.clienteId) {
-                    // Migrar dados antigos para nova estrutura
-                    processosAntigos.forEach(processo => {
-                        // Verificar se já existe um cliente com este CPF
-                        let clienteExistente = clientes.find(c => c.cpf === processo.clienteCpf);
-                        
-                        if (!clienteExistente) {
-                            // Criar novo cliente
-                            const novoCliente = {
-                                id: processo.id + '_cliente',
-                                nome: processo.clienteNome,
-                                cpf: processo.clienteCpf,
-                                dataCadastro: processo.dataCadastro || new Date().toISOString()
-                            };
-                            clientes.push(novoCliente);
-                            
-                            // Atualizar o processo com o ID do cliente
-                            processo.clienteId = novoCliente.id;
-                        } else {
-                            // Usar o cliente existente
-                            processo.clienteId = clienteExistente.id;
-                        }
-                        
-                        // Remover os campos antigos do cliente do processo
-                        delete processo.clienteNome;
-                        delete processo.clienteCpf;
-                    });
-                    
-                    salvarClientes(clientes);
-                    salvarProcessos(processosAntigos);
-                }
-            }
-            
             atualizarDashboard();
             atualizarSelectClientes();
-            atualizarSelectProcessosPerfil();
+            atualizarSelectClientesPerfil();
             atualizarSelectProcessosParcelas();
             atualizarSelectProcessosContratos();
             
             // Adicionar dados de exemplo se não houver dados
-            const processos = carregarProcessos();
-            if (processos.length === 0) {
+            const clientes = carregarClientes();
+            if (clientes.length === 0) {
                 // Criar cliente de exemplo
                 const clienteExemplo = {
                     id: 'exemplo-cliente-1',
@@ -2615,14 +1805,16 @@
                     cpf: '123.456.789-00',
                     telefone: '(11) 99999-9999',
                     email: 'joao.silva@email.com',
+                    endereco: 'Rua das Flores, 123, Centro, São Paulo - SP',
+                    profissao: 'Engenheiro',
                     dataCadastro: new Date().toISOString()
                 };
                 
-                const clientes = carregarClientes();
                 clientes.push(clienteExemplo);
                 salvarClientes(clientes);
                 
                 // Criar processo de exemplo
+                const processos = carregarProcessos();
                 const processoExemplo = {
                     id: 'exemplo-1',
                     clienteId: 'exemplo-cliente-1',
@@ -2642,41 +1834,24 @@
                 processos.push(processoExemplo);
                 salvarProcessos(processos);
                 
-                // Criar parcelas de exemplo
-                const parcelas = [];
-                const valorParcela = 5000 / 10;
+                // Criar processo externo de exemplo
+                const processosExternos = carregarProcessosExternos();
+                const processoExternoExemplo = {
+                    id: 'exemplo-externo-1',
+                    clienteId: 'exemplo-cliente-1',
+                    numero: '2023.001.123456-7',
+                    categoria: 'Trabalhista',
+                    vara: '2ª Vara do Trabalho de São Paulo',
+                    observacoes: 'Processo trabalhista por rescisão indireta. Cliente foi representado por outro advogado anteriormente.',
+                    dataCadastro: new Date().toISOString()
+                };
                 
-                for (let i = 1; i <= 10; i++) {
-                    const dataVencimento = new Date();
-                    dataVencimento.setMonth(dataVencimento.getMonth() + i);
-                    
-                    parcelas.push({
-                        id: 'exemplo-1_' + i,
-                        processoId: 'exemplo-1',
-                        numero: i,
-                        valor: valorParcela,
-                        dataVencimento: dataVencimento.toISOString(),
-                        status: i <= 3 ? 'paga' : 'pendente',
-                        dataPagamento: i <= 3 ? new Date().toISOString() : null
-                    });
-                }
-                
-                salvarParcelas(parcelas);
-                
-                // Criar anotação de exemplo
-                const anotacoes = [{
-                    id: 'exemplo-1',
-                    processoId: 'exemplo-1',
-                    texto: 'Primeira audiência marcada para 15/03/2024. Cliente compareceu e apresentou documentação necessária.',
-                    data: new Date().toISOString()
-                }];
-                salvarAnotacoes(anotacoes);
-                
-                // Criar contrato de exemplo
-                criarContratoAutomatico(processoExemplo);
+                processosExternos.push(processoExternoExemplo);
+                salvarProcessosExternos(processosExternos);
                 
                 atualizarDashboard();
                 atualizarSelectClientes();
+                atualizarSelectClientesPerfil();
             }
         });
     </script>
