@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
-    /* Estilos mantidos do código anterior */
+    /* TODOS OS ESTILOS EXISTENTES MANTIDOS */
     :root{
       --bg:#f4f6fb;
       --sidebar:#0f1724;
@@ -732,7 +732,7 @@
       justify-content: flex-end;
     }
     
-    /* Estilos para upload de documentos */
+    /* NOVOS ESTILOS PARA DOCUMENTOS */
     .documentos-container {
       margin-top: 20px;
     }
@@ -776,6 +776,21 @@
     .documento-meta {
       font-size: 12px;
       color: var(--muted);
+    }
+    
+    /* Estilos para cálculo de honorários */
+    .calc-honorarios {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    .calc-resultado {
+      margin-top: 16px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
     }
   </style>
 </head>
@@ -939,7 +954,7 @@
           </div>
         </section>
 
-        <!-- CADASTRO -->
+        <!-- CADASTRO - COM NOVOS CAMPOS ADICIONADOS -->
         <section id="cadastro" class="container tab" style="display:none">
           <h2><span class="material-icons">person_add</span>Cadastro de Cliente & Processo</h2>
           <div id="alertCadastro"></div>
@@ -972,10 +987,13 @@
                 <input name="endereco" type="text" placeholder="Rua, nº, bairro, cidade - UF" id="inputEndereco">
               </div>
 
-              <div>
+              <!-- NOVO CAMPO: NOME DA AÇÃO -->
+              <div class="col-full">
                 <label>Nome da Ação *</label>
                 <input name="nomeAcao" type="text" required placeholder="Ex: Ação de Indenização por Danos Morais" id="inputNomeAcao">
+              </div>
 
+              <div>
                 <label>Categoria do processo</label>
                 <select name="categoria" id="inputCategoria">
                   <option value="">Selecione...</option>
@@ -1045,7 +1063,7 @@
               </div>
 
               <!-- NOVA SEÇÃO: CÁLCULO DE HONORÁRIOS SEM PREJUÍZO -->
-              <div class="col-full" style="background:#f8fafc;padding:16px;border-radius:8px;margin-top:16px">
+              <div class="col-full calc-honorarios">
                 <h3 style="margin-top:0;color:var(--primary)">Cálculo de Honorários Sem Prejuízo</h3>
                 <div class="grid">
                   <div>
@@ -1070,7 +1088,7 @@
                     <span class="material-icons">calculate</span> Calcular Honorários Mínimos
                   </button>
                 </div>
-                <div id="resultadoCalculoHonorarios" style="display:none;margin-top:12px;padding:12px;background:white;border-radius:8px;border-left:4px solid var(--primary)">
+                <div id="resultadoCalculoHonorarios" class="calc-resultado" style="display:none">
                   <div style="font-weight:700;color:var(--primary)">Honorários Mínimos Recomendados:</div>
                   <div id="valorHonorariosMinimos" style="font-size:18px;font-weight:700">R$ 0,00</div>
                   <div id="detalhesCalculo" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
@@ -1080,6 +1098,20 @@
               <div class="col-full">
                 <label>Observações / Anotações</label>
                 <textarea name="observacoes" placeholder="Anotações importantes, prazos, lembretes..." id="inputObservacoes"></textarea>
+              </div>
+
+              <!-- NOVA SEÇÃO: DOCUMENTOS DO PROCESSO -->
+              <div class="col-full documentos-container">
+                <h3 style="color:var(--primary)">Documentos do Processo</h3>
+                <div class="upload-area" id="uploadArea">
+                  <span class="material-icons" style="font-size:48px;color:var(--muted);margin-bottom:8px">cloud_upload</span>
+                  <div style="font-weight:600;margin-bottom:4px">Arraste documentos aqui ou clique para selecionar</div>
+                  <div style="font-size:12px;color:var(--muted)">Formatos suportados: PDF, DOC, DOCX, JPEG, PNG</div>
+                  <input type="file" id="fileInput" multiple style="display:none">
+                </div>
+                <div id="listaDocumentos" class="documentos-lista">
+                  <!-- Documentos serão listados aqui -->
+                </div>
               </div>
             </div>
 
@@ -1100,7 +1132,7 @@
           </form>
         </section>
 
-        <!-- LISTA -->
+        <!-- LISTA DE PROCESSOS -->
         <section id="lista" class="container tab" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
             <h2><span class="material-icons">folder_open</span>Processos Registrados</h2>
@@ -1123,7 +1155,7 @@
           </div>
         </section>
 
-        <!-- PERFIL -->
+        <!-- PERFIL DO CLIENTE -->
         <section id="perfil" class="container tab" style="display:none">
           <h2><span class="material-icons">person</span>Perfil do Cliente</h2>
           
@@ -1536,6 +1568,7 @@
     const PERFIS_KEY = 'perfis_clientes';
     const DOCUMENTOS_KEY = 'documentos_processo';
 
+    // FUNÇÕES DE ARMAZENAMENTO
     function salvarProcessos(processos) {
       localStorage.setItem(DB_KEY, JSON.stringify(processos));
       invalidarCacheProcessos();
@@ -1574,7 +1607,6 @@
       return data ? JSON.parse(data) : [];
     }
 
-    // ========== FUNÇÕES PARA PERFIS DE CLIENTES ==========
     function salvarPerfis(perfis) {
       localStorage.setItem(PERFIS_KEY, JSON.stringify(perfis));
     }
@@ -1584,7 +1616,6 @@
       return data ? JSON.parse(data) : [];
     }
 
-    // ========== FUNÇÕES PARA DOCUMENTOS ==========
     function salvarDocumentos(documentos) {
       localStorage.setItem(DOCUMENTOS_KEY, JSON.stringify(documentos));
     }
@@ -1594,18 +1625,74 @@
       return data ? JSON.parse(data) : [];
     }
 
+    // ========== NAVEGAÇÃO ENTRE ABAS ==========
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        
+        // Atualizar botões ativos
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Mostrar aba correspondente
+        document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
+        const tabElement = document.getElementById(tab);
+        if (tabElement) {
+          tabElement.style.display = 'block';
+        }
+        
+        // Atualizar título
+        const titulos = {
+          'dashboard': 'Dashboard',
+          'cadastro': 'Cadastro',
+          'lista': 'Processos Registrados',
+          'perfil': 'Perfil do Cliente',
+          'contratos': 'Contratos',
+          'contratos-criados': 'Contratos Criados',
+          'anotacoes': 'Anotações',
+          'interacao': 'Interação com Cliente',
+          'ferramentas': 'Ferramentas'
+        };
+        document.getElementById('pageTitle').textContent = titulos[tab] || 'Sistema Jurídico';
+        
+        // Atualizar dados específicos da aba
+        if (tab === 'lista') {
+          renderizarTabela();
+        } else if (tab === 'anotacoes') {
+          atualizarSelectProcessos();
+          renderizarAnotacoes();
+        } else if (tab === 'interacao') {
+          atualizarSelectProcessosInteracao();
+          renderizarInteracoes();
+        } else if (tab === 'contratos-criados') {
+          renderizarContratosCriados();
+        } else if (tab === 'perfil') {
+          atualizarSelectClientesPerfil();
+        } else if (tab === 'dashboard') {
+          atualizarDashboard();
+          inicializarGraficos();
+        }
+      });
+    });
+
+    // ========== CONTROLE DE PARCELAS ==========
+    document.getElementById('formaPagamento').addEventListener('change', (e) => {
+      const parcelasInput = document.getElementById('parcelasInput');
+      if (e.target.value === 'Parcelado') {
+        parcelasInput.disabled = false;
+        parcelasInput.required = true;
+      } else {
+        parcelasInput.disabled = true;
+        parcelasInput.required = false;
+        parcelasInput.value = '';
+      }
+    });
+
     // ========== CÁLCULO DE HONORÁRIOS SEM PREJUÍZO ==========
     function calcularHonorariosMinimos(custosFixos, horasEstimadas, valorHora, percentualLucro) {
-      // Custo das horas de trabalho
       const custoHoras = horasEstimadas * valorHora;
-      
-      // Parte proporcional dos custos fixos (considerando que o processo usa 10% do tempo mensal)
       const custoFixoProporcional = custosFixos * 0.1;
-      
-      // Custo total
       const custoTotal = custoHoras + custoFixoProporcional;
-      
-      // Honorários mínimos (custo total + lucro)
       const honorariosMinimos = custoTotal * (1 + (percentualLucro / 100));
       
       return {
@@ -1639,112 +1726,82 @@
       `;
       
       document.getElementById('resultadoCalculoHonorarios').style.display = 'block';
-      
-      // Preencher automaticamente o campo de honorários com o valor mínimo
       document.getElementById('inputHonorarios').value = resultado.honorariosMinimos;
     });
 
-    // ========== CONTROLE DE PARCELAS ==========
-    document.getElementById('formaPagamento').addEventListener('change', (e) => {
-      const parcelasInput = document.getElementById('parcelasInput');
-      if (e.target.value === 'Parcelado') {
-        parcelasInput.disabled = false;
-        parcelasInput.required = true;
-      } else {
-        parcelasInput.disabled = true;
-        parcelasInput.required = false;
-        parcelasInput.value = '';
-      }
+    // ========== UPLOAD DE DOCUMENTOS ==========
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const listaDocumentos = document.getElementById('listaDocumentos');
+
+    uploadArea.addEventListener('click', () => {
+      fileInput.click();
     });
 
-    // ========== NAVEGAÇÃO ENTRE ABAS ==========
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
-        
-        // Atualizar botões ativos
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        // Mostrar aba correspondente
-        document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
-        document.getElementById(tab).style.display = 'block';
-        
-        // Atualizar título
-        const titulos = {
-          'dashboard': 'Dashboard',
-          'cadastro': 'Cadastro',
-          'lista': 'Processos Registrados',
-          'perfil': 'Perfil do Cliente',
-          'contratos': 'Contratos',
-          'contratos-criados': 'Contratos Criados',
-          'anotacoes': 'Anotações',
-          'interacao': 'Interação com Cliente',
-          'ferramentas': 'Ferramentas'
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('active');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('active');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+      const files = e.dataTransfer.files;
+      handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+      for (let file of files) {
+        const documento = {
+          id: Date.now().toString() + Math.random(),
+          nome: file.name,
+          tipo: file.type,
+          tamanho: formatarTamanho(file.size),
+          data: new Date().toLocaleString('pt-BR')
         };
-        document.getElementById('pageTitle').textContent = titulos[tab];
-        
-        // Atualizar lista se for aba de processos
-        if (tab === 'lista') {
-          renderizarTabela();
-        }
-        
-        // Atualizar anotações
-        if (tab === 'anotacoes') {
-          atualizarSelectProcessos();
-          renderizarAnotacoes();
-        }
-
-        // Atualizar interações
-        if (tab === 'interacao') {
-          atualizarSelectProcessosInteracao();
-          renderizarInteracoes();
-        }
-
-        // Atualizar contratos criados
-        if (tab === 'contratos-criados') {
-          renderizarContratosCriados();
-        }
-
-        // Atualizar perfil
-        if (tab === 'perfil') {
-          atualizarSelectClientesPerfil();
-        }
-
-        // Atualizar dashboard
-        if (tab === 'dashboard') {
-          atualizarDashboard();
-          inicializarGraficos();
-        }
-      });
-    });
-
-    // ========== ATUALIZAÇÃO DO CONTRATO EM TEMPO REAL ==========
-    function atualizarContrato() {
-      const form = document.getElementById('formCadastro');
-      const formData = new FormData(form);
-      
-      // Atualizar dados do contrato
-      document.getElementById('contratoCliente').textContent = formData.get('nome') || '[Nome do Cliente]';
-      document.getElementById('contratoCpf').textContent = formData.get('cpf') || '[CPF do Cliente]';
-      document.getElementById('contratoEndereco').textContent = formData.get('endereco') || '[Endereço do Cliente]';
-      document.getElementById('contratoNomeAcao').textContent = formData.get('nomeAcao') || '[Nome da Ação]';
-      document.getElementById('contratoCategoria').textContent = formData.get('categoria') || '[Categoria do Processo]';
-      document.getElementById('contratoNumero').textContent = formData.get('numero') || '[Número do Processo]';
-      document.getElementById('contratoVara').textContent = formData.get('vara') || '[Vara/Comarca]';
-      document.getElementById('contratoParte').textContent = formData.get('parte') || '[Parte Contrária]';
-      document.getElementById('contratoValor').textContent = formData.get('valor') ? `R$ ${parseFloat(formData.get('valor')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'R$ 0,00';
-      document.getElementById('contratoHonorarios').textContent = formData.get('honorarios') ? `R$ ${parseFloat(formData.get('honorarios')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'R$ 0,00';
-      document.getElementById('contratoPagamento').textContent = formData.get('formaPagamento') || '[Forma de Pagamento]';
-      document.getElementById('contratoAssinaturaCliente').textContent = formData.get('nome') || '[Nome do Cliente]';
-      document.getElementById('contratoAssinaturaCpf').textContent = formData.get('cpf') || '[CPF]';
+        adicionarDocumentoNaLista(documento);
+      }
     }
 
-    // Adicionar event listeners para atualizar o contrato em tempo real
-    document.querySelectorAll('#formCadastro input, #formCadastro select, #formCadastro textarea').forEach(element => {
-      element.addEventListener('input', atualizarContrato);
-      element.addEventListener('change', atualizarContrato);
-    });
+    function adicionarDocumentoNaLista(documento) {
+      const documentoItem = document.createElement('div');
+      documentoItem.className = 'documento-item';
+      documentoItem.innerHTML = `
+        <div class="documento-info">
+          <div class="documento-nome">${documento.nome}</div>
+          <div class="documento-meta">${documento.tipo} • ${documento.tamanho} • ${documento.data}</div>
+        </div>
+        <div>
+          <button class="btn danger" onclick="removerDocumentoDaLista('${documento.id}')">
+            <span class="material-icons">delete</span>
+          </button>
+        </div>
+      `;
+      listaDocumentos.appendChild(documentoItem);
+    }
+
+    function removerDocumentoDaLista(id) {
+      const item = document.querySelector(`[onclick="removerDocumentoDaLista('${id}')"]`);
+      if (item) {
+        item.closest('.documento-item').remove();
+      }
+    }
+
+    function formatarTamanho(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 
     // ========== FORMULÁRIO DE CADASTRO ==========
     document.getElementById('formCadastro').addEventListener('submit', (e) => {
@@ -1791,17 +1848,14 @@
       processos.push(processo);
       salvarProcessos(processos);
       
-      // Criar contrato automaticamente
       criarContratoAutomatico(processo);
-      
       mostrarAlerta('alertCadastro', 'Processo salvo com sucesso!', 'success');
       
-      // Limpar formulário
       e.target.reset();
       document.getElementById('parcelasInput').disabled = true;
       document.getElementById('resultadoCalculoHonorarios').style.display = 'none';
+      listaDocumentos.innerHTML = '';
       
-      // Atualizar dashboard e gráficos
       atualizarDashboard();
       inicializarGraficos();
       
@@ -1810,40 +1864,7 @@
       }, 3000);
     });
 
-    // Função para criar contrato automaticamente
-    function criarContratoAutomatico(processo) {
-      const contrato = {
-        id: Date.now().toString(),
-        dataCriacao: new Date().toISOString(),
-        cliente: processo.nome,
-        cpf: processo.cpf,
-        endereco: processo.endereco,
-        nomeAcao: processo.nomeAcao,
-        categoria: processo.categoria,
-        numeroProcesso: processo.numero,
-        vara: processo.vara,
-        parteContraria: processo.parte,
-        valorCausa: processo.valor,
-        honorarios: processo.honorarios,
-        formaPagamento: processo.formaPagamento,
-        parcelas: processo.parcelas,
-        geradoAutomaticamente: true
-      };
-      
-      const contratos = carregarContratos();
-      contratos.push(contrato);
-      salvarContratos(contratos);
-    }
-
-    // Limpar formulário
-    document.getElementById('btnLimparForm').addEventListener('click', () => {
-      document.getElementById('formCadastro').reset();
-      document.getElementById('parcelasInput').disabled = true;
-      document.getElementById('resultadoCalculoHonorarios').style.display = 'none';
-      atualizarContrato();
-    });
-
-    // ========== GERAR CONTRATO ==========
+    // ========== BOTÕES DO FORMULÁRIO ==========
     document.getElementById('btnGerarContrato').addEventListener('click', () => {
       const form = document.getElementById('formCadastro');
       const formData = new FormData(form);
@@ -1853,10 +1874,8 @@
         return;
       }
       
-      // Atualizar contrato em tempo real
       atualizarContrato();
       
-      // Salvar contrato
       const contrato = {
         id: Date.now().toString(),
         dataCriacao: new Date().toISOString(),
@@ -1878,181 +1897,14 @@
       salvarContratos(contratos);
       
       mostrarAlerta('alertCadastro', 'Contrato gerado com sucesso!', 'success');
-      
-      setTimeout(() => {
-        document.getElementById('alertCadastro').innerHTML = '';
-      }, 3000);
     });
 
-    // ========== IMPRIMIR CONTRATO ==========
-    function imprimirContrato() {
-      const contratoElement = document.getElementById('contratoPreview');
-      const ventana = window.open('', '_blank');
-      ventana.document.write(`
-        <html>
-          <head>
-            <title>Contrato - ${document.getElementById('contratoCliente').textContent}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .contrato-container { max-width: 800px; margin: 0 auto; }
-              .contrato-header { text-align: center; margin-bottom: 30px; }
-              .contrato-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-              .contrato-subtitle { font-size: 14px; color: #666; }
-              .contrato-section { margin-bottom: 20px; }
-              .contrato-section-title { font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; }
-              .contrato-field { margin-bottom: 8px; }
-              .contrato-label { font-weight: bold; }
-              .contrato-signatures { display: flex; justify-content: space-between; margin-top: 50px; }
-              .signature-line { margin-bottom: 40px; }
-              @media print {
-                body { margin: 0; }
-                .contrato-actions { display: none; }
-              }
-            </style>
-          </head>
-          <body>
-            ${contratoElement.innerHTML}
-          </body>
-        </html>
-      `);
-      ventana.document.close();
-      ventana.print();
-    }
-
-    document.getElementById('btnImprimirContrato').addEventListener('click', imprimirContrato);
-
-    // ========== SALVAR CONTRATO PDF ==========
-    function exportarContratoPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      
-      // Adicionar conteúdo do contrato
-      doc.setFontSize(16);
-      doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS', 20, 20);
-      doc.setFontSize(10);
-      
-      let y = 40;
-      const contratoCliente = document.getElementById('contratoCliente').textContent;
-      const contratoCpf = document.getElementById('contratoCpf').textContent;
-      const contratoEndereco = document.getElementById('contratoEndereco').textContent;
-      const contratoNomeAcao = document.getElementById('contratoNomeAcao').textContent;
-      const contratoCategoria = document.getElementById('contratoCategoria').textContent;
-      const contratoNumero = document.getElementById('contratoNumero').textContent;
-      const contratoVara = document.getElementById('contratoVara').textContent;
-      const contratoParte = document.getElementById('contratoParte').textContent;
-      const contratoValor = document.getElementById('contratoValor').textContent;
-      const contratoHonorarios = document.getElementById('contratoHonorarios').textContent;
-      const contratoPagamento = document.getElementById('contratoPagamento').textContent;
-      
-      const campos = [
-        ['CONTRATANTE:', contratoCliente],
-        ['CPF:', contratoCpf],
-        ['ENDEREÇO:', contratoEndereco],
-        ['CONTRATADA:', 'Dra. Advogada - OAB/SP 123.456'],
-        ['NOME DA AÇÃO:', contratoNomeAcao],
-        ['CATEGORIA:', contratoCategoria],
-        ['NÚMERO DO PROCESSO:', contratoNumero],
-        ['VARA/COMARCA:', contratoVara],
-        ['PARTE CONTRÁRIA:', contratoParte],
-        ['VALOR DA CAUSA:', contratoValor],
-        ['HONORÁRIOS:', contratoHonorarios],
-        ['FORMA DE PAGAMENTO:', contratoPagamento]
-      ];
-      
-      campos.forEach(([label, value]) => {
-        doc.setFont(undefined, 'bold');
-        doc.text(label, 20, y);
-        doc.setFont(undefined, 'normal');
-        const lines = doc.splitTextToSize(value, 120);
-        doc.text(lines, 70, y);
-        y += lines.length * 7;
-      });
-      
-      // Assinaturas
-      y += 20;
-      doc.text('___________________________________', 20, y);
-      doc.text('CONTRATANTE', 20, y + 10);
-      doc.text(contratoCliente, 20, y + 20);
-      doc.text(`CPF: ${contratoCpf}`, 20, y + 30);
-      
-      doc.text('___________________________________', 120, y);
-      doc.text('CONTRATADA', 120, y + 10);
-      doc.text('Dra. Advogada', 120, y + 20);
-      doc.text('OAB/SP 123.456', 120, y + 30);
-      
-      doc.save(`contrato-${contratoCliente}-${Date.now()}.pdf`);
-      mostrarAlerta('alertContratos', 'Contrato salvo como PDF!', 'success');
-    }
-
-    document.getElementById('btnSalvarContrato').addEventListener('click', exportarContratoPDF);
-
-    // ========== EXPORTAÇÃO DE DADOS DOS GRÁFICOS ==========
-    document.getElementById('btnExportPdf').addEventListener('click', () => {
-      const form = document.getElementById('formCadastro');
-      const formData = new FormData(form);
-      
-      if (!formData.get('nome')) {
-        alert('Preencha pelo menos o nome do cliente para exportar.');
-        return;
-      }
-      
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      
-      doc.setFontSize(18);
-      doc.text('Cadastro de Processo - Sistema Jurídico', 20, 20);
-      
-      doc.setFontSize(12);
-      let y = 40;
-      
-      const campos = [
-        ['Nome', formData.get('nome')],
-        ['CPF', formData.get('cpf')],
-        ['RG', formData.get('rg')],
-        ['Telefone', formData.get('telefone')],
-        ['E-mail', formData.get('email')],
-        ['Responsável', formData.get('responsavel')],
-        ['Endereço', formData.get('endereco')],
-        ['Nome da Ação', formData.get('nomeAcao')],
-        ['Categoria', formData.get('categoria')],
-        ['Número do Processo', formData.get('numero')],
-        ['Vara/Comarca', formData.get('vara')],
-        ['Parte Contrária', formData.get('parte')],
-        ['Status', formData.get('status')],
-        ['Data de Abertura', formData.get('dataAbertura')],
-        ['Valor da Causa', formData.get('valor') ? `R$ ${parseFloat(formData.get('valor')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : ''],
-        ['Honorários', formData.get('honorarios') ? `R$ ${parseFloat(formData.get('honorarios')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : ''],
-        ['Forma de Pagamento', formData.get('formaPagamento')],
-        ['Parcelas', formData.get('parcelas')],
-      ];
-      
-      campos.forEach(([label, value]) => {
-        if (value) {
-          doc.setFont(undefined, 'bold');
-          doc.text(`${label}:`, 20, y);
-          doc.setFont(undefined, 'normal');
-          const lines = doc.splitTextToSize(value, 150);
-          doc.text(lines, 70, y);
-          y += lines.length * 7;
-        }
-      });
-      
-      if (formData.get('observacoes')) {
-        y += 10;
-        doc.setFont(undefined, 'bold');
-        doc.text('Observações:', 20, y);
-        y += 7;
-        doc.setFont(undefined, 'normal');
-        const obs = doc.splitTextToSize(formData.get('observacoes'), 170);
-        doc.text(obs, 20, y);
-      }
-      
-      doc.save(`processo-${formData.get('nome')}-${Date.now()}.pdf`);
-      mostrarAlerta('alertCadastro', 'PDF exportado com sucesso!', 'success');
-      
-      setTimeout(() => {
-        document.getElementById('alertCadastro').innerHTML = '';
-      }, 3000);
+    document.getElementById('btnLimparForm').addEventListener('click', () => {
+      document.getElementById('formCadastro').reset();
+      document.getElementById('parcelasInput').disabled = true;
+      document.getElementById('resultadoCalculoHonorarios').style.display = 'none';
+      listaDocumentos.innerHTML = '';
+      atualizarContrato();
     });
 
     // ========== LISTA DE PROCESSOS ==========
@@ -2114,65 +1966,16 @@
       wrapper.innerHTML = html;
     }
 
-    // Mudar status
+    // Funções globais para a tabela
     window.mudarStatus = function(id, novoStatus) {
       const processos = carregarProcessos();
       const processo = processos.find(p => p.id === id);
       if (processo) {
         processo.status = novoStatus;
         salvarProcessos(processos);
-        console.log(`Status do processo ${id} alterado para: ${novoStatus}`);
       }
     };
 
-    // Busca
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      renderizarTabela(e.target.value);
-    });
-
-    // Atualizar
-    document.getElementById('btnRefresh').addEventListener('click', () => {
-      renderizarTabela();
-    });
-
-    // Ordenar por data
-    document.getElementById('btnSortDate').addEventListener('click', () => {
-      const processos = carregarProcessos();
-      ordenacaoData = ordenacaoData === 'desc' ? 'asc' : 'desc';
-      
-      processos.sort((a, b) => {
-        const dataA = new Date(a.dataAbertura || a.dataCadastro);
-        const dataB = new Date(b.dataAbertura || b.dataCadastro);
-        return ordenacaoData === 'desc' ? dataB - dataA : dataA - dataB;
-      });
-      
-      salvarProcessos(processos);
-      renderizarTabela();
-    });
-
-    // Download CSV
-    document.getElementById('btnDownloadCsv').addEventListener('click', () => {
-      const processos = processosFiltrados.length > 0 ? processosFiltrados : carregarProcessos();
-      
-      if (processos.length === 0) {
-        alert('Nenhum processo para exportar.');
-        return;
-      }
-      
-      let csv = 'Nome,CPF,Telefone,Email,Nome Ação,Categoria,Número,Status,Data Abertura,Valor,Honorários,Forma Pagamento,Parcelas\n';
-      
-      processos.forEach(p => {
-        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.nomeAcao || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}","${p.formaPagamento || ''}","${p.parcelas || ''}"\n`;
-      });
-      
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `processos-${Date.now()}.csv`;
-      link.click();
-    });
-
-    // Ver detalhes
     window.verDetalhes = function(id) {
       const processos = carregarProcessos();
       const processo = processos.find(p => p.id === id);
@@ -2195,7 +1998,6 @@
       detalhes += `Data Abertura: ${processo.dataAbertura || '-'}\n`;
       detalhes += `Valor da Causa: R$ ${processo.valor || '0'}\n`;
       detalhes += `Honorários: R$ ${processo.honorarios || '0'}\n`;
-      detalhes += `Honorários Mínimos: R$ ${processo.honorariosMinimos || '0'}\n`;
       detalhes += `Forma de Pagamento: ${processo.formaPagamento || '-'}\n`;
       detalhes += `Parcelas: ${processo.parcelas || '-'}\n`;
       detalhes += `Observações: ${processo.observacoes || '-'}\n`;
@@ -2203,339 +2005,215 @@
       alert(detalhes);
     };
 
-    // Deletar processo
     window.deletarProcesso = function(id) {
       if (!confirm('Deseja realmente deletar este processo?')) return;
       
       let processos = carregarProcessos();
       processos = processos.filter(p => p.id !== id);
       salvarProcessos(processos);
-      
       renderizarTabela();
     };
 
-    // ========== PERFIL DO CLIENTE ==========
-    function atualizarSelectClientesPerfil() {
-      const processos = carregarProcessos();
-      const select = document.getElementById('selectClientePerfil');
-      
-      select.innerHTML = '<option value="">--- selecione um cliente ---</option>';
-      
-      // Obter clientes únicos
-      const clientesUnicos = {};
-      processos.forEach(p => {
-        if (p.cpf && !clientesUnicos[p.cpf]) {
-          clientesUnicos[p.cpf] = p;
-        }
-      });
-      
-      Object.values(clientesUnicos).forEach(cliente => {
-        const option = document.createElement('option');
-        option.value = cliente.cpf;
-        option.textContent = `${cliente.nome} - ${cliente.cpf}`;
-        select.appendChild(option);
-      });
-    }
-
-    document.getElementById('selectClientePerfil').addEventListener('change', (e) => {
-      const cpf = e.target.value;
-      if (cpf) {
-        renderizarPerfilCliente(cpf);
-      } else {
-        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Selecione um cliente para visualizar o perfil.</div>';
-      }
+    // Botões da lista
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      renderizarTabela(e.target.value);
     });
 
-    function renderizarPerfilCliente(cpf) {
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      renderizarTabela();
+    });
+
+    document.getElementById('btnSortDate').addEventListener('click', () => {
       const processos = carregarProcessos();
-      const processosCliente = processos.filter(p => p.cpf === cpf);
+      ordenacaoData = ordenacaoData === 'desc' ? 'asc' : 'desc';
       
-      if (processosCliente.length === 0) {
-        document.getElementById('perfilConteudo').innerHTML = '<div class="no-data">Nenhum processo encontrado para este cliente.</div>';
+      processos.sort((a, b) => {
+        const dataA = new Date(a.dataAbertura || a.dataCadastro);
+        const dataB = new Date(b.dataAbertura || b.dataCadastro);
+        return ordenacaoData === 'desc' ? dataB - dataA : dataA - dataB;
+      });
+      
+      salvarProcessos(processos);
+      renderizarTabela();
+    });
+
+    document.getElementById('btnDownloadCsv').addEventListener('click', () => {
+      const processos = processosFiltrados.length > 0 ? processosFiltrados : carregarProcessos();
+      
+      if (processos.length === 0) {
+        alert('Nenhum processo para exportar.');
         return;
       }
       
-      const cliente = processosCliente[0];
-      const interacoes = carregarInteracoes();
-      const interacoesCliente = interacoes.filter(i => 
-        processosCliente.some(p => p.id === i.processoId)
-      );
-      
-      // Calcular estatísticas financeiras
-      const totalHonorarios = processosCliente.reduce((total, p) => total + (parseFloat(p.honorarios) || 0), 0);
-      const totalValorCausa = processosCliente.reduce((total, p) => total + (parseFloat(p.valor) || 0), 0);
-      const processosAtivos = processosCliente.filter(p => 
-        p.status !== 'Arquivado' && p.status !== 'Finalizado' && p.status !== 'Trânsito em Julgado'
-      ).length;
-      
-      // Calcular situação financeira (simulação)
-      const situacaoFinanceira = calcularSituacaoFinanceira(processosCliente);
-      
-      const html = `
-        <div class="perfil-header">
-          <div class="perfil-avatar">${cliente.nome.charAt(0)}</div>
-          <div class="perfil-info">
-            <h1 class="perfil-nome">${cliente.nome}</h1>
-            <p class="perfil-detalhes">
-              CPF: ${cliente.cpf} | Email: ${cliente.email || 'Não informado'} | Telefone: ${cliente.telefone || 'Não informado'}
-            </p>
-          </div>
-        </div>
-        
-        <div class="perfil-stats">
-          <div class="perfil-stat">
-            <div class="perfil-stat-value">${processosCliente.length}</div>
-            <div class="perfil-stat-label">Total de Processos</div>
-          </div>
-          <div class="perfil-stat">
-            <div class="perfil-stat-value">${processosAtivos}</div>
-            <div class="perfil-stat-label">Processos Ativos</div>
-          </div>
-          <div class="perfil-stat">
-            <div class="perfil-stat-value">R$ ${totalHonorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-            <div class="perfil-stat-label">Total Honorários</div>
-          </div>
-          <div class="perfil-stat">
-            <div class="perfil-stat-value">R$ ${totalValorCausa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-            <div class="perfil-stat-label">Valor Total Causas</div>
-          </div>
-        </div>
-        
-        <div class="info-section">
-          <h3 class="info-section-title">
-            <span class="material-icons">person</span>
-            Informações Pessoais
-          </h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Nome Completo</div>
-              <div class="info-value">${cliente.nome}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">CPF</div>
-              <div class="info-value">${cliente.cpf}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">RG</div>
-              <div class="info-value">${cliente.rg || 'Não informado'}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Email</div>
-              <div class="info-value">${cliente.email || 'Não informado'}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Telefone</div>
-              <div class="info-value">${cliente.telefone || 'Não informado'}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Endereço</div>
-              <div class="info-value">${cliente.endereco || 'Não informado'}</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="info-section">
-          <h3 class="info-section-title">
-            <span class="material-icons">attach_money</span>
-            Situação Financeira
-          </h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Status Financeiro</div>
-              <div class="info-value financeiro-status ${situacaoFinanceira.status === 'regular' ? 'status-pago' : situacaoFinanceira.status === 'atraso' ? 'status-atrasado' : 'status-pendente'}">
-                <span class="material-icons" style="font-size: 16px;">
-                  ${situacaoFinanceira.status === 'regular' ? 'check_circle' : situacaoFinanceira.status === 'atraso' ? 'warning' : 'schedule'}
-                </span>
-                ${situacaoFinanceira.descricao}
-              </div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Total em Honorários</div>
-              <div class="info-value">R$ ${totalHonorarios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Valor Pendente</div>
-              <div class="info-value">R$ ${situacaoFinanceira.valorPendente.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Próximo Vencimento</div>
-              <div class="info-value">${situacaoFinanceira.proximoVencimento || 'Não há'}</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="info-section">
-          <h3 class="info-section-title">
-            <span class="material-icons">folder_open</span>
-            Processos do Cliente
-          </h3>
-          <div style="overflow-x: auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nome da Ação</th>
-                  <th>Categoria</th>
-                  <th>Status</th>
-                  <th>Data Abertura</th>
-                  <th>Valor Causa</th>
-                  <th>Honorários</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${processosCliente.map(p => `
-                  <tr>
-                    <td>${p.nomeAcao || 'S/N'}</td>
-                    <td>${p.categoria || '-'}</td>
-                    <td>
-                      <span class="status-badge status-${p.status.toLowerCase().replace(' ', '')}">
-                        ${p.status}
-                      </span>
-                    </td>
-                    <td>${p.dataAbertura ? new Date(p.dataAbertura).toLocaleDateString('pt-BR') : '-'}</td>
-                    <td>${p.valor ? `R$ ${parseFloat(p.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '-'}</td>
-                    <td>${p.honorarios ? `R$ ${parseFloat(p.honorarios).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '-'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <div class="info-section">
-          <h3 class="info-section-title">
-            <span class="material-icons">history</span>
-            Histórico de Interações
-          </h3>
-          ${interacoesCliente.length > 0 ? `
-            <div>
-              ${interacoesCliente.slice(0, 5).map(i => {
-                const processo = processosCliente.find(p => p.id === i.processoId);
-                const tipoLabel = {
-                  'reuniao': 'Reunião',
-                  'telefonema': 'Telefonema',
-                  'email': 'E-mail',
-                  'anotacao': 'Anotação'
-                }[i.tipo];
-                
-                return `
-                  <div class="note-card">
-                    <div class="note-meta">
-                      <span>${new Date(i.data).toLocaleString('pt-BR')}</span>
-                      <span>${tipoLabel} - ${processo ? processo.nomeAcao || 'Processo' : 'Processo'}</span>
-                    </div>
-                    <div class="note-text">${i.detalhes}</div>
-                  </div>
-                `;
-              }).join('')}
-              ${interacoesCliente.length > 5 ? `
-                <div style="text-align: center; margin-top: 12px;">
-                  <button class="btn link" onclick="alert('Total de interações: ${interacoesCliente.length}')">
-                    Ver todas as ${interacoesCliente.length} interações
-                  </button>
-                </div>
-              ` : ''}
-            </div>
-          ` : '<div class="no-data">Nenhuma interação registrada para este cliente.</div>'}
-        </div>
-        
-        <div class="actions">
-          <button class="btn primary" onclick="exportarPerfilCliente('${cpf}')">
-            <span class="material-icons">download</span> Exportar Perfil
-          </button>
-          <button class="btn ghost" onclick="imprimirPerfilCliente()">
-            <span class="material-icons">print</span> Imprimir Perfil
-          </button>
-        </div>
-      `;
-      
-      document.getElementById('perfilConteudo').innerHTML = html;
-    }
-
-    function calcularSituacaoFinanceira(processos) {
-      // Simulação de cálculo da situação financeira
-      let valorPendente = 0;
-      let proximoVencimento = null;
-      let status = 'regular';
+      let csv = 'Nome,CPF,Telefone,Email,Nome Ação,Categoria,Número,Status,Data Abertura,Valor,Honorários,Forma Pagamento,Parcelas\n';
       
       processos.forEach(p => {
-        if (p.formaPagamento === 'Parcelado' && p.parcelas) {
-          const valorParcela = (parseFloat(p.honorarios) || 0) / parseInt(p.parcelas);
-          valorPendente += valorParcela * 2; // Simulação: 2 parcelas pendentes
-        } else if (p.formaPagamento === 'À Vista' && p.honorarios) {
-          valorPendente += parseFloat(p.honorarios) || 0;
-        }
+        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.nomeAcao || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}","${p.formaPagamento || ''}","${p.parcelas || ''}"\n`;
       });
       
-      if (valorPendente > 0) {
-        status = 'pendente';
-        // Simular próximo vencimento (5 dias a partir de hoje)
-        const data = new Date();
-        data.setDate(data.getDate() + 5);
-        proximoVencimento = data.toLocaleDateString('pt-BR');
-        
-        if (valorPendente > 1000) {
-          status = 'atraso';
-        }
-      }
-      
-      return {
-        status,
-        descricao: status === 'regular' ? 'Em dia' : status === 'pendente' ? 'Pagamentos pendentes' : 'Pagamentos em atraso',
-        valorPendente,
-        proximoVencimento
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `processos-${Date.now()}.csv`;
+      link.click();
+    });
+
+    // ========== CONTRATOS ==========
+    function criarContratoAutomatico(processo) {
+      const contrato = {
+        id: Date.now().toString(),
+        dataCriacao: new Date().toISOString(),
+        cliente: processo.nome,
+        cpf: processo.cpf,
+        endereco: processo.endereco,
+        nomeAcao: processo.nomeAcao,
+        categoria: processo.categoria,
+        numeroProcesso: processo.numero,
+        vara: processo.vara,
+        parteContraria: processo.parte,
+        valorCausa: processo.valor,
+        honorarios: processo.honorarios,
+        formaPagamento: processo.formaPagamento,
+        parcelas: processo.parcelas,
+        geradoAutomaticamente: true
       };
+      
+      const contratos = carregarContratos();
+      contratos.push(contrato);
+      salvarContratos(contratos);
     }
 
-    function exportarPerfilCliente(cpf) {
+    function atualizarContrato() {
+      const form = document.getElementById('formCadastro');
+      const formData = new FormData(form);
+      
+      document.getElementById('contratoCliente').textContent = formData.get('nome') || '[Nome do Cliente]';
+      document.getElementById('contratoCpf').textContent = formData.get('cpf') || '[CPF do Cliente]';
+      document.getElementById('contratoEndereco').textContent = formData.get('endereco') || '[Endereço do Cliente]';
+      document.getElementById('contratoNomeAcao').textContent = formData.get('nomeAcao') || '[Nome da Ação]';
+      document.getElementById('contratoCategoria').textContent = formData.get('categoria') || '[Categoria do Processo]';
+      document.getElementById('contratoNumero').textContent = formData.get('numero') || '[Número do Processo]';
+      document.getElementById('contratoVara').textContent = formData.get('vara') || '[Vara/Comarca]';
+      document.getElementById('contratoParte').textContent = formData.get('parte') || '[Parte Contrária]';
+      document.getElementById('contratoValor').textContent = formData.get('valor') ? `R$ ${parseFloat(formData.get('valor')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'R$ 0,00';
+      document.getElementById('contratoHonorarios').textContent = formData.get('honorarios') ? `R$ ${parseFloat(formData.get('honorarios')).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'R$ 0,00';
+      document.getElementById('contratoPagamento').textContent = formData.get('formaPagamento') || '[Forma de Pagamento]';
+      document.getElementById('contratoAssinaturaCliente').textContent = formData.get('nome') || '[Nome do Cliente]';
+      document.getElementById('contratoAssinaturaCpf').textContent = formData.get('cpf') || '[CPF]';
+    }
+
+    document.getElementById('btnImprimirContrato').addEventListener('click', () => {
+      const contratoElement = document.getElementById('contratoPreview');
+      const ventana = window.open('', '_blank');
+      ventana.document.write(`
+        <html>
+          <head>
+            <title>Contrato - ${document.getElementById('contratoCliente').textContent}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .contrato-container { max-width: 800px; margin: 0 auto; }
+              .contrato-header { text-align: center; margin-bottom: 30px; }
+              .contrato-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+              .contrato-subtitle { font-size: 14px; color: #666; }
+              .contrato-section { margin-bottom: 20px; }
+              .contrato-section-title { font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; }
+              .contrato-field { margin-bottom: 8px; }
+              .contrato-label { font-weight: bold; }
+              .contrato-signatures { display: flex; justify-content: space-between; margin-top: 50px; }
+              .signature-line { margin-bottom: 40px; }
+              @media print {
+                body { margin: 0; }
+                .contrato-actions { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            ${contratoElement.innerHTML}
+          </body>
+        </html>
+      `);
+      ventana.document.close();
+      ventana.print();
+    });
+
+    document.getElementById('btnSalvarContrato').addEventListener('click', () => {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       
-      doc.setFontSize(18);
-      doc.text('Perfil do Cliente - Sistema Jurídico', 20, 20);
+      doc.setFontSize(16);
+      doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS', 20, 20);
+      doc.setFontSize(10);
       
-      doc.setFontSize(12);
       let y = 40;
+      const contratoCliente = document.getElementById('contratoCliente').textContent;
+      const contratoCpf = document.getElementById('contratoCpf').textContent;
+      const contratoEndereco = document.getElementById('contratoEndereco').textContent;
+      const contratoNomeAcao = document.getElementById('contratoNomeAcao').textContent;
+      const contratoCategoria = document.getElementById('contratoCategoria').textContent;
+      const contratoNumero = document.getElementById('contratoNumero').textContent;
+      const contratoVara = document.getElementById('contratoVara').textContent;
+      const contratoParte = document.getElementById('contratoParte').textContent;
+      const contratoValor = document.getElementById('contratoValor').textContent;
+      const contratoHonorarios = document.getElementById('contratoHonorarios').textContent;
+      const contratoPagamento = document.getElementById('contratoPagamento').textContent;
       
-      // Aqui você pode adicionar o conteúdo do perfil ao PDF
-      doc.text('Relatório de Perfil do Cliente', 20, y);
-      y += 10;
-      doc.text('CPF: ' + cpf, 20, y);
+      const campos = [
+        ['CONTRATANTE:', contratoCliente],
+        ['CPF:', contratoCpf],
+        ['ENDEREÇO:', contratoEndereco],
+        ['CONTRATADA:', 'Dra. Advogada - OAB/SP 123.456'],
+        ['NOME DA AÇÃO:', contratoNomeAcao],
+        ['CATEGORIA:', contratoCategoria],
+        ['NÚMERO DO PROCESSO:', contratoNumero],
+        ['VARA/COMARCA:', contratoVara],
+        ['PARTE CONTRÁRIA:', contratoParte],
+        ['VALOR DA CAUSA:', contratoValor],
+        ['HONORÁRIOS:', contratoHonorarios],
+        ['FORMA DE PAGAMENTO:', contratoPagamento]
+      ];
       
-      doc.save(`perfil-cliente-${cpf}-${Date.now()}.pdf`);
-    }
-
-    function imprimirPerfilCliente() {
-      window.print();
-    }
+      campos.forEach(([label, value]) => {
+        doc.setFont(undefined, 'bold');
+        doc.text(label, 20, y);
+        doc.setFont(undefined, 'normal');
+        const lines = doc.splitTextToSize(value, 120);
+        doc.text(lines, 70, y);
+        y += lines.length * 7;
+      });
+      
+      y += 20;
+      doc.text('___________________________________', 20, y);
+      doc.text('CONTRATANTE', 20, y + 10);
+      doc.text(contratoCliente, 20, y + 20);
+      doc.text(`CPF: ${contratoCpf}`, 20, y + 30);
+      
+      doc.text('___________________________________', 120, y);
+      doc.text('CONTRATADA', 120, y + 10);
+      doc.text('Dra. Advogada', 120, y + 20);
+      doc.text('OAB/SP 123.456', 120, y + 30);
+      
+      doc.save(`contrato-${contratoCliente}-${Date.now()}.pdf`);
+      mostrarAlerta('alertContratos', 'Contrato salvo como PDF!', 'success');
+    });
 
     // ========== CONTRATOS CRIADOS ==========
     function renderizarContratosCriados(filtros = {}) {
       const contratos = carregarContratos();
       const container = document.getElementById('listaContratosCriados');
       
-      // Aplicar filtros
       let contratosFiltrados = contratos.filter(contrato => {
-        // Filtro por cliente
         if (filtros.cliente && !contrato.cliente.toLowerCase().includes(filtros.cliente.toLowerCase())) {
           return false;
         }
-        
-        // Filtro por número do processo
         if (filtros.numeroProcesso && !contrato.numeroProcesso?.includes(filtros.numeroProcesso)) {
           return false;
         }
-        
-        // Filtro por vara
         if (filtros.vara && !contrato.vara?.toLowerCase().includes(filtros.vara.toLowerCase())) {
           return false;
         }
-        
-        // Filtro por categoria
         if (filtros.categoria && contrato.categoria !== filtros.categoria) {
           return false;
         }
-        
-        // Filtro por data
         if (filtros.dataInicial || filtros.dataFinal) {
           const dataContrato = new Date(contrato.dataCriacao);
           
@@ -2546,7 +2224,7 @@
           
           if (filtros.dataFinal) {
             const dataFinal = new Date(filtros.dataFinal);
-            dataFinal.setDate(dataFinal.getDate() + 1); // Inclui o dia final
+            dataFinal.setDate(dataFinal.getDate() + 1);
             if (dataContrato >= dataFinal) return false;
           }
         }
@@ -2559,7 +2237,6 @@
         return;
       }
       
-      // Ordenar por data (mais recente primeiro)
       contratosFiltrados.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
       
       let html = '<table><thead><tr>';
@@ -2595,7 +2272,7 @@
       container.innerHTML = html;
     }
 
-    // Aplicar filtros
+    // Botões dos contratos criados
     document.getElementById('btnAplicarFiltros').addEventListener('click', () => {
       const filtros = {
         cliente: document.getElementById('filtroCliente').value,
@@ -2609,7 +2286,6 @@
       renderizarContratosCriados(filtros);
     });
 
-    // Limpar filtros
     document.getElementById('btnLimparFiltros').addEventListener('click', () => {
       document.getElementById('filtroCliente').value = '';
       document.getElementById('filtroNumeroProcesso').value = '';
@@ -2621,7 +2297,6 @@
       renderizarContratosCriados();
     });
 
-    // Exportar lista de contratos
     document.getElementById('btnExportarContratos').addEventListener('click', () => {
       const contratos = carregarContratos();
       
@@ -2643,25 +2318,18 @@
       link.click();
     });
 
-    // Visualizar contrato
+    // Funções globais para contratos
     window.visualizarContrato = function(id) {
       const contratos = carregarContratos();
       const contrato = contratos.find(c => c.id === id);
       if (!contrato) return;
       
-      // Gerar HTML do contrato para visualização
       const contratoHTML = gerarHTMLContrato(contrato);
-      
-      // Exibir no modal
       document.getElementById('modalContent').innerHTML = contratoHTML;
       document.getElementById('modalPdf').classList.add('active');
-      
-      // Configurar botões do modal
-      const modal = document.getElementById('modalPdf');
-      modal.dataset.contratoId = id;
+      document.getElementById('modalPdf').dataset.contratoId = id;
     };
 
-    // Gerar PDF do contrato
     window.gerarPDFContrato = function(id) {
       const contratos = carregarContratos();
       const contrato = contratos.find(c => c.id === id);
@@ -2670,12 +2338,10 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       
-      // Configurações do PDF
       doc.setFontSize(16);
       doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS', 20, 20);
       doc.setFontSize(10);
       
-      // Conteúdo do contrato
       let y = 40;
       const campos = [
         ['CONTRATANTE:', contrato.cliente],
@@ -2701,7 +2367,6 @@
         y += 10;
       });
       
-      // Assinaturas
       y += 20;
       doc.text('___________________________________', 20, y);
       doc.text('CONTRATANTE', 20, y + 10);
@@ -2716,7 +2381,15 @@
       doc.save(`contrato-${contrato.cliente}-${Date.now()}.pdf`);
     };
 
-    // Gerar HTML do contrato para visualização
+    window.deletarContrato = function(id) {
+      if (!confirm('Deseja realmente deletar este contrato?')) return;
+      
+      let contratos = carregarContratos();
+      contratos = contratos.filter(c => c.id !== id);
+      salvarContratos(contratos);
+      renderizarContratosCriados();
+    };
+
     function gerarHTMLContrato(contrato) {
       return `
         <div class="contrato-container">
@@ -2809,17 +2482,6 @@
       `;
     }
 
-    // Deletar contrato
-    window.deletarContrato = function(id) {
-      if (!confirm('Deseja realmente deletar este contrato?')) return;
-      
-      let contratos = carregarContratos();
-      contratos = contratos.filter(c => c.id !== id);
-      salvarContratos(contratos);
-      
-      renderizarContratosCriados();
-    };
-
     // ========== MODAL PDF ==========
     document.getElementById('btnFecharModal').addEventListener('click', fecharModal);
     document.getElementById('btnFecharModal2').addEventListener('click', fecharModal);
@@ -2839,7 +2501,6 @@
       document.getElementById('modalPdf').classList.remove('active');
     }
 
-    // Fechar modal ao clicar fora
     document.getElementById('modalPdf').addEventListener('click', (e) => {
       if (e.target === document.getElementById('modalPdf')) {
         fecharModal();
@@ -2965,7 +2626,6 @@
         return;
       }
       
-      // Ordenar por data (mais recente primeiro)
       interacoes.sort((a, b) => new Date(b.data) - new Date(a.data));
       
       let html = '';
@@ -3021,7 +2681,7 @@
         id: Date.now().toString(),
         processoId,
         tipo,
-        data: data + 'T12:00:00', // Adiciona horário padrão
+        data: data + 'T12:00:00',
         detalhes
       });
       
@@ -3049,7 +2709,7 @@
       renderizarInteracoes();
     };
 
-    // ========== CALCULADORA DE PRAZOS ==========
+    // ========== FERRAMENTAS - CALCULADORAS ==========
     document.getElementById('btnCalcularPrazo').addEventListener('click', () => {
       const dataInicial = document.getElementById('dataInicial').value;
       const tipoPrazo = document.getElementById('tipoPrazo').value;
@@ -3067,7 +2727,6 @@
         data.setDate(data.getDate() + quantidade);
         diasAdicionados = quantidade;
       } else {
-        // Dias úteis (não considera feriados)
         while (diasAdicionados < quantidade) {
           data.setDate(data.getDate() + 1);
           const diaSemana = data.getDay();
@@ -3088,7 +2747,6 @@
       resultado.style.display = 'block';
     });
 
-    // ========== CALCULADORA DE HONORÁRIOS ==========
     document.getElementById('btnCalcularHonorarios').addEventListener('click', () => {
       const valorCausa = parseFloat(document.getElementById('valorCausa').value) || 0;
       const percentual = parseFloat(document.getElementById('percentualHonorarios').value) || 0;
@@ -3103,7 +2761,6 @@
       document.getElementById('resultadoHonorarios').classList.add('show');
     });
 
-    // ========== CALCULADORA DE CUSTAS ==========
     document.getElementById('btnCalcularCustas').addEventListener('click', () => {
       const valorCausa = parseFloat(document.getElementById('valorCausaCustas').value) || 0;
       const percentual = parseFloat(document.getElementById('percentualCustas').value) || 1;
@@ -3118,7 +2775,6 @@
       document.getElementById('resultadoCustas').classList.add('show');
     });
 
-    // ========== CALCULADORA DE PARCELAMENTO ==========
     document.getElementById('btnCalcularParcelamento').addEventListener('click', () => {
       const valorTotal = parseFloat(document.getElementById('valorTotalParcelamento').value) || 0;
       const numeroParcelas = parseInt(document.getElementById('numeroParcelas').value) || 1;
@@ -3131,6 +2787,25 @@
       const valorParcela = valorTotal / numeroParcelas;
       document.getElementById('valorParcela').textContent = `R$ ${valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('resultadoParcelamento').classList.add('show');
+    });
+
+    document.getElementById('btnLimparTodos').addEventListener('click', () => {
+      if (!confirm('ATENÇÃO: Isso irá apagar TODOS os processos e anotações. Deseja continuar?')) return;
+      if (!confirm('Tem certeza? Esta ação não pode ser desfeita!')) return;
+      
+      localStorage.removeItem(DB_KEY);
+      localStorage.removeItem(NOTES_KEY);
+      localStorage.removeItem(CONTRATOS_KEY);
+      localStorage.removeItem(INTERACOES_KEY);
+      localStorage.removeItem(PERFIS_KEY);
+      localStorage.removeItem(DOCUMENTOS_KEY);
+      
+      alert('Todos os dados foram removidos com sucesso.');
+      renderizarTabela();
+      renderizarAnotacoes();
+      renderizarInteracoes();
+      renderizarContratosCriados();
+      atualizarDashboard();
     });
 
     // ========== DASHBOARD ==========
@@ -3152,32 +2827,9 @@
       document.getElementById('clientesAtivos').textContent = clientesUnicos;
     }
 
-    // ========== LIMPAR TODOS OS DADOS ==========
-    document.getElementById('btnLimparTodos').addEventListener('click', () => {
-      if (!confirm('ATENÇÃO: Isso irá apagar TODOS os processos e anotações. Deseja continuar?')) return;
-      if (!confirm('Tem certeza? Esta ação não pode ser desfeita!')) return;
-      
-      localStorage.removeItem(DB_KEY);
-      localStorage.removeItem(NOTES_KEY);
-      localStorage.removeItem(CONTRATOS_KEY);
-      localStorage.removeItem(INTERACOES_KEY);
-      localStorage.removeItem(PERFIS_KEY);
-      localStorage.removeItem(DOCUMENTOS_KEY);
-      
-      alert('Todos os dados foram removidos com sucesso.');
-      renderizarTabela();
-      renderizarAnotacoes();
-      renderizarInteracoes();
-      renderizarContratosCriados();
-      atualizarDashboard();
-    });
-
-    // ========== NOVAS FUNCIONALIDADES ==========
-    
-    // Gráficos interativos
+    // ========== GRÁFICOS ==========
     let chartStatus, chartHonorarios, chartMensal, chartVara;
     
-    // Inicializar gráficos
     function inicializarGraficos() {
       const processos = carregarProcessos();
       criarGraficoStatus(processos);
@@ -3186,11 +2838,9 @@
       criarGraficoVara(processos);
     }
     
-    // Gráfico de status dos processos
     function criarGraficoStatus(processos) {
       const ctx = document.getElementById('chartStatus').getContext('2d');
       
-      // Contar processos por status
       const statusCount = {};
       processos.forEach(p => {
         statusCount[p.status] = (statusCount[p.status] || 0) + 1;
@@ -3199,7 +2849,6 @@
       const labels = Object.keys(statusCount);
       const data = Object.values(statusCount);
       
-      // Cores para os status
       const cores = [
         '#3366ff', '#2b61ff', '#0ea44e', '#f59e0b', '#ef4444',
         '#8b5cf6', '#06b6d4', '#84cc16', '#f97316', '#64748b'
@@ -3223,28 +2872,15 @@
           plugins: {
             legend: {
               position: 'right',
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const label = context.label || '';
-                  const value = context.raw || 0;
-                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                  const percentage = Math.round((value / total) * 100);
-                  return `${label}: ${value} (${percentage}%)`;
-                }
-              }
             }
           }
         }
       });
     }
     
-    // Gráfico de honorários por categoria
     function criarGraficoHonorarios(processos) {
       const ctx = document.getElementById('chartHonorarios').getContext('2d');
       
-      // Agrupar honorários por categoria
       const honorariosPorCategoria = {};
       processos.forEach(p => {
         if (p.honorarios && p.categoria) {
@@ -3275,32 +2911,16 @@
           maintainAspectRatio: false,
           scales: {
             y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return 'R$ ' + value.toLocaleString('pt-BR');
-                }
-              }
-            }
-          },
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return 'R$ ' + context.raw.toLocaleString('pt-BR');
-                }
-              }
+              beginAtZero: true
             }
           }
         }
       });
     }
     
-    // Gráfico de processos por mês
     function criarGraficoMensal(processos) {
       const ctx = document.getElementById('chartMensal').getContext('2d');
       
-      // Agrupar processos por mês/ano
       const processosPorMes = {};
       processos.forEach(p => {
         if (p.dataAbertura) {
@@ -3310,7 +2930,6 @@
         }
       });
       
-      // Ordenar por data
       const sortedEntries = Object.entries(processosPorMes)
         .sort((a, b) => {
           const [mesA, anoA] = a[0].split('/').map(Number);
@@ -3349,11 +2968,9 @@
       });
     }
     
-    // Gráfico de distribuição por vara
     function criarGraficoVara(processos) {
       const ctx = document.getElementById('chartVara').getContext('2d');
       
-      // Contar processos por vara
       const varaCount = {};
       processos.forEach(p => {
         if (p.vara) {
@@ -3361,13 +2978,11 @@
         }
       });
       
-      // Limitar a 10 varas mais comuns para evitar poluição visual
       const sortedVaras = Object.entries(varaCount)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
       
       const labels = sortedVaras.map(entry => {
-        // Abreviar nomes longos
         const nome = entry[0];
         return nome.length > 20 ? nome.substring(0, 20) + '...' : nome;
       });
@@ -3390,141 +3005,10 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          indexAxis: 'y',
-          scales: {
-            x: {
-              beginAtZero: true
-            }
-          }
+          indexAxis: 'y'
         }
       });
     }
-    
-    // ========== EXPORTAÇÃO DE DADOS DOS GRÁFICOS ==========
-    
-    // Exportar dados do gráfico de status
-    document.getElementById('btnExportStatus').addEventListener('click', () => {
-      const processos = carregarProcessos();
-      const statusCount = {};
-      processos.forEach(p => {
-        statusCount[p.status] = (statusCount[p.status] || 0) + 1;
-      });
-      
-      const dados = Object.entries(statusCount).map(([status, count]) => ({
-        Status: status,
-        Quantidade: count
-      }));
-      
-      exportarParaExcel(dados, 'status-processos');
-    });
-    
-    // Exportar dados do gráfico de honorários
-    document.getElementById('btnExportHonorarios').addEventListener('click', () => {
-      const processos = carregarProcessos();
-      const honorariosPorCategoria = {};
-      processos.forEach(p => {
-        if (p.honorarios && p.categoria) {
-          const valor = parseFloat(p.honorarios) || 0;
-          honorariosPorCategoria[p.categoria] = (honorariosPorCategoria[p.categoria] || 0) + valor;
-        }
-      });
-      
-      const dados = Object.entries(honorariosPorCategoria).map(([categoria, valor]) => ({
-        Categoria: categoria,
-        'Honorários (R$)': valor
-      }));
-      
-      exportarParaExcel(dados, 'honorarios-categoria');
-    });
-    
-    // Exportar dados do gráfico mensal
-    document.getElementById('btnExportMensal').addEventListener('click', () => {
-      const processos = carregarProcessos();
-      const processosPorMes = {};
-      processos.forEach(p => {
-        if (p.dataAbertura) {
-          const data = new Date(p.dataAbertura);
-          const mesAno = `${data.getMonth() + 1}/${data.getFullYear()}`;
-          processosPorMes[mesAno] = (processosPorMes[mesAno] || 0) + 1;
-        }
-      });
-      
-      const sortedEntries = Object.entries(processosPorMes)
-        .sort((a, b) => {
-          const [mesA, anoA] = a[0].split('/').map(Number);
-          const [mesB, anoB] = b[0].split('/').map(Number);
-          return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
-        });
-      
-      const dados = sortedEntries.map(([mesAno, count]) => ({
-        'Mês/Ano': mesAno,
-        'Quantidade de Processos': count
-      }));
-      
-      exportarParaExcel(dados, 'processos-mensal');
-    });
-    
-    // Exportar dados do gráfico de vara
-    document.getElementById('btnExportVara').addEventListener('click', () => {
-      const processos = carregarProcessos();
-      const varaCount = {};
-      processos.forEach(p => {
-        if (p.vara) {
-          varaCount[p.vara] = (varaCount[p.vara] || 0) + 1;
-        }
-      });
-      
-      const sortedVaras = Object.entries(varaCount)
-        .sort((a, b) => b[1] - a[1]);
-      
-      const dados = sortedVaras.map(([vara, count]) => ({
-        Vara: vara,
-        'Quantidade de Processos': count
-      }));
-      
-      exportarParaExcel(dados, 'processos-vara');
-    });
-    
-    // Função genérica para exportar dados para Excel
-    function exportarParaExcel(dados, nomeArquivo) {
-      const ws = XLSX.utils.json_to_sheet(dados);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Dados");
-      XLSX.writeFile(wb, `${nomeArquivo}-${Date.now()}.xlsx`);
-    }
-    
-    // ========== OTIMIZAÇÃO DE PERFORMANCE ==========
-    
-    // Cache para processos carregados
-    let cacheProcessos = null;
-    let cacheTimestamp = null;
-    const CACHE_DURATION = 30000; // 30 segundos
-    
-    // Função otimizada para carregar processos
-    function carregarProcessosOtimizado() {
-      const agora = Date.now();
-      
-      // Se o cache existe e ainda é válido, retornar do cache
-      if (cacheProcessos && cacheTimestamp && (agora - cacheTimestamp < CACHE_DURATION)) {
-        return cacheProcessos;
-      }
-      
-      // Caso contrário, carregar do localStorage e atualizar cache
-      const data = localStorage.getItem(DB_KEY);
-      cacheProcessos = data ? JSON.parse(data) : [];
-      cacheTimestamp = agora;
-      
-      return cacheProcessos;
-    }
-    
-    // Função para invalidar o cache quando necessário
-    function invalidarCacheProcessos() {
-      cacheProcessos = null;
-      cacheTimestamp = null;
-    }
-    
-    // Substituir a função original por versão otimizada
-    window.carregarProcessos = carregarProcessosOtimizado;
 
     // ========== UTILITÁRIOS ==========
     function mostrarAlerta(containerId, mensagem, tipo) {
@@ -3537,13 +3021,11 @@
 
     // ========== INICIALIZAÇÃO ==========
     document.addEventListener('DOMContentLoaded', function() {
-      // Configurar data atual nos campos de data
       const hoje = new Date().toISOString().split('T')[0];
       document.getElementById('dataInteracao').value = hoje;
       document.getElementById('dataInicial').value = hoje;
       document.getElementById('inputDataAbertura').value = hoje;
       
-      // Inicializar dados
       renderizarTabela();
       atualizarSelectProcessos();
       atualizarSelectProcessosInteracao();
@@ -3552,13 +3034,10 @@
       atualizarContrato();
       renderizarContratosCriados();
       
-      // Inicializar gráficos
       inicializarGraficos();
       
-      // Adicionar dados de exemplo se não houver dados
       const processos = carregarProcessos();
       if (processos.length === 0) {
-        // Adicionar processo de exemplo
         const processoExemplo = {
           id: 'exemplo-1',
           dataCadastro: new Date().toISOString(),
@@ -3590,9 +3069,7 @@
         
         processos.push(processoExemplo);
         salvarProcessos(processos);
-        invalidarCacheProcessos(); // Invalidar cache após salvar
         
-        // Adicionar anotação de exemplo
         const anotacoes = carregarAnotacoes();
         anotacoes.push({
           id: 'exemplo-anotacao-1',
@@ -3602,7 +3079,6 @@
         });
         salvarAnotacoes(anotacoes);
         
-        // Adicionar interação de exemplo
         const interacoes = carregarInteracoes();
         interacoes.push({
           id: 'exemplo-interacao-1',
@@ -3613,12 +3089,12 @@
         });
         salvarInteracoes(interacoes);
         
-        // Atualizar interface
         renderizarTabela();
         atualizarDashboard();
         inicializarGraficos();
       }
     });
+
   </script>
 </body>
 </html>
