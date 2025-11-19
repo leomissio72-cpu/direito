@@ -867,6 +867,71 @@
       font-size: 14px;
     }
 
+    /* NOVOS ESTILOS PARA PARCELAS */
+    .parcelas-container {
+      margin-top: 16px;
+    }
+    
+    .parcelas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .parcelas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    
+    .parcela-item {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid rgba(11,27,43,0.06);
+      transition: all 0.3s ease;
+    }
+    
+    .parcela-item.paga {
+      border-left: 4px solid var(--success);
+    }
+    
+    .parcela-item.pendente {
+      border-left: 4px solid var(--warning);
+    }
+    
+    .parcela-item.atrasada {
+      border-left: 4px solid var(--danger);
+    }
+    
+    .parcela-numero {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .parcela-valor {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    
+    .parcela-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .parcela-data {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
     @media (max-width:980px){
       .grid{grid-template-columns:1fr}
       .sidebar{width:64px}
@@ -888,6 +953,9 @@
         grid-template-columns: repeat(2, 1fr);
       }
       .imagens-lista {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .parcelas-grid {
         grid-template-columns: repeat(2, 1fr);
       }
     }
@@ -1337,6 +1405,10 @@
 
                 <label>Quantidade de Parcelas</label>
                 <input name="parcelas" type="number" min="1" placeholder="Ex: 12" id="parcelasInput">
+                
+                <!-- NOVO CAMPO: PARCELAS PAGAS -->
+                <label>Parcelas Pagas</label>
+                <input name="parcelasPagas" type="number" min="0" placeholder="Ex: 3" id="parcelasPagasInput">
               </div>
 
               <!-- NOVA SEÇÃO: CÁLCULO DE HONORÁRIOS SEM PREJUÍZO -->
@@ -1861,6 +1933,7 @@
     const FINANCEIRO_KEY = 'dados_financeiros';
     const IMAGENS_KEY = 'imagens_processo';
     const CLIENTES_KEY = 'clientes_juridicos';
+    const PARCELAS_KEY = 'parcelas_processo';
 
     // FUNÇÕES DE ARMAZENAMENTO
     function salvarProcessos(processos) {
@@ -1937,6 +2010,15 @@
       return data ? JSON.parse(data) : [];
     }
 
+    function salvarParcelas(parcelas) {
+      localStorage.setItem(PARCELAS_KEY, JSON.stringify(parcelas));
+    }
+
+    function carregarParcelas() {
+      const data = localStorage.getItem(PARCELAS_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+
     // NOVAS FUNÇÕES PARA DADOS FINANCEIROS
     function salvarDadosFinanceiros(dados) {
       localStorage.setItem(FINANCEIRO_KEY, JSON.stringify(dados));
@@ -2002,13 +2084,18 @@
     // ========== CONTROLE DE PARCELAS ==========
     document.getElementById('formaPagamento').addEventListener('change', (e) => {
       const parcelasInput = document.getElementById('parcelasInput');
+      const parcelasPagasInput = document.getElementById('parcelasPagasInput');
+      
       if (e.target.value === 'Parcelado') {
         parcelasInput.disabled = false;
         parcelasInput.required = true;
+        parcelasPagasInput.disabled = false;
       } else {
         parcelasInput.disabled = true;
         parcelasInput.required = false;
         parcelasInput.value = '';
+        parcelasPagasInput.disabled = true;
+        parcelasPagasInput.value = '';
       }
     });
 
@@ -2238,6 +2325,7 @@
       document.getElementById('selectClienteExistente').value = '';
       document.getElementById('formCadastro').reset();
       document.getElementById('parcelasInput').disabled = true;
+      document.getElementById('parcelasPagasInput').disabled = true;
       document.getElementById('resultadoCalculoHonorarios').style.display = 'none';
       listaDocumentos.innerHTML = '';
       listaImagens.innerHTML = '';
@@ -2306,6 +2394,7 @@
         honorariosMinimos,
         formaPagamento: formData.get('formaPagamento'),
         parcelas: formData.get('parcelas'),
+        parcelasPagas: formData.get('parcelasPagas') || 0,
         observacoes: formData.get('observacoes'),
         historicoStatus: [{
           status: formData.get('status'),
@@ -2318,9 +2407,34 @@
       processos.push(processo);
       salvarProcessos(processos);
       
+      // Criar parcelas se for pagamento parcelado
+      if (formData.get('formaPagamento') === 'Parcelado' && formData.get('parcelas')) {
+        const parcelas = carregarParcelas();
+        const totalParcelas = parseInt(formData.get('parcelas'));
+        const valorParcela = parseFloat(formData.get('honorarios')) / totalParcelas;
+        const parcelasPagas = parseInt(formData.get('parcelasPagas')) || 0;
+        
+        for (let i = 1; i <= totalParcelas; i++) {
+          const dataVencimento = new Date();
+          dataVencimento.setMonth(dataVencimento.getMonth() + i);
+          
+          parcelas.push({
+            id: Date.now().toString() + i,
+            processoId: processo.id,
+            numero: i,
+            valor: valorParcela,
+            dataVencimento: dataVencimento.toISOString(),
+            status: i <= parcelasPagas ? 'paga' : 'pendente',
+            dataPagamento: i <= parcelasPagas ? new Date().toISOString() : null
+          });
+        }
+        
+        salvarParcelas(parcelas);
+      }
+      
       // Salvar imagens do processo
       const imagens = carregarImagens();
-      const imagensProcesso = Array.from(listaImagens.children).map(item => {
+      const imagensProcesso = Array.from(listaImagens.children).map((item, index) => {
         const img = item.querySelector('img');
         const nome = item.querySelector('.imagem-nome').textContent;
         const meta = item.querySelector('.imagem-meta').textContent;
@@ -2329,11 +2443,12 @@
         return {
           id: Date.now().toString() + Math.random(),
           processoId: processo.id,
+          clienteId: clienteId,
           nome: nome,
           url: img.src,
           tamanho: tamanho,
           dataUpload: new Date().toISOString(),
-          ordem: imagens.filter(i => i.processoId === processo.id).length + 1
+          ordem: index + 1
         };
       });
       
@@ -2345,6 +2460,7 @@
       
       e.target.reset();
       document.getElementById('parcelasInput').disabled = true;
+      document.getElementById('parcelasPagasInput').disabled = true;
       document.getElementById('resultadoCalculoHonorarios').style.display = 'none';
       listaDocumentos.innerHTML = '';
       listaImagens.innerHTML = '';
@@ -2396,6 +2512,7 @@
     document.getElementById('btnLimparForm').addEventListener('click', () => {
       document.getElementById('formCadastro').reset();
       document.getElementById('parcelasInput').disabled = true;
+      document.getElementById('parcelasPagasInput').disabled = true;
       document.getElementById('resultadoCalculoHonorarios').style.display = 'none';
       listaDocumentos.innerHTML = '';
       listaImagens.innerHTML = '';
@@ -2409,6 +2526,7 @@
     function renderizarTabela(filtro = '') {
       const processos = carregarProcessos();
       const clientes = carregarClientes();
+      const parcelas = carregarParcelas();
       
       processosFiltrados = processos.filter(p => {
         if (!filtro) return true;
@@ -2430,12 +2548,22 @@
       }
       
       let html = '<table><thead><tr>';
-      html += '<th>Cliente</th><th>Ação</th><th>Categoria</th><th>Número</th><th>Status</th><th>Data Abertura</th><th>Pagamento</th><th>Ações</th>';
+      html += '<th>Cliente</th><th>Ação</th><th>Categoria</th><th>Número</th><th>Status</th><th>Data Abertura</th><th>Pagamento</th><th>Parcelas</th><th>Ações</th>';
       html += '</tr></thead><tbody>';
       
       processosFiltrados.forEach(p => {
         const cliente = clientes.find(c => c.id === p.clienteId);
         const nomeCliente = cliente ? cliente.nome : p.nome;
+        
+        // Calcular parcelas pagas
+        const parcelasProcesso = parcelas.filter(parc => parc.processoId === p.id);
+        const parcelasPagas = parcelasProcesso.filter(parc => parc.status === 'paga').length;
+        const totalParcelas = p.parcelas || parcelasProcesso.length;
+        
+        let infoParcelas = '-';
+        if (p.formaPagamento === 'Parcelado' && totalParcelas > 0) {
+          infoParcelas = `${parcelasPagas}/${totalParcelas} pagas`;
+        }
         
         html += '<tr>';
         html += `<td>${nomeCliente}</td>`;
@@ -2451,9 +2579,13 @@
         </td>`;
         html += `<td>${p.dataAbertura ? new Date(p.dataAbertura).toLocaleDateString('pt-BR') : '-'}</td>`;
         html += `<td>${p.formaPagamento || '-'}${p.parcelas ? ` (${p.parcelas}x)` : ''}</td>`;
+        html += `<td>${infoParcelas}</td>`;
         html += `<td>
           <button class="btn ghost" onclick="verDetalhes('${p.id}')">
             <span class="material-icons">visibility</span> Ver
+          </button>
+          <button class="btn primary" onclick="gerenciarParcelas('${p.id}')">
+            <span class="material-icons">payments</span> Parcelas
           </button>
           <button class="btn danger" onclick="deletarProcesso('${p.id}')">
             <span class="material-icons">delete</span>
@@ -2513,9 +2645,109 @@
       detalhes += `Honorários: R$ ${processo.honorarios || '0'}\n`;
       detalhes += `Forma de Pagamento: ${processo.formaPagamento || '-'}\n`;
       detalhes += `Parcelas: ${processo.parcelas || '-'}\n`;
+      detalhes += `Parcelas Pagas: ${processo.parcelasPagas || '0'}\n`;
       detalhes += `Observações: ${processo.observacoes || '-'}\n`;
       
       alert(detalhes);
+    };
+
+    window.gerenciarParcelas = function(processoId) {
+      const processos = carregarProcessos();
+      const processo = processos.find(p => p.id === processoId);
+      if (!processo) return;
+      
+      const parcelas = carregarParcelas().filter(p => p.processoId === processoId);
+      
+      let html = `<h3>Gerenciar Parcelas - ${processo.nomeAcao}</h3>`;
+      
+      if (parcelas.length === 0 && processo.formaPagamento === 'Parcelado' && processo.parcelas) {
+        // Criar parcelas se não existirem
+        const totalParcelas = parseInt(processo.parcelas);
+        const valorParcela = parseFloat(processo.honorarios) / totalParcelas;
+        
+        for (let i = 1; i <= totalParcelas; i++) {
+          const dataVencimento = new Date();
+          dataVencimento.setMonth(dataVencimento.getMonth() + i);
+          
+          parcelas.push({
+            id: Date.now().toString() + i,
+            processoId: processoId,
+            numero: i,
+            valor: valorParcela,
+            dataVencimento: dataVencimento.toISOString(),
+            status: i <= (processo.parcelasPagas || 0) ? 'paga' : 'pendente',
+            dataPagamento: i <= (processo.parcelasPagas || 0) ? new Date().toISOString() : null
+          });
+        }
+        
+        salvarParcelas(parcelas);
+      }
+      
+      if (parcelas.length > 0) {
+        html += '<div class="parcelas-grid">';
+        parcelas.forEach(parcela => {
+          const statusClass = `parcela-${parcela.status}`;
+          const statusText = parcela.status === 'paga' ? 'Paga' : 
+                            parcela.status === 'atrasada' ? 'Atrasada' : 'Pendente';
+          
+          html += `
+            <div class="parcela-item ${statusClass}">
+              <div class="parcela-numero">Parcela ${parcela.numero}</div>
+              <div class="parcela-valor">R$ ${parcela.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+              <div class="parcela-status ${statusClass}">
+                <span class="material-icons" style="font-size:14px">
+                  ${parcela.status === 'paga' ? 'check_circle' : 
+                    parcela.status === 'atrasada' ? 'warning' : 'schedule'}
+                </span>
+                ${statusText}
+              </div>
+              <div class="parcela-data">
+                Vencimento: ${new Date(parcela.dataVencimento).toLocaleDateString('pt-BR')}
+                ${parcela.dataPagamento ? `<br>Pagamento: ${new Date(parcela.dataPagamento).toLocaleDateString('pt-BR')}` : ''}
+              </div>
+              <div style="margin-top:8px">
+                <button class="btn success" onclick="marcarParcelaComoPaga('${parcela.id}')" ${parcela.status === 'paga' ? 'disabled' : ''}>
+                  <span class="material-icons">check</span> Pagar
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="no-data">Nenhuma parcela encontrada para este processo.</div>';
+      }
+      
+      // Mostrar modal com as parcelas
+      document.getElementById('modalContent').innerHTML = html;
+      document.getElementById('modalPdf').classList.add('active');
+      document.getElementById('modalPdf').dataset.processoId = processoId;
+    };
+
+    window.marcarParcelaComoPaga = function(parcelaId) {
+      const parcelas = carregarParcelas();
+      const parcela = parcelas.find(p => p.id === parcelaId);
+      
+      if (parcela) {
+        parcela.status = 'paga';
+        parcela.dataPagamento = new Date().toISOString();
+        salvarParcelas(parcelas);
+        
+        // Atualizar contador de parcelas pagas no processo
+        const processos = carregarProcessos();
+        const processo = processos.find(p => p.id === parcela.processoId);
+        if (processo) {
+          const parcelasProcesso = parcelas.filter(p => p.processoId === processo.id);
+          const parcelasPagas = parcelasProcesso.filter(p => p.status === 'paga').length;
+          processo.parcelasPagas = parcelasPagas;
+          salvarProcessos(processos);
+        }
+        
+        // Fechar modal e reabrir para atualizar
+        const processoId = document.getElementById('modalPdf').dataset.processoId;
+        fecharModal();
+        gerenciarParcelas(processoId);
+      }
     };
 
     window.deletarProcesso = function(id) {
@@ -2524,6 +2756,12 @@
       let processos = carregarProcessos();
       processos = processos.filter(p => p.id !== id);
       salvarProcessos(processos);
+      
+      // Remover parcelas associadas
+      let parcelas = carregarParcelas();
+      parcelas = parcelas.filter(p => p.processoId !== id);
+      salvarParcelas(parcelas);
+      
       renderizarTabela();
     };
 
@@ -2558,10 +2796,10 @@
         return;
       }
       
-      let csv = 'Nome,CPF,Telefone,Email,Nome Ação,Categoria,Número,Status,Data Abertura,Valor,Honorários,Forma Pagamento,Parcelas\n';
+      let csv = 'Nome,CPF,Telefone,Email,Nome Ação,Categoria,Número,Status,Data Abertura,Valor,Honorários,Forma Pagamento,Parcelas,Parcelas Pagas\n';
       
       processos.forEach(p => {
-        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.nomeAcao || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}","${p.formaPagamento || ''}","${p.parcelas || ''}"\n`;
+        csv += `"${p.nome}","${p.cpf || ''}","${p.telefone || ''}","${p.email || ''}","${p.nomeAcao || ''}","${p.categoria || ''}","${p.numero || ''}","${p.status}","${p.dataAbertura || ''}","${p.valor || ''}","${p.honorarios || ''}","${p.formaPagamento || ''}","${p.parcelas || ''}","${p.parcelasPagas || ''}"\n`;
       });
       
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -3315,6 +3553,7 @@
       localStorage.removeItem(FINANCEIRO_KEY);
       localStorage.removeItem(IMAGENS_KEY);
       localStorage.removeItem(CLIENTES_KEY);
+      localStorage.removeItem(PARCELAS_KEY);
       
       alert('Todos os dados foram removidos com sucesso.');
       renderizarTabela();
@@ -3558,7 +3797,8 @@
     function renderizarPerfilCliente(cliente) {
       const container = document.getElementById('perfilConteudo');
       const processos = carregarProcessos().filter(p => p.clienteId === cliente.id);
-      const imagens = carregarImagens();
+      const imagens = carregarImagens().filter(i => i.clienteId === cliente.id);
+      const parcelas = carregarParcelas();
       
       // Carregar dados financeiros e anotações específicas para este cliente
       const dadosFinanceiros = carregarDadosFinanceiros().filter(df => 
@@ -3580,6 +3820,16 @@
       const totalAtrasado = dadosFinanceiros
         .filter(df => df.status === 'atrasado')
         .reduce((total, df) => total + (parseFloat(df.valor) || 0), 0);
+      
+      // Calcular parcelas pagas totais
+      let totalParcelasPagas = 0;
+      let totalParcelas = 0;
+      
+      processos.forEach(processo => {
+        const parcelasProcesso = parcelas.filter(p => p.processoId === processo.id);
+        totalParcelasPagas += parcelasProcesso.filter(p => p.status === 'paga').length;
+        totalParcelas += processo.parcelas || parcelasProcesso.length;
+      });
       
       let html = `
         <div class="perfil-header">
@@ -3610,8 +3860,8 @@
             <div class="perfil-stat-value">R$ ${processos.reduce((total, p) => total + (parseFloat(p.honorarios) || 0), 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
           </div>
           <div class="perfil-stat">
-            <div class="perfil-stat-label">Valor Total das Causas</div>
-            <div class="perfil-stat-value">R$ ${processos.reduce((total, p) => total + (parseFloat(p.valor) || 0), 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            <div class="perfil-stat-label">Parcelas Pagas</div>
+            <div class="perfil-stat-value">${totalParcelasPagas}/${totalParcelas}</div>
           </div>
         </div>
         
@@ -3652,6 +3902,30 @@
           </div>
         </div>
         
+        <!-- SEÇÃO: ARQUIVOS E IMAGENS DO CLIENTE -->
+        <div class="imagens-container">
+          <h3 class="info-section-title">
+            <span class="material-icons">photo_library</span>
+            Arquivos e Imagens do Cliente
+          </h3>
+          
+          ${imagens.length > 0 ? `
+            <div class="imagens-lista">
+              ${imagens.map(img => `
+                <div class="imagem-item">
+                  <img src="${img.url}" alt="${img.nome}">
+                  <div class="imagem-info">
+                    <div class="imagem-nome">${img.nome}</div>
+                    <div class="imagem-meta">${img.tamanho} • ${new Date(img.dataUpload).toLocaleDateString('pt-BR')}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="no-data">Nenhuma imagem ou arquivo encontrado para este cliente.</div>
+          `}
+        </div>
+        
         <!-- SEÇÃO: PROCESSOS DO CLIENTE -->
         <div class="processos-cliente-container">
           <h3 class="info-section-title">
@@ -3662,6 +3936,10 @@
           ${processos.length > 0 ? 
             processos.map(p => {
               const imagensProcesso = imagens.filter(i => i.processoId === p.id);
+              const parcelasProcesso = parcelas.filter(parc => parc.processoId === p.id);
+              const parcelasPagas = parcelasProcesso.filter(parc => parc.status === 'paga').length;
+              const totalParcelas = p.parcelas || parcelasProcesso.length;
+              
               return `
                 <div class="processo-cliente-item">
                   <div class="processo-cliente-header">
@@ -3675,7 +3953,8 @@
                   </div>
                   <div class="processo-cliente-detalhes">
                     <strong>Valor da Causa:</strong> R$ ${(parseFloat(p.valor) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} | 
-                    <strong>Honorários:</strong> R$ ${(parseFloat(p.honorarios) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                    <strong>Honorários:</strong> R$ ${(parseFloat(p.honorarios) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} |
+                    <strong>Parcelas:</strong> ${parcelasPagas}/${totalParcelas} pagas
                   </div>
                   
                   ${p.historicoStatus && p.historicoStatus.length > 0 ? `
@@ -3713,8 +3992,8 @@
                     <button class="btn ghost" onclick="verDetalhes('${p.id}')">
                       <span class="material-icons">visibility</span> Ver Detalhes
                     </button>
-                    <button class="btn primary" onclick="editarProcesso('${p.id}')">
-                      <span class="material-icons">edit</span> Editar
+                    <button class="btn primary" onclick="gerenciarParcelas('${p.id}')">
+                      <span class="material-icons">payments</span> Parcelas
                     </button>
                   </div>
                 </div>
@@ -3949,6 +4228,7 @@
           honorariosMinimos: 4600,
           formaPagamento: 'Parcelado',
           parcelas: '10',
+          parcelasPagas: '3',
           observacoes: 'Processo sobre cobrança indevida.',
           historicoStatus: [{
             status: 'Em Andamento',
@@ -3959,6 +4239,27 @@
         
         processos.push(processoExemplo);
         salvarProcessos(processos);
+        
+        // Criar parcelas de exemplo
+        const parcelas = carregarParcelas();
+        const valorParcela = 5000 / 10; // 5000 / 10 parcelas
+        
+        for (let i = 1; i <= 10; i++) {
+          const dataVencimento = new Date();
+          dataVencimento.setMonth(dataVencimento.getMonth() + i);
+          
+          parcelas.push({
+            id: 'exemplo-parcela-' + i,
+            processoId: 'exemplo-1',
+            numero: i,
+            valor: valorParcela,
+            dataVencimento: dataVencimento.toISOString(),
+            status: i <= 3 ? 'paga' : 'pendente',
+            dataPagamento: i <= 3 ? new Date().toISOString() : null
+          });
+        }
+        
+        salvarParcelas(parcelas);
         
         const anotacoes = carregarAnotacoes();
         anotacoes.push({
@@ -3991,6 +4292,24 @@
           status: 'pendente'
         });
         salvarDadosFinanceiros(dadosFinanceiros);
+        
+        // Adicionar imagem de exemplo
+        const imagens = carregarImagens();
+        // Criar uma imagem de exemplo em base64 (imagem placeholder)
+        const imagemPlaceholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y0ZjZmYiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiMzMzY2ZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZW0gZG8gUHJvY2Vzc288L3RleHQ+PC9zdmc+';
+        
+        imagens.push({
+          id: 'exemplo-imagem-1',
+          processoId: 'exemplo-1',
+          clienteId: clienteId,
+          nome: 'documento-exemplo.jpg',
+          url: imagemPlaceholder,
+          tamanho: '2.5 KB',
+          dataUpload: new Date().toISOString(),
+          ordem: 1
+        });
+        
+        salvarImagens(imagens);
         
         renderizarTabela();
         atualizarDashboard();
