@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Todos os estilos anteriores permanecem iguais */
         :root {
             --bg: #f4f6fb;
             --sidebar: #0f1724;
@@ -1354,7 +1353,7 @@
     </div>
 
     <script>
-        // Sistema de Armazenamento - Adicionando chave para processos externos
+        // Sistema de Armazenamento
         const STORAGE_KEYS = {
             CLIENTES: 'sistema_juridico_clientes',
             PROCESSOS: 'sistema_juridico_processos',
@@ -1362,7 +1361,8 @@
             PARCELAS: 'sistema_juridico_parcelas',
             IMAGENS: 'sistema_juridico_imagens',
             ANOTACOES: 'sistema_juridico_anotacoes',
-            CONTRATOS: 'sistema_juridico_contratos'
+            CONTRATOS: 'sistema_juridico_contratos',
+            RECIBOS: 'sistema_juridico_recibos'
         };
 
         // Funções de Armazenamento
@@ -1429,6 +1429,15 @@
             return data ? JSON.parse(data) : [];
         }
 
+        function salvarRecibos(recibos) {
+            localStorage.setItem(STORAGE_KEYS.RECIBOS, JSON.stringify(recibos));
+        }
+
+        function carregarRecibos() {
+            const data = localStorage.getItem(STORAGE_KEYS.RECIBOS);
+            return data ? JSON.parse(data) : [];
+        }
+
         // Função para agrupar clientes por nome e CPF
         function agruparClientesPorNomeCPF(clientes) {
             const grupos = {};
@@ -1452,7 +1461,7 @@
             return grupos;
         }
 
-        // Sistema de Navegação - CORRIGIDO
+        // Sistema de Navegação
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 // Remover classe active de todos os botões
@@ -1486,7 +1495,7 @@
             });
         });
 
-        // Função para atualizar o select de clientes na aba Perfil - MODIFICADA para agrupar
+        // Função para atualizar o select de clientes na aba Perfil
         function atualizarSelectClientesPerfil() {
             const clientes = carregarClientes();
             const grupos = agruparClientesPorNomeCPF(clientes);
@@ -1503,7 +1512,7 @@
             });
         }
 
-        // Evento para selecionar cliente na aba Perfil - MODIFICADO para agrupar
+        // Evento para selecionar cliente na aba Perfil
         document.getElementById('select-cliente-perfil').addEventListener('change', function() {
             const chave = this.value;
             const container = document.getElementById('perfil-conteudo');
@@ -1586,7 +1595,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <h3>Processos do Grupo (${grupo.processos.length + grupo.processosExternos.length})</h3>
                         <div class="actions">
-                            <button class="btn btn-primary" onclick="abrirModalProcessoExternoGrupo('${chave}')">
+                            <button class="btn btn-primary" onclick="abrirModalProcessoExterno('${chave}')">
                                 <span class="material-icons">add</span>
                                 Adicionar Processo Externo
                             </button>
@@ -1669,9 +1678,16 @@
                     </div>
                 </div>
             `;
+            
+            // Adicionar eventos para edição do grupo
+            document.getElementById('btn-editar-grupo').addEventListener('click', function() {
+                document.getElementById('dados-cliente-view').style.display = 'none';
+                // Aqui poderia ser implementada a edição do grupo
+                alert('Funcionalidade de edição do grupo em desenvolvimento');
+            });
         });
 
-        // Função para atualizar o select de clientes na aba Cadastro - MODIFICADA para mostrar dados do perfil
+        // Função para atualizar o select de clientes na aba Cadastro
         function atualizarSelectClientes() {
             const clientes = carregarClientes();
             const select = document.getElementById('selecionar-cliente');
@@ -1685,7 +1701,7 @@
             });
         }
 
-        // Evento para selecionar cliente na aba Cadastro - MODIFICADO para mostrar dados do perfil
+        // Evento para selecionar cliente na aba Cadastro
         document.getElementById('selecionar-cliente').addEventListener('change', function() {
             const clienteId = this.value;
             const container = document.getElementById('info-cliente-selecionado');
@@ -1776,13 +1792,386 @@
             container.style.display = 'block';
         });
 
-        // Funções auxiliares para o agrupamento
-        window.abrirModalProcessoExternoGrupo = function(chave) {
-            // Implementação similar à função anterior, mas para grupo
-            document.getElementById('modal-processo-externo').classList.add('active');
-            document.getElementById('modal-processo-externo').dataset.grupoChave = chave;
+        // Função para gerar parcelas automaticamente
+        function gerarParcelas(processoId, valorTotal, quantidadeParcelas, formaPagamento) {
+            const parcelas = carregarParcelas();
+            const processo = carregarProcessos().find(p => p.id === processoId);
+            
+            if (!processo) return [];
+
+            // Remove parcelas existentes para este processo
+            const novasParcelas = parcelas.filter(p => p.processoId !== processoId);
+            
+            const valorParcela = valorTotal / quantidadeParcelas;
+            const dataAtual = new Date();
+            
+            for (let i = 0; i < quantidadeParcelas; i++) {
+                const dataVencimento = new Date(dataAtual);
+                dataVencimento.setMonth(dataVencimento.getMonth() + i + 1); // +1 para começar do próximo mês
+                
+                novasParcelas.push({
+                    id: `parcela-${processoId}-${i}-${Date.now()}`,
+                    processoId: processoId,
+                    numero: i + 1,
+                    valor: parseFloat(valorParcela.toFixed(2)),
+                    dataVencimento: dataVencimento.toISOString(),
+                    dataPagamento: null,
+                    status: 'Pendente',
+                    formaPagamento: formaPagamento
+                });
+            }
+            
+            salvarParcelas(novasParcelas);
+            return novasParcelas.filter(p => p.processoId === processoId);
+        }
+
+        // Função para atualizar select de processos na aba Parcelas
+        function atualizarSelectProcessosParcelas() {
+            const processos = carregarProcessos();
+            const select = document.getElementById('select-processo-parcelas');
+            
+            select.innerHTML = '<option value="">Selecione um processo...</option>';
+            processos.forEach(processo => {
+                const cliente = carregarClientes().find(c => c.id === processo.clienteId);
+                const option = document.createElement('option');
+                option.value = processo.id;
+                option.textContent = `${processo.numero || 'Sem número'} - ${cliente ? cliente.nome : 'Cliente não encontrado'}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Evento para selecionar processo na aba Parcelas
+        document.getElementById('select-processo-parcelas').addEventListener('change', function() {
+            const processoId = this.value;
+            const container = document.getElementById('parcelas-container');
+            
+            if (!processoId) {
+                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Selecione um processo para visualizar as parcelas.</p>';
+                return;
+            }
+            
+            const processo = carregarProcessos().find(p => p.id === processoId);
+            const cliente = carregarClientes().find(c => c.id === processo.clienteId);
+            const parcelas = carregarParcelas().filter(p => p.processoId === processoId);
+            
+            // Se não há parcelas e o processo é parcelado, gerar automaticamente
+            if (parcelas.length === 0 && processo.formaPagamento === 'Parcelado' && processo.parcelas) {
+                gerarParcelas(processoId, processo.honorarios, processo.parcelas, processo.formaPagamento);
+                // Recarregar parcelas
+                const parcelasAtualizadas = carregarParcelas().filter(p => p.processoId === processoId);
+                exibirParcelas(processo, cliente, parcelasAtualizadas, container);
+            } else {
+                exibirParcelas(processo, cliente, parcelas, container);
+            }
+        });
+
+        // Função para exibir parcelas
+        function exibirParcelas(processo, cliente, parcelas, container) {
+            let html = `
+                <div class="info-grid" style="margin-bottom: 20px;">
+                    <div class="info-item">
+                        <div class="info-label">Processo</div>
+                        <div class="info-value">${processo.numero || 'Número não informado'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Cliente</div>
+                        <div class="info-value">${cliente.nome}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Valor Total</div>
+                        <div class="info-value">R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Forma de Pagamento</div>
+                        <div class="info-value">${processo.formaPagamento || 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+            
+            if (parcelas.length === 0) {
+                html += `
+                    <div style="text-align: center; padding: 40px; color: var(--muted);">
+                        <p>Nenhuma parcela encontrada para este processo.</p>
+                        ${processo.formaPagamento === 'Parcelado' ? `
+                            <button class="btn btn-primary" onclick="gerarParcelasParaProcesso('${processo.id}')">
+                                <span class="material-icons">add</span>
+                                Gerar Parcelas
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                const parcelasPagas = parcelas.filter(p => p.status === 'Paga').length;
+                const totalPendente = parcelas
+                    .filter(p => p.status === 'Pendente')
+                    .reduce((total, p) => total + p.valor, 0);
+                
+                html += `
+                    <div class="perfil-stats">
+                        <div class="stat-card">
+                            <div class="stat-label">Total de Parcelas</div>
+                            <div class="stat-value">${parcelas.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Parcelas Pagas</div>
+                            <div class="stat-value">${parcelasPagas}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Parcelas Pendentes</div>
+                            <div class="stat-value">${parcelas.length - parcelasPagas}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Pendente</div>
+                            <div class="stat-value">R$ ${totalPendente.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                        </div>
+                    </div>
+                    
+                    <h3>Parcelas</h3>
+                    <div class="parcelas-grid">
+                `;
+                
+                // Ordenar parcelas por número
+                parcelas.sort((a, b) => a.numero - b.numero);
+                
+                parcelas.forEach(parcela => {
+                    const vencimento = new Date(parcela.dataVencimento).toLocaleDateString('pt-BR');
+                    const statusClass = parcela.status === 'Paga' ? 'paga' : 'pendente';
+                    const statusText = parcela.status === 'Paga' ? 'Paga' : 'Pendente';
+                    
+                    html += `
+                        <div class="parcela-item ${statusClass}">
+                            <div style="font-weight: bold; margin-bottom: 8px;">Parcela ${parcela.numero}</div>
+                            <div style="font-size: 18px; font-weight: bold; color: var(--primary); margin-bottom: 8px;">
+                                R$ ${parcela.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                            </div>
+                            <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+                                Vencimento: ${vencimento}
+                            </div>
+                            <div style="display: flex; gap: 8px; flex-direction: column;">
+                                <button class="parcela-btn ${statusClass}" onclick="alternarStatusParcela('${parcela.id}')">
+                                    ${parcela.status === 'Paga' ? 'Marcar como Pendente' : 'Marcar como Paga'}
+                                </button>
+                                <button class="btn btn-ghost btn-sm" onclick="gerarReciboParcela('${parcela.id}')">
+                                    <span class="material-icons" style="font-size: 14px;">receipt</span>
+                                    Gerar Recibo
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Função para gerar parcelas para um processo
+        window.gerarParcelasParaProcesso = function(processoId) {
+            const processo = carregarProcessos().find(p => p.id === processoId);
+            if (!processo || processo.formaPagamento !== 'Parcelado' || !processo.parcelas) {
+                alert('Não é possível gerar parcelas para este processo.');
+                return;
+            }
+            
+            gerarParcelas(processoId, processo.honorarios, processo.parcelas, processo.formaPagamento);
+            
+            // Atualizar a visualização
+            document.getElementById('select-processo-parcelas').dispatchEvent(new Event('change'));
+            
+            mostrarAlerta('alert-cadastro', 'Parcelas geradas com sucesso!', 'success');
         };
 
+        // Função para alternar status da parcela
+        window.alternarStatusParcela = function(parcelaId) {
+            const parcelas = carregarParcelas();
+            const parcelaIndex = parcelas.findIndex(p => p.id === parcelaId);
+            
+            if (parcelaIndex === -1) return;
+            
+            // Alternar status
+            parcelas[parcelaIndex].status = parcelas[parcelaIndex].status === 'Paga' ? 'Pendente' : 'Paga';
+            
+            // Se marcando como paga, definir data de pagamento
+            if (parcelas[parcelaIndex].status === 'Paga') {
+                parcelas[parcelaIndex].dataPagamento = new Date().toISOString();
+            } else {
+                parcelas[parcelaIndex].dataPagamento = null;
+            }
+            
+            salvarParcelas(parcelas);
+            
+            // Atualizar a visualização
+            document.getElementById('select-processo-parcelas').dispatchEvent(new Event('change'));
+            
+            mostrarAlerta('alert-cadastro', `Parcela ${parcelas[parcelaIndex].numero} marcada como ${parcelas[parcelaIndex].status.toLowerCase()}!`, 'success');
+        };
+
+        // Função para gerar recibo de parcela
+        window.gerarReciboParcela = function(parcelaId) {
+            const parcelas = carregarParcelas();
+            const parcela = parcelas.find(p => p.id === parcelaId);
+            
+            if (!parcela) return;
+            
+            const processo = carregarProcessos().find(p => p.id === parcela.processoId);
+            const cliente = carregarClientes().find(c => c.id === processo.clienteId);
+            const recibos = carregarRecibos();
+            
+            const reciboId = `recibo-parcela-${Date.now()}`;
+            const novoRecibo = {
+                id: reciboId,
+                processoId: parcela.processoId,
+                parcelaId: parcelaId,
+                parcelaNumero: parcela.numero,
+                dataCriacao: new Date().toISOString(),
+                valor: parcela.valor,
+                tipo: 'Parcela',
+                conteudo: gerarConteudoReciboParcela(processo, cliente, parcela)
+            };
+            
+            recibos.push(novoRecibo);
+            salvarRecibos(recibos);
+            
+            // Abrir modal para visualizar o recibo
+            visualizarRecibo(reciboId);
+            
+            mostrarAlerta('alert-cadastro', `Recibo da parcela ${parcela.numero} gerado com sucesso!`, 'success');
+        };
+
+        // Função para gerar conteúdo do recibo de parcela
+        function gerarConteudoReciboParcela(processo, cliente, parcela) {
+            const vencimento = new Date(parcela.dataVencimento).toLocaleDateString('pt-BR');
+            const pagamento = parcela.dataPagamento ? 
+                new Date(parcela.dataPagamento).toLocaleDateString('pt-BR') : 
+                new Date().toLocaleDateString('pt-BR');
+            
+            return `
+                <div class="recibo-container">
+                    <div class="recibo-header">
+                        <div class="recibo-title">RECIBO DE PAGAMENTO - PARCELA</div>
+                        <div class="recibo-subtitle">Comprovante de Pagamento de Honorários Advocatícios</div>
+                    </div>
+                    
+                    <div class="recibo-detalhes">
+                        <p><strong>Emitente:</strong> Dra. Advogada - OAB/SP 123.456</p>
+                        <p><strong>Cliente:</strong> ${cliente.nome}</p>
+                        <p><strong>CPF:</strong> ${cliente.cpf || 'Não informado'}</p>
+                        <p><strong>Processo:</strong> ${processo.numero || 'Número não informado'}</p>
+                        <p><strong>Descrição:</strong> Parcela ${parcela.numero} de ${processo.parcelas}</p>
+                        <p><strong>Data de Vencimento:</strong> ${vencimento}</p>
+                        <p><strong>Status:</strong> ${parcela.status}</p>
+                    </div>
+                    
+                    <div class="recibo-valor">
+                        R$ ${parcela.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                    </div>
+                    
+                    <div class="recibo-detalhes">
+                        <p><strong>Data do Pagamento:</strong> ${pagamento}</p>
+                        <p><strong>Forma de Pagamento:</strong> ${processo.formaPagamento || 'Não informada'}</p>
+                    </div>
+                    
+                    <div class="contrato-signatures">
+                        <div class="signature-line">
+                            <p>___________________________________</p>
+                            <p>Dra. Advogada - OAB/SP 123.456</p>
+                        </div>
+                        <div class="signature-line">
+                            <p>___________________________________</p>
+                            <p>${cliente.nome}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
+                        <p>Recibo gerado automaticamente pelo Sistema Jurídico</p>
+                        <p>Data de emissão: ${new Date().toLocaleString('pt-BR')}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Função para mostrar alerta
+        function mostrarAlerta(containerId, mensagem, tipo) {
+            const container = document.getElementById(containerId);
+            const alertClass = tipo === 'success' ? 'alert-success' : 'alert-error';
+            
+            container.innerHTML = `
+                <div class="alert ${alertClass}">
+                    <span class="material-icons">${tipo === 'success' ? 'check_circle' : 'error'}</span>
+                    ${mensagem}
+                </div>
+            `;
+            
+            // Remover alerta após 5 segundos
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Função para fechar modal
+        window.fecharModal = function(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        };
+
+        // Função para abrir modal de processo externo
+        window.abrirModalProcessoExterno = function(chave) {
+            document.getElementById('modal-processo-externo').classList.add('active');
+            document.getElementById('modal-processo-externo').dataset.grupoChave = chave;
+            
+            // Limpar campos do formulário
+            document.getElementById('processo-externo-numero').value = '';
+            document.getElementById('processo-externo-categoria').value = '';
+            document.getElementById('processo-externo-vara').value = '';
+            document.getElementById('processo-externo-observacoes').value = '';
+        };
+
+        // Evento para salvar processo externo
+        document.getElementById('btn-salvar-processo-externo').addEventListener('click', function() {
+            const grupoChave = document.getElementById('modal-processo-externo').dataset.grupoChave;
+            const numero = document.getElementById('processo-externo-numero').value.trim();
+            const categoria = document.getElementById('processo-externo-categoria').value;
+            const vara = document.getElementById('processo-externo-vara').value.trim();
+            const observacoes = document.getElementById('processo-externo-observacoes').value.trim();
+            
+            if (!numero) {
+                alert('Por favor, informe o número do processo.');
+                return;
+            }
+            
+            const clientes = carregarClientes();
+            const grupos = agruparClientesPorNomeCPF(clientes);
+            const grupo = grupos[grupoChave];
+            
+            if (!grupo || grupo.clientes.length === 0) {
+                alert('Grupo de cliente não encontrado.');
+                return;
+            }
+            
+            // Usar o primeiro cliente do grupo
+            const cliente = grupo.clientes[0];
+            
+            const processosExternos = carregarProcessosExternos();
+            processosExternos.push({
+                id: Date.now().toString(),
+                clienteId: cliente.id,
+                numero: numero,
+                categoria: categoria,
+                vara: vara,
+                observacoes: observacoes,
+                dataCadastro: new Date().toISOString()
+            });
+            
+            salvarProcessosExternos(processosExternos);
+            fecharModal('modal-processo-externo');
+            
+            // Atualizar a visualização do perfil do cliente
+            document.getElementById('select-cliente-perfil').dispatchEvent(new Event('change'));
+            
+            mostrarAlerta('alert-cadastro', 'Processo externo adicionado com sucesso!', 'success');
+        });
+
+        // Função para ir para a aba de cadastro com cliente do grupo
         window.irParaCadastroComClienteGrupo = function(chave) {
             const clientes = carregarClientes();
             const grupos = agruparClientesPorNomeCPF(clientes);
@@ -1795,11 +2184,42 @@
             }
         };
 
-        // As demais funções permanecem similares, mas adaptadas para o agrupamento
-        // ...
+        // Função para ir para a aba de cadastro com cliente pré-selecionado
+        window.irParaCadastroComCliente = function(clienteId) {
+            // Mudar para a aba de cadastro
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-tab="cadastro"]').classList.add('active');
+            
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('cadastro').classList.add('active');
+            
+            document.getElementById('page-title').textContent = 'Cadastro';
+            
+            // Selecionar o cliente no select
+            const select = document.getElementById('selecionar-cliente');
+            select.value = clienteId;
+            select.dispatchEvent(new Event('change'));
+        };
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
+            // Fechar modais ao clicar no X
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.modal').classList.remove('active');
+                });
+            });
+            
+            // Fechar modais ao clicar fora do conteúdo
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Inicialização do sistema
             atualizarDashboard();
             atualizarSelectClientes();
             atualizarSelectClientesPerfil();
@@ -1838,35 +2258,24 @@
                     formaPagamento: 'Parcelado',
                     parcelas: 10,
                     observacoes: 'Processo sobre indenização por danos morais.',
-                    dataCadastro: new Date().toISOString(),
-                    parcelasPagas: 3
+                    dataCadastro: new Date().toISOString()
                 };
                 
                 processos.push(processoExemplo);
                 salvarProcessos(processos);
                 
-                // Criar processo externo de exemplo
-                const processosExternos = carregarProcessosExternos();
-                const processoExternoExemplo = {
-                    id: 'exemplo-externo-1',
-                    clienteId: 'exemplo-cliente-1',
-                    numero: '2023.001.123456-7',
-                    categoria: 'Trabalhista',
-                    vara: '2ª Vara do Trabalho de São Paulo',
-                    observacoes: 'Processo trabalhista por rescisão indireta. Cliente foi representado por outro advogado anteriormente.',
-                    dataCadastro: new Date().toISOString()
-                };
-                
-                processosExternos.push(processoExternoExemplo);
-                salvarProcessosExternos(processosExternos);
+                // Gerar parcelas de exemplo
+                gerarParcelas('exemplo-1', 5000, 10, 'Parcelado');
                 
                 atualizarDashboard();
                 atualizarSelectClientes();
                 atualizarSelectClientesPerfil();
+                atualizarSelectProcessosParcelas();
+                atualizarSelectProcessosContratos();
             }
         });
 
-        // As demais funções do sistema (calculadora, formulários, etc.) permanecem
+        // As demais funções do sistema (dashboard, cadastro, etc.) permanecem
         // ...
 
     </script>
