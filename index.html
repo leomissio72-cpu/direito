@@ -453,12 +453,6 @@
             color: var(--muted);
         }
 
-        .imagem-acoes {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-        }
-
         /* Anotações */
         .anotacoes-lista {
             margin-top: 20px;
@@ -2091,6 +2085,411 @@
             `;
         }
 
+        // FUNCIONALIDADES DE CONTRATOS - CÓDIGO COMPLETO
+
+        // Função para atualizar select de processos na aba Contratos
+        function atualizarSelectProcessosContratos() {
+            const processos = carregarProcessos();
+            const select = document.getElementById('select-processo-contrato');
+            
+            select.innerHTML = '<option value="">Selecione um processo...</option>';
+            processos.forEach(processo => {
+                const cliente = carregarClientes().find(c => c.id === processo.clienteId);
+                const option = document.createElement('option');
+                option.value = processo.id;
+                option.textContent = `${processo.numero || 'Sem número'} - ${cliente ? cliente.nome : 'Cliente não encontrado'}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Evento para selecionar processo na aba Contratos
+        document.getElementById('select-processo-contrato').addEventListener('change', function() {
+            const processoId = this.value;
+            const container = document.getElementById('contratos-container');
+            
+            if (!processoId) {
+                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Selecione um processo para gerar contratos e recibos.</p>';
+                return;
+            }
+            
+            const processo = carregarProcessos().find(p => p.id === processoId);
+            const cliente = carregarClientes().find(c => c.id === processo.clienteId);
+            
+            container.innerHTML = `
+                <div class="info-grid" style="margin-bottom: 30px;">
+                    <div class="info-item">
+                        <div class="info-label">Processo</div>
+                        <div class="info-value">${processo.numero || 'Número não informado'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Cliente</div>
+                        <div class="info-value">${cliente.nome}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Valor dos Honorários</div>
+                        <div class="info-value">R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Forma de Pagamento</div>
+                        <div class="info-value">${processo.formaPagamento || 'Não informado'}</div>
+                    </div>
+                </div>
+
+                <h3>Gerar Documentos</h3>
+                <div class="grid" style="margin-bottom: 30px;">
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="gerarContrato('${processoId}')" style="width: 100%;">
+                            <span class="material-icons">description</span>
+                            Gerar Contrato de Honorários
+                        </button>
+                        <p style="font-size: 12px; color: var(--muted); margin-top: 8px;">
+                            Contrato completo de prestação de serviços advocatícios
+                        </p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-success" onclick="gerarReciboCompleto('${processoId}')" style="width: 100%;">
+                            <span class="material-icons">receipt</span>
+                            Gerar Recibo Completo
+                        </button>
+                        <p style="font-size: 12px; color: var(--muted); margin-top: 8px;">
+                            Recibo único para pagamento total dos honorários
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="contrato-observacoes">Observações/Cláusulas Adicionais</label>
+                    <textarea id="contrato-observacoes" rows="4" placeholder="Adicione cláusulas específicas ou observações para o contrato..."></textarea>
+                </div>
+
+                ${processo.formaPagamento === 'Parcelado' ? `
+                    <div class="container" style="background: #f8fafc; margin-top: 20px;">
+                        <h4>Recibos de Parcelas</h4>
+                        <p style="color: var(--muted); margin-bottom: 16px;">Gerar recibos individuais para cada parcela:</p>
+                        <div id="lista-parcelas-contratos">
+                            <!-- Lista de parcelas será preenchida aqui -->
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            // Se for parcelado, carregar a lista de parcelas
+            if (processo.formaPagamento === 'Parcelado') {
+                carregarParcelasParaContratos(processoId);
+            }
+        });
+
+        // Função para carregar parcelas na aba de contratos
+        function carregarParcelasParaContratos(processoId) {
+            const parcelas = carregarParcelas().filter(p => p.processoId === processoId);
+            const container = document.getElementById('lista-parcelas-contratos');
+            
+            if (parcelas.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 20px;">Nenhuma parcela encontrada.</p>';
+                return;
+            }
+            
+            // Ordenar parcelas por número
+            parcelas.sort((a, b) => a.numero - b.numero);
+            
+            let html = '<div class="parcelas-grid">';
+            parcelas.forEach(parcela => {
+                const vencimento = new Date(parcela.dataVencimento).toLocaleDateString('pt-BR');
+                const statusClass = parcela.status === 'Paga' ? 'paga' : 'pendente';
+                
+                html += `
+                    <div class="parcela-item ${statusClass}">
+                        <div style="font-weight: bold; margin-bottom: 8px;">Parcela ${parcela.numero}</div>
+                        <div style="font-size: 16px; font-weight: bold; color: var(--primary); margin-bottom: 8px;">
+                            R$ ${parcela.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                        </div>
+                        <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+                            Vencimento: ${vencimento}<br>
+                            Status: ${parcela.status}
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="gerarReciboParcela('${parcela.id}')" style="width: 100%;">
+                            <span class="material-icons" style="font-size: 14px;">receipt</span>
+                            Gerar Recibo
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+        }
+
+        // Função para gerar contrato
+        window.gerarContrato = function(processoId) {
+            const processo = carregarProcessos().find(p => p.id === processoId);
+            const cliente = carregarClientes().find(c => c.id === processo.clienteId);
+            const observacoes = document.getElementById('contrato-observacoes').value;
+            
+            // Salvar contrato
+            const contratos = carregarContratos();
+            const contratoId = `contrato-${Date.now()}`;
+            
+            const novoContrato = {
+                id: contratoId,
+                processoId: processoId,
+                dataCriacao: new Date().toISOString(),
+                tipo: 'Honorários',
+                conteudo: gerarConteudoContrato(processo, cliente, observacoes)
+            };
+            
+            contratos.push(novoContrato);
+            salvarContratos(contratos);
+            
+            // Abrir modal para visualizar o contrato
+            visualizarContrato(contratoId);
+            
+            mostrarAlerta('alert-cadastro', 'Contrato gerado com sucesso!', 'success');
+        };
+
+        // Função para gerar conteúdo do contrato
+        function gerarConteudoContrato(processo, cliente, observacoes) {
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            const valorHonorarios = (processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            
+            // Função auxiliar para converter número para extenso
+            function numeroParaExtenso(valor) {
+                // Implementação simplificada - em produção, use uma biblioteca adequada
+                const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+                const dezenas = ['', 'dez', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+                const centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+                
+                if (valor === 0) return 'zero';
+                if (valor >= 1000) return 'valor extenso não implementado para valores acima de 999';
+                
+                let extenso = '';
+                const centena = Math.floor(valor / 100);
+                const dezena = Math.floor((valor % 100) / 10);
+                const unidade = valor % 10;
+                
+                if (centena > 0) {
+                    extenso += centenas[centena];
+                    if (dezena > 0 || unidade > 0) extenso += ' e ';
+                }
+                
+                if (dezena > 0) {
+                    if (dezena === 1 && unidade > 0) {
+                        const especiais = ['', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+                        extenso += especiais[unidade];
+                        return extenso;
+                    } else {
+                        extenso += dezenas[dezena];
+                        if (unidade > 0) extenso += ' e ';
+                    }
+                }
+                
+                if (unidade > 0) {
+                    extenso += unidades[unidade];
+                }
+                
+                return extenso;
+            }
+            
+            let clausulasPagamento = '';
+            if (processo.formaPagamento === 'À Vista') {
+                clausulasPagamento = `
+                    <p><strong>CLÁUSULA 3ª - DO PAGAMENTO</strong></p>
+                    <p>Os honorários advocatícios ficam fixados em R$ ${valorHonorarios} (${numeroParaExtenso(Math.floor(processo.honorarios))} reais), a serem pagos à vista, no ato da assinatura do presente contrato.</p>
+                `;
+            } else if (processo.formaPagamento === 'Parcelado' && processo.parcelas) {
+                const valorParcela = (processo.honorarios / processo.parcelas).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                clausulasPagamento = `
+                    <p><strong>CLÁUSULA 3ª - DO PAGAMENTO</strong></p>
+                    <p>Os honorários advocatícios ficam fixados em R$ ${valorHonorarios} (${numeroParaExtenso(Math.floor(processo.honorarios))} reais), a serem pagos em ${processo.parcelas} parcelas mensais e consecutivas de R$ ${valorParcela} (${numeroParaExtenso(Math.floor(processo.honorarios / processo.parcelas))} reais), vencendo a primeira parcela no ato da assinatura deste contrato e as demais nos dias subsequentes.</p>
+                `;
+            } else if (processo.formaPagamento === 'Sucumbência') {
+                clausulasPagamento = `
+                    <p><strong>CLÁUSULA 3ª - DO PAGAMENTO</strong></p>
+                    <p>Os honorários advocatícios serão pagos por sucumbência, conforme previsto no art. 85 do CPC, correspondendo a 20% do valor da causa ou do proveito econômico obtido.</p>
+                `;
+            }
+            
+            return `
+                <div class="contrato-container">
+                    <div class="contrato-header">
+                        <div class="contrato-title">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS</div>
+                        <div class="contrato-subtitle">Instrumento Particular de Prestação de Serviços Profissionais</div>
+                    </div>
+                    
+                    <div class="contrato-section">
+                        <p>Pelo presente instrumento particular, de um lado:</p>
+                        <p><strong>CONTRATADA:</strong> Dra. Advogada, brasileira, advogada, inscrita na OAB/SP sob o nº 123.456, com escritório profissional situado na Rua das Flores, 123, Centro, São Paulo/SP, CEP 01234-567;</p>
+                        <p>E de outro lado:</p>
+                        <p><strong>CONTRATANTE:</strong> ${cliente.nome}, ${cliente.profissao || 'profissão não informada'}, portador(a) do CPF nº ${cliente.cpf || 'não informado'}, residente e domiciliado(a) na ${cliente.endereco || 'endereço não informado'}.</p>
+                    </div>
+                    
+                    <div class="contrato-section">
+                        <p><strong>CLÁUSULA 1ª - DO OBJETO</strong></p>
+                        <p>O presente contrato tem por objeto a prestação de serviços advocatícios pela CONTRATADA à CONTRATANTE, em relação ao processo nº ${processo.numero || 'não informado'}, na vara ${processo.vara || 'não informada'}, da comarca de ${processo.vara ? processo.vara.split('de ')[1] || 'não informada' : 'não informada'}.</p>
+                    </div>
+                    
+                    <div class="contrato-section">
+                        <p><strong>CLÁUSULA 2ª - DOS SERVIÇOS PRESTADOS</strong></p>
+                        <p>Ficam compreendidos nos serviços a serem prestados pela CONTRATADA todas as atividades necessárias ao regular andamento do processo, incluindo, mas não se limitando a: elaboração de peças processuais, acompanhamento de audiências, sustentação oral, recursos e demais atos necessários à defesa dos interesses da CONTRATANTE.</p>
+                    </div>
+                    
+                    ${clausulasPagamento}
+                    
+                    <div class="contrato-section">
+                        <p><strong>CLÁUSULA 4ª - DAS OBRIGAÇÕES DAS PARTES</strong></p>
+                        <p>4.1. São obrigações da CONTRATADA:</p>
+                        <p>a) Prestar os serviços advocatícios com zelo, diligência e capacidade técnica;</p>
+                        <p>b) Manter a CONTRATANTE informada sobre o andamento do processo;</p>
+                        <p>c) Guardar sigilo profissional sobre todas as informações recebidas.</p>
+                        <p>4.2. São obrigações da CONTRATANTE:</p>
+                        <p>a) Fornecer todas as informações e documentos necessários ao regular andamento do processo;</p>
+                        <p>b) Pagar pontualmente os honorários combinados;</p>
+                        <p>c) Arcar com as custas processuais e despesas extras.</p>
+                    </div>
+                    
+                    ${observacoes ? `
+                        <div class="contrato-section">
+                            <p><strong>CLÁUSULA 5ª - DAS DISPOSIÇÕES ESPECIAIS</strong></p>
+                            <p>${observacoes}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="contrato-section">
+                        <p><strong>CLÁUSULA ${observacoes ? '6' : '5'}ª - DO PRAZO</strong></p>
+                        <p>Este contrato vigorará pelo tempo necessário à conclusão do processo objeto deste contrato, podendo ser rescindido por qualquer das partes, mediante comunicação por escrito com 30 (trinta) dias de antecedência.</p>
+                    </div>
+                    
+                    <div class="contrato-section">
+                        <p><strong>CLÁUSULA ${observacoes ? '7' : '6'}ª - DO FORO</strong></p>
+                        <p>Para dirimir quaisquer controvérsias oriundas deste contrato, as partes elegem o foro da Comarca de São Paulo/SP.</p>
+                    </div>
+                    
+                    <div class="contrato-signatures">
+                        <div class="signature-line">
+                            <p>___________________________________</p>
+                            <p>Dra. Advogada - OAB/SP 123.456</p>
+                        </div>
+                        <div class="signature-line">
+                            <p>___________________________________</p>
+                            <p>${cliente.nome}</p>
+                            <p>CPF: ${cliente.cpf || 'não informado'}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
+                        <p>Contrato gerado automaticamente pelo Sistema Jurídico</p>
+                        <p>Data de emissão: ${dataAtual}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Função para gerar recibo completo
+        window.gerarReciboCompleto = function(processoId) {
+            const processo = carregarProcessos().find(p => p.id === processoId);
+            const cliente = carregarClientes().find(c => c.id === processo.clienteId);
+            const recibos = carregarRecibos();
+            
+            const reciboId = `recibo-completo-${Date.now()}`;
+            const novoRecibo = {
+                id: reciboId,
+                processoId: processoId,
+                dataCriacao: new Date().toISOString(),
+                valor: processo.honorarios,
+                tipo: 'Completo',
+                conteudo: gerarConteudoReciboCompleto(processo, cliente)
+            };
+            
+            recibos.push(novoRecibo);
+            salvarRecibos(recibos);
+            
+            // Abrir modal para visualizar o recibo
+            visualizarRecibo(reciboId);
+            
+            mostrarAlerta('alert-cadastro', 'Recibo completo gerado com sucesso!', 'success');
+        };
+
+        // Função para gerar conteúdo do recibo completo
+        function gerarConteudoReciboCompleto(processo, cliente) {
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            
+            return `
+                <div class="recibo-container">
+                    <div class="recibo-header">
+                        <div class="recibo-title">RECIBO DE PAGAMENTO</div>
+                        <div class="recibo-subtitle">Comprovante de Pagamento de Honorários Advocatícios</div>
+                    </div>
+                    
+                    <div class="recibo-detalhes">
+                        <p><strong>Emitente:</strong> Dra. Advogada - OAB/SP 123.456</p>
+                        <p><strong>Cliente:</strong> ${cliente.nome}</p>
+                        <p><strong>CPF:</strong> ${cliente.cpf || 'Não informado'}</p>
+                        <p><strong>Processo:</strong> ${processo.numero || 'Número não informado'}</p>
+                        <p><strong>Descrição:</strong> Honorários advocatícios referentes aos serviços prestados no processo ${processo.numero || 'não informado'}</p>
+                        <p><strong>Forma de Pagamento:</strong> ${processo.formaPagamento || 'Não informada'}</p>
+                    </div>
+                    
+                    <div class="recibo-valor">
+                        R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                    </div>
+                    
+                    <div class="contrato-signatures">
+                        <div class="signature-line">
+                            <p>___________________________________</p>
+                            <p>Dra. Advogada - OAB/SP 123.456</p>
+                        </div>
+                        <div class="signature-line">
+                            <p>___________________________________</p>
+                            <p>${cliente.nome}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
+                        <p>Recibo gerado automaticamente pelo Sistema Jurídico</p>
+                        <p>Data de emissão: ${dataAtual}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Função para visualizar contrato no modal
+        function visualizarContrato(contratoId) {
+            const contrato = carregarContratos().find(c => c.id === contratoId);
+            if (!contrato) return;
+            
+            document.getElementById('modal-contrato-conteudo').innerHTML = contrato.conteudo;
+            document.getElementById('modal-contrato').classList.add('active');
+            
+            // Configurar eventos dos botões do modal
+            document.getElementById('btn-imprimir-contrato').onclick = function() {
+                window.print();
+            };
+            
+            document.getElementById('btn-download-contrato').onclick = function() {
+                // Implementação simplificada para download do PDF
+                alert('Funcionalidade de download de PDF será implementada em breve');
+            };
+        }
+
+        // Função para visualizar recibo no modal
+        function visualizarRecibo(reciboId) {
+            const recibo = carregarRecibos().find(r => r.id === reciboId);
+            if (!recibo) return;
+            
+            document.getElementById('modal-recibo-conteudo').innerHTML = recibo.conteudo;
+            document.getElementById('modal-recibo').classList.add('active');
+            
+            // Configurar eventos dos botões do modal
+            document.getElementById('btn-imprimir-recibo').onclick = function() {
+                window.print();
+            };
+            
+            document.getElementById('btn-download-recibo').onclick = function() {
+                // Implementação simplificada para download do PDF
+                alert('Funcionalidade de download de PDF será implementada em breve');
+            };
+        }
+
         // Função para mostrar alerta
         function mostrarAlerta(containerId, mensagem, tipo) {
             const container = document.getElementById(containerId);
@@ -2275,9 +2674,211 @@
             }
         });
 
-        // As demais funções do sistema (dashboard, cadastro, etc.) permanecem
-        // ...
+        // Função para atualizar dashboard
+        function atualizarDashboard() {
+            const clientes = carregarClientes();
+            const processos = carregarProcessos();
+            
+            document.getElementById('total-clientes').textContent = clientes.length;
+            document.getElementById('total-processos').textContent = processos.length;
+            document.getElementById('processos-ativos').textContent = processos.filter(p => p.status !== 'Finalizado').length;
+            
+            const honorariosMensais = processos
+                .filter(p => p.status !== 'Finalizado')
+                .reduce((total, p) => total + (p.honorarios || 0), 0);
+            document.getElementById('honorarios-mensais').textContent = `R$ ${honorariosMensais.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            // Atualizar processos recentes
+            const processosRecentes = document.getElementById('processos-recentes');
+            if (processos.length > 0) {
+                let html = '<table><thead><tr><th>Número</th><th>Cliente</th><th>Categoria</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+                
+                processos.slice(0, 5).forEach(processo => {
+                    const cliente = clientes.find(c => c.id === processo.clienteId);
+                    html += `
+                        <tr>
+                            <td>${processo.numero || 'N/I'}</td>
+                            <td>${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
+                            <td>${processo.categoria || 'N/I'}</td>
+                            <td><span class="status-badge status-${processo.status.toLowerCase().replace(' ', '-')}">${processo.status}</span></td>
+                            <td>
+                                <button class="btn btn-ghost btn-sm" onclick="verDetalhesProcesso('${processo.id}')">
+                                    <span class="material-icons" style="font-size: 16px;">visibility</span>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                processosRecentes.innerHTML = html;
+            } else {
+                processosRecentes.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Nenhum processo cadastrado ainda.</p>';
+            }
+        }
 
+        // Função para ver detalhes do processo
+        window.verDetalhesProcesso = function(processoId) {
+            const processo = carregarProcessos().find(p => p.id === processoId);
+            const cliente = carregarClientes().find(c => c.id === processo.clienteId);
+            
+            if (!processo) return;
+            
+            document.getElementById('modal-processo-conteudo').innerHTML = `
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Número do Processo</div>
+                        <div class="info-value">${processo.numero || 'Não informado'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Cliente</div>
+                        <div class="info-value">${cliente.nome}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">CPF do Cliente</div>
+                        <div class="info-value">${cliente.cpf || 'Não informado'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Categoria</div>
+                        <div class="info-value">${processo.categoria || 'Não informado'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Vara/Comarca</div>
+                        <div class="info-value">${processo.vara || 'Não informado'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Status</div>
+                        <div class="info-value">${processo.status}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Valor da Causa</div>
+                        <div class="info-value">R$ ${(processo.valorCausa || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Honorários</div>
+                        <div class="info-value">R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Forma de Pagamento</div>
+                        <div class="info-value">${processo.formaPagamento || 'Não informado'}</div>
+                    </div>
+                    ${processo.parcelas ? `
+                        <div class="info-item">
+                            <div class="info-label">Quantidade de Parcelas</div>
+                            <div class="info-value">${processo.parcelas}</div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                ${processo.observacoes ? `
+                    <div class="form-group">
+                        <label>Observações</label>
+                        <div style="padding: 12px; background: #f8fafc; border-radius: 8px; margin-top: 8px;">
+                            ${processo.observacoes}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="editarProcesso('${processo.id}')">
+                        <span class="material-icons">edit</span>
+                        Editar Processo
+                    </button>
+                    <button class="btn btn-danger" onclick="excluirProcesso('${processo.id}')">
+                        <span class="material-icons">delete</span>
+                        Excluir Processo
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modal-processo').classList.add('active');
+        };
+
+        // Funções básicas do sistema (simplificadas)
+        window.editarProcesso = function(processoId) {
+            alert('Funcionalidade de edição em desenvolvimento');
+        };
+
+        window.excluirProcesso = function(processoId) {
+            if (confirm('Tem certeza que deseja excluir este processo?')) {
+                const processos = carregarProcessos();
+                const novosProcessos = processos.filter(p => p.id !== processoId);
+                salvarProcessos(novosProcessos);
+                
+                // Atualizar a interface
+                atualizarDashboard();
+                carregarTabelaProcessos();
+                fecharModal('modal-processo');
+                
+                mostrarAlerta('alert-cadastro', 'Processo excluído com sucesso!', 'success');
+            }
+        };
+
+        window.editarProcessoExterno = function(processoId) {
+            alert('Funcionalidade de edição de processo externo em desenvolvimento');
+        };
+
+        window.excluirProcessoExterno = function(processoId) {
+            if (confirm('Tem certeza que deseja excluir este processo externo?')) {
+                const processosExternos = carregarProcessosExternos();
+                const novosProcessosExternos = processosExternos.filter(p => p.id !== processoId);
+                salvarProcessosExternos(novosProcessosExternos);
+                
+                // Atualizar a interface
+                document.getElementById('select-cliente-perfil').dispatchEvent(new Event('change'));
+                
+                mostrarAlerta('alert-cadastro', 'Processo externo excluído com sucesso!', 'success');
+            }
+        };
+
+        // Função para carregar tabela de processos
+        function carregarTabelaProcessos() {
+            const processos = carregarProcessos();
+            const clientes = carregarClientes();
+            const tabelaProcessos = document.getElementById('tabela-processos');
+            
+            if (processos.length > 0) {
+                let html = '<table><thead><tr><th>Número</th><th>Cliente</th><th>Categoria</th><th>Status</th><th>Honorários</th><th>Ações</th></tr></thead><tbody>';
+                
+                processos.forEach(processo => {
+                    const cliente = clientes.find(c => c.id === processo.clienteId);
+                    html += `
+                        <tr>
+                            <td>${processo.numero || 'N/I'}</td>
+                            <td>${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
+                            <td>${processo.categoria || 'N/I'}</td>
+                            <td><span class="status-badge status-${processo.status.toLowerCase().replace(' ', '-')}">${processo.status}</span></td>
+                            <td>R$ ${(processo.honorarios || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                            <td>
+                                <button class="btn btn-ghost btn-sm" onclick="verDetalhesProcesso('${processo.id}')">
+                                    <span class="material-icons" style="font-size: 16px;">visibility</span>
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="excluirProcesso('${processo.id}')">
+                                    <span class="material-icons" style="font-size: 16px;">delete</span>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                tabelaProcessos.innerHTML = html;
+            } else {
+                tabelaProcessos.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 40px;">Nenhum processo encontrado.</p>';
+            }
+        }
+
+        // Inicializar a busca de processos
+        document.getElementById('search-processos').addEventListener('input', function() {
+            // Implementação simplificada da busca
+            const termo = this.value.toLowerCase();
+            const linhas = document.querySelectorAll('#tabela-processos tbody tr');
+            
+            linhas.forEach(linha => {
+                const texto = linha.textContent.toLowerCase();
+                linha.style.display = texto.includes(termo) ? '' : 'none';
+            });
+        });
     </script>
 </body>
 </html>
